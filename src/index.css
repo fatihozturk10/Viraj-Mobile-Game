@@ -1,0 +1,1000 @@
+@import "tailwindcss";
+
+@layer base {
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: #09090b;
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+.font-display {
+  font-family: "Oxanium", sans-serif;
+}
+
+.font-mono-num {
+  font-family: "JetBrains Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes calloutFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+}
+
+.animate-callout {
+  animation: calloutFloat 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes holdRipple {
+  0% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(0.78);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.65);
+  }
+}
+
+@keyframes holdFlowUp {
+  0% {
+    opacity: 0.25;
+    transform: translateY(4px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 0.25;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes holdFlowDown {
+  0% {
+    opacity: 0.25;
+    transform: translateY(-6px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+  100% {
+    opacity: 0.25;
+    transform: translateY(6px);
+  }
+}
+
+.animate-hold-ripple {
+  animation: holdRipple 0.95s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-hold-up {
+  animation: holdFlowUp 0.65s ease-in-out infinite;
+}
+
+.animate-hold-down {
+  animation: holdFlowDown 0.65s ease-in-out infinite;
+}
+
+@keyframes nitroShockwaveOuter {
+  0% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.65);
+  }
+}
+
+@keyframes nitroShockwaveInner {
+  0% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.95);
+  }
+}
+
+@keyframes nitroFlamePop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20%) scale(0.65);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -55%) scale(1.18);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -82%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -115%) scale(0.92);
+  }
+}
+
+@keyframes nitroSpin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.animate-nitro-outer {
+  animation: nitroShockwaveOuter 0.72s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-nitro-inner {
+  animation: nitroShockwaveInner 0.56s cubic-bezier(0.16, 1, 0.3, 1) 0.06s forwards;
+}
+
+.animate-nitro-pop {
+  animation: nitroFlamePop 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-nitro-spin {
+  animation: nitroSpin 1.4s linear infinite;
+}
+
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 191, 36, 0.45) rgba(255, 255, 255, 0.06);
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(251, 191, 36, 0.45);
+  border-radius: 9999px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(251, 191, 36, 0.7);
+}
+
+@keyframes rampageTriSurgeA {
+  0%, 100% {
+    opacity: 0.58;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.045) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes rampageTriSurgeB {
+  0%, 100% {
+    opacity: 0.96;
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 0.32;
+    transform: scale(0.965) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes rampageTriDriftLeft {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translate3d(-14px, 0, 0) scale(0.95);
+  }
+  45% {
+    opacity: 1;
+    transform: translate3d(8px, -10px, 0) scale(1.06);
+  }
+  75% {
+    opacity: 0.65;
+    transform: translate3d(2px, 8px, 0) scale(1.01);
+  }
+}
+
+@keyframes rampageTriDriftRight {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translate3d(14px, 0, 0) scale(0.95);
+  }
+  45% {
+    opacity: 1;
+    transform: translate3d(-8px, 10px, 0) scale(1.06);
+  }
+  75% {
+    opacity: 0.65;
+    transform: translate3d(-2px, -8px, 0) scale(1.01);
+  }
+}
+
+@keyframes rampageTriFlicker {
+  0%, 100% {
+    opacity: 0.22;
+    transform: scale(0.94);
+  }
+  25% {
+    opacity: 0.98;
+    transform: scale(1.05);
+  }
+  52% {
+    opacity: 0.42;
+    transform: scale(0.98);
+  }
+  78% {
+    opacity: 0.92;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes rampageGlowBreath {
+  0%, 100% {
+    opacity: 0.68;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-rampage-glow {
+  animation: rampageGlowBreath 1.15s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.animate-rampage-tri-a {
+  transform-origin: center;
+  animation: rampageTriSurgeA 1.15s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-rampage-tri-b {
+  transform-origin: center;
+  animation: rampageTriSurgeB 1.45s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-rampage-tri-left {
+  transform-origin: left center;
+  animation: rampageTriDriftLeft 1.3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-rampage-tri-right {
+  transform-origin: right center;
+  animation: rampageTriDriftRight 1.3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-rampage-tri-spark {
+  transform-origin: center;
+  animation: rampageTriFlicker 0.95s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-rampage-tri-fast {
+  transform-origin: center;
+  animation: rampageTriSurgeA 0.36s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-rampage-tri-fast-alt {
+  transform-origin: center;
+  animation: rampageTriFlicker 0.32s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rampage-glow,
+  .animate-rampage-tri-a,
+  .animate-rampage-tri-b,
+  .animate-rampage-tri-left,
+  .animate-rampage-tri-right,
+  .animate-rampage-tri-spark,
+  .animate-rampage-tri-fast,
+  .animate-rampage-tri-fast-alt,
+  .animate-sheet-up,
+  .animate-crate-drop,
+  .animate-crate-charge-shake,
+  .animate-crate-charge-rumble,
+  .animate-crate-tap-recoil,
+  .animate-crate-tap-recoil-alt,
+  .animate-crate-lid-fly,
+  .animate-crate-vault-lid-open,
+  .animate-crate-base-recoil,
+  .animate-crate-vault-base-open,
+  .animate-crate-screen-shake,
+  .animate-crate-callout-slam,
+  .animate-crate-core-flash,
+  .animate-crate-shockwave,
+  .animate-crate-orbit,
+  .animate-crate-orbit-reverse,
+  .animate-crate-spark,
+  .animate-crate-sunburst,
+  .animate-loot-card-reveal,
+  .animate-loot-card-flip,
+  .animate-loot-hero-reveal,
+  .animate-loot-sheen,
+  .animate-crate-seam-pulse,
+  .animate-career-cloud,
+  .animate-career-aurora,
+  .animate-career-snow,
+  .animate-career-ember,
+  .animate-career-turbine,
+  .animate-career-lava,
+  .animate-career-beacon {
+    animation: none !important;
+  }
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes sheetSlideUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-sheet-up {
+  animation: sheetSlideUp 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ===== Crate Opening Ceremony Keyframes (GPU-composited) ===== */
+@keyframes crateDropSlam {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -110px, 0) scale(0.76) rotate(-4deg);
+  }
+  58% {
+    opacity: 1;
+    transform: translate3d(0, 10px, 0) scale(1.06, 0.92) rotate(1deg);
+  }
+  78% {
+    transform: translate3d(0, -6px, 0) scale(0.98, 1.03) rotate(-0.6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes crateChargeShake {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  12% {
+    transform: translate3d(-3px, 1px, 0) scale(1.01, 0.99) rotate(-1.1deg);
+  }
+  24% {
+    transform: translate3d(3px, -1px, 0) scale(0.99, 1.01) rotate(1.1deg);
+  }
+  36% {
+    transform: translate3d(-4px, 2px, 0) scale(1.02, 0.98) rotate(-1.8deg);
+  }
+  48% {
+    transform: translate3d(4px, -2px, 0) scale(0.98, 1.02) rotate(1.8deg);
+  }
+  60% {
+    transform: translate3d(-6px, 2px, 0) scale(1.04, 0.96) rotate(-2.5deg);
+  }
+  72% {
+    transform: translate3d(6px, -2px, 0) scale(1.05, 0.95) rotate(2.6deg);
+  }
+  84% {
+    transform: translate3d(-7px, 3px, 0) scale(1.08, 0.92) rotate(-3.2deg);
+  }
+  94% {
+    transform: translate3d(7px, -3px, 0) scale(1.11, 0.9) rotate(3.2deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.14, 0.88) rotate(0deg);
+  }
+}
+
+@keyframes crateLidFly {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: translate3d(0, -48px, 0) rotate(-10deg) scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(26px, -170px, 0) rotate(-28deg) scale(0.84);
+  }
+}
+
+@keyframes crateBaseRecoil {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1.06, 0.94);
+  }
+  28% {
+    opacity: 1;
+    transform: translate3d(0, 18px, 0) scale(1.08, 0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 56px, 0) scale(0.86);
+  }
+}
+
+@keyframes crateCoreFlash {
+  0% {
+    opacity: 0;
+    transform: scale(0.25);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(1.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.85);
+  }
+}
+
+@keyframes crateShockwave {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.32);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes crateOrbitSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes crateSparkFly {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  65% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--tx, 0px), var(--ty, -120px), 0) scale(0.2)
+      rotate(var(--rot, 180deg));
+  }
+}
+
+@keyframes crateSunburstSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lootCardReveal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(0.86);
+  }
+  65% {
+    opacity: 1;
+    transform: translate3d(0, -3px, 0) scale(1.025);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes lootSheenSweep {
+  0% {
+    transform: translate3d(-135%, 0, 0) skewX(-22deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+  }
+  60% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(220%, 0, 0) skewX(-22deg);
+    opacity: 0;
+  }
+}
+
+@keyframes crateSeamPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scaleX(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.04);
+  }
+}
+
+.animate-crate-drop {
+  animation: crateDropSlam 340ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-charge-shake {
+  animation: crateChargeShake 980ms cubic-bezier(0.55, 0.06, 0.68, 0.19)
+    forwards;
+  will-change: transform;
+}
+
+.animate-crate-lid-fly {
+  animation: crateLidFly 560ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-base-recoil {
+  animation: crateBaseRecoil 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-core-flash {
+  animation: crateCoreFlash 580ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-shockwave {
+  animation: crateShockwave 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-orbit {
+  animation: crateOrbitSpin 5.5s linear infinite;
+  will-change: transform;
+}
+
+.animate-crate-spark {
+  animation: crateSparkFly 640ms cubic-bezier(0.12, 0.82, 0.28, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-sunburst {
+  animation: crateSunburstSpin 18s linear infinite;
+  will-change: transform;
+}
+
+.animate-loot-card-reveal {
+  opacity: 0;
+  animation: lootCardReveal 420ms cubic-bezier(0.2, 0.95, 0.3, 1.04) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-loot-sheen {
+  animation: lootSheenSweep 1.15s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-seam-pulse {
+  animation: crateSeamPulse 420ms ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes crateChargeRumble {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  20% {
+    transform: translate3d(-2.5px, 1px, 0) rotate(-1.2deg) scale(1.015, 0.985);
+  }
+  40% {
+    transform: translate3d(2.5px, -1.5px, 0) rotate(1.3deg) scale(0.99, 1.015);
+  }
+  60% {
+    transform: translate3d(-3.5px, 1.5px, 0) rotate(-1.7deg) scale(1.025, 0.975);
+  }
+  80% {
+    transform: translate3d(3.5px, -1px, 0) rotate(1.6deg) scale(1.02, 0.98);
+  }
+}
+
+@keyframes crateTapRecoil {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  18% {
+    transform: translate3d(0, 9px, 0) scale(1.13, 0.85) rotate(-2.2deg);
+  }
+  46% {
+    transform: translate3d(0, -10px, 0) scale(0.94, 1.09) rotate(1.6deg);
+  }
+  72% {
+    transform: translate3d(0, 3px, 0) scale(1.03, 0.97) rotate(-0.8deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes crateVaultLidOpen {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateX(0deg) rotateZ(0deg) scale(1);
+  }
+  22% {
+    opacity: 1;
+    transform: translate3d(0, -34px, 24px) rotateX(32deg) rotateZ(-6deg) scale(1.07);
+  }
+  65% {
+    opacity: 0.92;
+    transform: translate3d(14px, -124px, 48px) rotateX(68deg) rotateZ(-16deg) scale(0.95);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(26px, -185px, 60px) rotateX(82deg) rotateZ(-24deg) scale(0.8);
+  }
+}
+
+@keyframes crateVaultBaseOpen {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1.08, 0.9);
+  }
+  22% {
+    opacity: 1;
+    transform: translate3d(0, 14px, 0) scale(1.1, 0.88);
+  }
+  58% {
+    opacity: 0.94;
+    transform: translate3d(0, 8px, 0) scale(1.02, 0.98);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 44px, 0) scale(0.88);
+  }
+}
+
+@keyframes crateScreenShake {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  10% {
+    transform: translate3d(-9px, 7px, 0) rotate(-0.8deg);
+  }
+  22% {
+    transform: translate3d(9px, -6px, 0) rotate(0.8deg);
+  }
+  34% {
+    transform: translate3d(-7px, -5px, 0) rotate(-0.5deg);
+  }
+  48% {
+    transform: translate3d(6px, 5px, 0) rotate(0.4deg);
+  }
+  64% {
+    transform: translate3d(-4px, 2px, 0);
+  }
+  80% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes crateCalloutSlam {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(1.65);
+  }
+  45% {
+    opacity: 1;
+    transform: translate3d(0, -2px, 0) scale(0.95);
+  }
+  70% {
+    transform: translate3d(0, 0, 0) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes crateOrbitReverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes lootHeroReveal {
+  0% {
+    opacity: 0;
+    transform: perspective(900px) translate3d(0, 26px, 0) rotateX(16deg) scale(0.88);
+  }
+  58% {
+    opacity: 1;
+    transform: perspective(900px) translate3d(0, -4px, 0) rotateX(-3deg) scale(1.025);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(900px) translate3d(0, 0, 0) rotateX(0deg) scale(1);
+  }
+}
+
+@keyframes lootCardFlip {
+  0% {
+    opacity: 0;
+    transform: perspective(800px) translate3d(0, 22px, 0) rotateX(22deg) scale(0.88);
+  }
+  64% {
+    opacity: 1;
+    transform: perspective(800px) translate3d(0, -2px, 0) rotateX(-3deg) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(800px) translate3d(0, 0, 0) rotateX(0deg) scale(1);
+  }
+}
+
+.animate-crate-charge-rumble {
+  animation: crateChargeRumble 340ms ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes crateTapRecoilAlt {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  18% {
+    transform: translate3d(0, 9px, 0) scale(1.13, 0.85) rotate(2.2deg);
+  }
+  46% {
+    transform: translate3d(0, -10px, 0) scale(0.94, 1.09) rotate(-1.6deg);
+  }
+  72% {
+    transform: translate3d(0, 3px, 0) scale(1.03, 0.97) rotate(0.8deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+.animate-crate-tap-recoil {
+  animation: crateTapRecoil 310ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform;
+}
+
+.animate-crate-tap-recoil-alt {
+  animation: crateTapRecoilAlt 310ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform;
+}
+
+.animate-crate-vault-lid-open {
+  animation: crateVaultLidOpen 760ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-vault-base-open {
+  animation: crateVaultBaseOpen 780ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-screen-shake {
+  animation: crateScreenShake 460ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  will-change: transform;
+}
+
+.animate-crate-callout-slam {
+  animation: crateCalloutSlam 380ms cubic-bezier(0.18, 0.96, 0.32, 1.08) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-crate-orbit-reverse {
+  animation: crateOrbitReverse 2.6s linear infinite;
+  will-change: transform;
+}
+
+.animate-loot-hero-reveal {
+  opacity: 0;
+  animation: lootHeroReveal 480ms cubic-bezier(0.18, 0.96, 0.3, 1.04) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-loot-card-flip {
+  opacity: 0;
+  animation: lootCardFlip 440ms cubic-bezier(0.18, 0.96, 0.3, 1.04) forwards;
+  will-change: transform, opacity;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+/* ===== Career Map Scenic Environment Animations (GPU-composited) ===== */
+@keyframes careerCloudDrift {
+  0%, 100% {
+    transform: translate3d(-16px, 0, 0);
+    opacity: 0.34;
+  }
+  50% {
+    transform: translate3d(22px, -4px, 0);
+    opacity: 0.54;
+  }
+}
+
+@keyframes careerAuroraWave {
+  0%, 100% {
+    transform: translate3d(-12px, 0, 0) scaleY(1);
+    opacity: 0.36;
+  }
+  50% {
+    transform: translate3d(16px, -6px, 0) scaleY(1.08);
+    opacity: 0.62;
+  }
+}
+
+@keyframes careerSnowDrift {
+  0% {
+    transform: translate3d(0, -18px, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.82;
+  }
+  85% {
+    opacity: 0.72;
+  }
+  100% {
+    transform: translate3d(18px, 95px, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes careerEmberRise {
+  0% {
+    transform: translate3d(0, 18px, 0) scale(0.75);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.92;
+  }
+  80% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate3d(-12px, -88px, 0) scale(1.1);
+    opacity: 0;
+  }
+}
+
+@keyframes careerTurbineSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes careerLavaPulse {
+  0%, 100% {
+    opacity: 0.58;
+  }
+  50% {
+    opacity: 0.96;
+  }
+}
+
+@keyframes careerBeaconPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.48;
+  }
+  50% {
+    transform: scale(1.24);
+    opacity: 0.12;
+  }
+}
+
+.animate-career-cloud {
+  animation: careerCloudDrift 16s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-career-aurora {
+  animation: careerAuroraWave 11s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-career-snow {
+  animation: careerSnowDrift 7.5s linear infinite;
+  will-change: transform, opacity;
+}
+
+.animate-career-ember {
+  animation: careerEmberRise 5.2s ease-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-career-turbine {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: careerTurbineSpin 5.5s linear infinite;
+  will-change: transform;
+}
+
+.animate-career-lava {
+  animation: careerLavaPulse 3.2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.animate-career-beacon {
+  animation: careerBeaconPulse 2.1s ease-in-out infinite;
+  will-change: transform, opacity;
+}

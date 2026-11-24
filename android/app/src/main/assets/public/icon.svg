@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="108" fill="#09090b"/>
+  <rect x="24" y="24" width="464" height="464" rx="92" fill="none" stroke="#27272a" stroke-width="6"/>
+  <!-- Sweeping highway S-curve -->
+  <path d="M128 456 C132 330, 360 300, 344 196 C334 132, 240 100, 210 64" fill="none" stroke="#3f3f46" stroke-width="110" stroke-linecap="round"/>
+  <path d="M128 456 C132 330, 360 300, 344 196 C334 132, 240 100, 210 64" fill="none" stroke="#18181b" stroke-width="92" stroke-linecap="round"/>
+  <!-- Amber racing center line -->
+  <path d="M128 456 C132 330, 360 300, 344 196 C334 132, 240 100, 210 64" fill="none" stroke="#f59e0b" stroke-width="10" stroke-dasharray="26 22" stroke-linecap="round"/>
+  <!-- Sleek car silhouette at bottom-left apex -->
+  <g transform="translate(152 344) rotate(-14)">
+    <rect x="-34" y="-54" width="68" height="108" rx="20" fill="#f4f4f5"/>
+    <rect x="-24" y="-22" width="48" height="46" rx="10" fill="#09090b"/>
+    <rect x="-26" y="42" width="18" height="7" rx="3" fill="#ef4444"/>
+    <rect x="8" y="42" width="18" height="7" rx="3" fill="#ef4444"/>
+  </g>
+</svg>

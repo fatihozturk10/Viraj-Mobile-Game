@@ -1,0 +1,440 @@
+{
+  "entities": {
+    "LeaderboardAllTimeEntry": {
+      "title": "LeaderboardAllTimeEntry",
+      "description": "Public all-time best driving score record for a single player (no PII).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Public driver display name.",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "plate": {
+          "type": "string",
+          "description": "Custom vehicle license plate text.",
+          "minLength": 1,
+          "maxLength": 12
+        },
+        "carModel": {
+          "type": "string",
+          "description": "Vehicle model ID used for the run.",
+          "enum": [
+            "dogan",
+            "hatch",
+            "gt",
+            "rally",
+            "pickup",
+            "muscle",
+            "m3gtr",
+            "jdm",
+            "porsche",
+            "amggt",
+            "hyper",
+            "laferrari",
+            "lambo",
+            "mclarenp1",
+            "bugatti",
+            "jesko",
+            "f1",
+            "pagani",
+            "bolide",
+            "solaris"
+          ]
+        },
+        "score": {
+          "type": "number",
+          "description": "Best all-time run score."
+        },
+        "distanceMeters": {
+          "type": "number",
+          "description": "Distance covered in meters."
+        },
+        "driftTotal": {
+          "type": "number",
+          "description": "Total drift points earned during the run."
+        },
+        "playerLevel": {
+          "type": "number",
+          "description": "Driver level at the time of submission."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when first created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest high score."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "plate",
+        "carModel",
+        "score",
+        "distanceMeters",
+        "driftTotal",
+        "playerLevel",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DailyBoard": {
+      "title": "DailyBoard",
+      "description": "Day bucket document grouping daily leaderboard entries by YYYY-MM-DD.",
+      "type": "object",
+      "properties": {
+        "dayKey": {
+          "type": "string",
+          "description": "UTC/Local calendar day key in YYYY-MM-DD format.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when day bucket was initialized."
+        }
+      },
+      "required": ["dayKey", "createdAt"]
+    },
+    "LeaderboardDailyEntry": {
+      "title": "LeaderboardDailyEntry",
+      "description": "Public daily best score entry for a player on a specific day.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the player.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "dayKey": {
+          "type": "string",
+          "description": "Calendar day key in YYYY-MM-DD format.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Public driver display name.",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "plate": {
+          "type": "string",
+          "description": "Custom vehicle license plate text.",
+          "minLength": 1,
+          "maxLength": 12
+        },
+        "carModel": {
+          "type": "string",
+          "description": "Vehicle model ID used for the run.",
+          "enum": [
+            "dogan",
+            "hatch",
+            "gt",
+            "rally",
+            "pickup",
+            "muscle",
+            "m3gtr",
+            "jdm",
+            "porsche",
+            "amggt",
+            "hyper",
+            "laferrari",
+            "lambo",
+            "mclarenp1",
+            "bugatti",
+            "jesko",
+            "f1",
+            "pagani",
+            "bolide",
+            "solaris"
+          ]
+        },
+        "score": {
+          "type": "number",
+          "description": "Best daily run score."
+        },
+        "distanceMeters": {
+          "type": "number",
+          "description": "Distance covered in meters."
+        },
+        "driftTotal": {
+          "type": "number",
+          "description": "Total drift points earned during the run."
+        },
+        "playerLevel": {
+          "type": "number",
+          "description": "Driver level at the time of submission."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when updated."
+        }
+      },
+      "required": [
+        "uid",
+        "dayKey",
+        "displayName",
+        "plate",
+        "carModel",
+        "score",
+        "distanceMeters",
+        "driftTotal",
+        "playerLevel",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserEntitlement": {
+      "title": "UserEntitlement",
+      "description": "Owner-only store entitlements summary (non-consumable unlocks and aggregate counters, zero PII).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "adFreePurchased": {
+          "type": "boolean",
+          "description": "Whether the permanent ad-free VIP pass is owned."
+        },
+        "claimedOneTimeSkus": {
+          "type": "array",
+          "description": "Bounded list (max 20) of one-time bundle SKUs already purchased."
+        },
+        "totalGoldPurchased": {
+          "type": "number",
+          "description": "Cumulative gold credited from store purchases."
+        },
+        "totalCratesOpened": {
+          "type": "number",
+          "description": "Cumulative real-money crates opened."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when entitlements document was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest purchase update."
+        }
+      },
+      "required": [
+        "uid",
+        "adFreePurchased",
+        "claimedOneTimeSkus",
+        "totalGoldPurchased",
+        "totalCratesOpened",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StorePurchaseOrder": {
+      "title": "StorePurchaseOrder",
+      "description": "Immutable owner-only store purchase receipt record (zero PII / no card numbers).",
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Unique order receipt identifier.",
+          "minLength": 6,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the buyer.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sku": {
+          "type": "string",
+          "description": "Store catalog product SKU.",
+          "enum": [
+            "viraj_starter_pack",
+            "viraj_ad_free",
+            "viraj_super_bundle",
+            "viraj_hyper_bundle",
+            "viraj_crate_street_1",
+            "viraj_crate_street_3",
+            "viraj_crate_pro_1",
+            "viraj_crate_pro_3",
+            "viraj_crate_legendary_1",
+            "viraj_crate_legendary_3",
+            "viraj_gold_500",
+            "viraj_gold_1500",
+            "viraj_gold_4000",
+            "viraj_gold_10000",
+            "viraj_gold_25000",
+            "viraj_gold_60000"
+          ]
+        },
+        "category": {
+          "type": "string",
+          "description": "Product category.",
+          "enum": ["bundle", "crate", "gold"]
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable product title.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "priceTry": {
+          "type": "number",
+          "description": "Purchase amount in TRY."
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO currency code.",
+          "enum": ["TRY"]
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Checkout channel identifier.",
+          "enum": ["google_play", "card", "wallet"]
+        },
+        "platform": {
+          "type": "string",
+          "description": "Client platform where purchase originated.",
+          "enum": ["android_play", "web_checkout", "web_sandbox"]
+        },
+        "rewardSummary": {
+          "type": "string",
+          "description": "Short summary of granted rewards.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of purchase."
+        }
+      },
+      "required": [
+        "orderId",
+        "uid",
+        "sku",
+        "category",
+        "title",
+        "priceTry",
+        "currency",
+        "paymentMethod",
+        "platform",
+        "rewardSummary",
+        "createdAt"
+      ]
+    },
+    "PromoRedemption": {
+      "title": "PromoRedemption",
+      "description": "Immutable global single-use promo code claim lock (one redemption worldwide per code, zero PII).",
+      "type": "object",
+      "properties": {
+        "codeId": {
+          "type": "string",
+          "description": "Normalized single-use promo code identifier.",
+          "minLength": 11,
+          "maxLength": 11,
+          "pattern": "^[A-Z0-9]+$",
+          "enum": [
+            "VIP7K4M9X2Q",
+            "VIP3N8R6P5W",
+            "VIP9T2H4C8Z",
+            "VIP5F6B8M3D",
+            "VIP2W9J7V4K",
+            "GLD8M4P2X9R",
+            "GLD4K7W9T3N",
+            "GLD6R2C5H8F",
+            "GLD9B5V3D7J",
+            "GLD3X8Q7N4M"
+          ]
+        },
+        "rewardType": {
+          "type": "string",
+          "description": "Type of reward unlocked by the promo code.",
+          "enum": ["ad_free", "gold_1m"]
+        },
+        "redeemedByUid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the single player who claimed the code.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "redeemedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the code was permanently burned."
+        }
+      },
+      "required": ["codeId", "rewardType", "redeemedByUid", "redeemedAt"]
+    }
+  },
+  "firestore": {
+    "/leaderboard_alltime/{uid}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardAllTimeEntry"
+      },
+      "description": "Public all-time leaderboard scores indexed by player UID."
+    },
+    "/daily_boards/{dayKey}": {
+      "schema": {
+        "$ref": "#/entities/DailyBoard"
+      },
+      "description": "Parent day bucket documents for daily leaderboards."
+    },
+    "/daily_boards/{dayKey}/entries/{uid}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardDailyEntry"
+      },
+      "description": "Public daily leaderboard scores for a given dayKey."
+    },
+    "/user_entitlements/{uid}": {
+      "schema": {
+        "$ref": "#/entities/UserEntitlement"
+      },
+      "description": "Owner-only store entitlements document for purchase restoration."
+    },
+    "/user_entitlements/{uid}/orders/{orderId}": {
+      "schema": {
+        "$ref": "#/entities/StorePurchaseOrder"
+      },
+      "description": "Owner-only immutable store purchase receipt subcollection."
+    },
+    "/promo_redemptions/{codeId}": {
+      "schema": {
+        "$ref": "#/entities/PromoRedemption"
+      },
+      "description": "Global single-use promo code redemption registry preventing any code from being claimed more than once worldwide."
+    }
+  }
+}

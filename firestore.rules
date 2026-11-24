@@ -1,0 +1,342 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny global catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidDayKey(dayKey) {
+      return dayKey is string && dayKey.size() == 10 && dayKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isValidCarModel(model) {
+      return model in [
+        'dogan', 'hatch', 'gt', 'rally', 'pickup', 'muscle',
+        'm3gtr', 'jdm', 'porsche', 'amggt', 'hyper', 'laferrari',
+        'lambo', 'mclarenp1', 'bugatti', 'jesko', 'f1',
+        'pagani', 'bolide', 'solaris'
+      ];
+    }
+
+    function isValidStoreSku(sku) {
+      return sku in [
+        'viraj_starter_pack',
+        'viraj_ad_free',
+        'viraj_super_bundle',
+        'viraj_hyper_bundle',
+        'viraj_crate_street_1',
+        'viraj_crate_street_3',
+        'viraj_crate_pro_1',
+        'viraj_crate_pro_3',
+        'viraj_crate_legendary_1',
+        'viraj_crate_legendary_3',
+        'viraj_gold_500',
+        'viraj_gold_1500',
+        'viraj_gold_4000',
+        'viraj_gold_10000',
+        'viraj_gold_25000',
+        'viraj_gold_60000'
+      ];
+    }
+
+    function isAdFreePromoCode(codeId) {
+      return codeId in [
+        'VIP7K4M9X2Q',
+        'VIP3N8R6P5W',
+        'VIP9T2H4C8Z',
+        'VIP5F6B8M3D',
+        'VIP2W9J7V4K'
+      ];
+    }
+
+    function isGold1MPromoCode(codeId) {
+      return codeId in [
+        'GLD8M4P2X9R',
+        'GLD4K7W9T3N',
+        'GLD6R2C5H8F',
+        'GLD9B5V3D7J',
+        'GLD3X8Q7N4M'
+      ];
+    }
+
+    function isValidPromoCode(codeId) {
+      return codeId is string
+        && codeId.size() == 11
+        && codeId.matches('^[A-Z0-9]+$')
+        && (isAdFreePromoCode(codeId) || isGold1MPromoCode(codeId));
+    }
+
+    function isValidPromoRedemption(data, codeId) {
+      return data.keys().hasAll(['codeId', 'rewardType', 'redeemedByUid', 'redeemedAt'])
+        && data.keys().hasOnly(['codeId', 'rewardType', 'redeemedByUid', 'redeemedAt'])
+        && isValidPromoCode(data.codeId)
+        && data.codeId == codeId
+        && data.rewardType is string
+        && data.rewardType.size() >= 1 && data.rewardType.size() <= 16
+        && (
+          (isAdFreePromoCode(codeId) && data.rewardType == 'ad_free') ||
+          (isGold1MPromoCode(codeId) && data.rewardType == 'gold_1m')
+        )
+        && isValidId(data.redeemedByUid)
+        && data.redeemedByUid == request.auth.uid
+        && data.redeemedAt == request.time;
+    }
+
+    function isValidAllTimeEntry(data, uid) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'plate', 'carModel',
+          'score', 'distanceMeters', 'driftTotal', 'playerLevel',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'plate', 'carModel',
+          'score', 'distanceMeters', 'driftTotal', 'playerLevel',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == uid
+        && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 32
+        && data.plate is string && data.plate.size() >= 1 && data.plate.size() <= 12
+        && isValidCarModel(data.carModel)
+        && data.score is number && data.score >= 0 && data.score <= 50000000
+        && data.distanceMeters is number && data.distanceMeters >= 0 && data.distanceMeters <= 5000000
+        && data.driftTotal is number && data.driftTotal >= 0 && data.driftTotal <= 50000000
+        && data.playerLevel is number && data.playerLevel >= 1 && data.playerLevel <= 10000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDailyBucket(data, dayKey) {
+      return data.keys().hasAll(['dayKey', 'createdAt'])
+        && data.keys().hasOnly(['dayKey', 'createdAt'])
+        && isValidDayKey(data.dayKey)
+        && data.dayKey == dayKey
+        && data.createdAt == request.time;
+    }
+
+    function isValidDailyEntry(data, dayKey, uid) {
+      return data.keys().hasAll([
+          'uid', 'dayKey', 'displayName', 'plate', 'carModel',
+          'score', 'distanceMeters', 'driftTotal', 'playerLevel',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'dayKey', 'displayName', 'plate', 'carModel',
+          'score', 'distanceMeters', 'driftTotal', 'playerLevel',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == uid
+        && data.uid == request.auth.uid
+        && isValidDayKey(data.dayKey)
+        && data.dayKey == dayKey
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 32
+        && data.plate is string && data.plate.size() >= 1 && data.plate.size() <= 12
+        && isValidCarModel(data.carModel)
+        && data.score is number && data.score >= 0 && data.score <= 50000000
+        && data.distanceMeters is number && data.distanceMeters >= 0 && data.distanceMeters <= 5000000
+        && data.driftTotal is number && data.driftTotal >= 0 && data.driftTotal <= 50000000
+        && data.playerLevel is number && data.playerLevel >= 1 && data.playerLevel <= 10000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserEntitlement(data, uid) {
+      return data.keys().hasAll([
+          'uid', 'adFreePurchased', 'claimedOneTimeSkus',
+          'totalGoldPurchased', 'totalCratesOpened', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'adFreePurchased', 'claimedOneTimeSkus',
+          'totalGoldPurchased', 'totalCratesOpened', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == uid
+        && data.uid == request.auth.uid
+        && data.adFreePurchased is bool
+        && data.claimedOneTimeSkus is list
+        && data.claimedOneTimeSkus.size() <= 20
+        && data.claimedOneTimeSkus.hasOnly([
+          'viraj_starter_pack',
+          'viraj_ad_free',
+          'viraj_super_bundle',
+          'viraj_hyper_bundle'
+        ])
+        && data.totalGoldPurchased is number
+        && data.totalGoldPurchased >= 0 && data.totalGoldPurchased <= 100000000
+        && data.totalCratesOpened is number
+        && data.totalCratesOpened >= 0 && data.totalCratesOpened <= 100000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStoreOrder(data, uid, orderId) {
+      return data.keys().hasAll([
+          'orderId', 'uid', 'sku', 'category', 'title',
+          'priceTry', 'currency', 'paymentMethod', 'platform',
+          'rewardSummary', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'orderId', 'uid', 'sku', 'category', 'title',
+          'priceTry', 'currency', 'paymentMethod', 'platform',
+          'rewardSummary', 'createdAt'
+        ])
+        && isValidId(data.orderId)
+        && data.orderId.size() >= 6 && data.orderId.size() <= 64
+        && data.orderId == orderId
+        && isValidId(data.uid)
+        && data.uid == uid
+        && data.uid == request.auth.uid
+        && isValidStoreSku(data.sku)
+        && data.category in ['bundle', 'crate', 'gold']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 64
+        && data.priceTry is number && data.priceTry >= 1 && data.priceTry <= 50000
+        && data.currency == 'TRY'
+        && data.paymentMethod in ['google_play', 'card', 'wallet']
+        && data.platform in ['android_play', 'web_checkout', 'web_sandbox']
+        && data.rewardSummary is string && data.rewardSummary.size() >= 1 && data.rewardSummary.size() <= 160
+        && data.createdAt == request.time;
+    }
+
+    // Connection check document
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // Public All-Time Leaderboard (Zero PII)
+    match /leaderboard_alltime/{uid} {
+      allow get: if isValidId(uid);
+      allow list: if true;
+      allow create: if isSignedIn()
+        && isValidId(uid)
+        && isValidAllTimeEntry(incoming(), uid)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(uid)
+        && uid == request.auth.uid
+        && isValidAllTimeEntry(incoming(), uid)
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'plate', 'carModel', 'score',
+          'distanceMeters', 'driftTotal', 'playerLevel', 'updatedAt'
+        ])
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().score >= existing().score;
+      allow delete: if false;
+    }
+
+    // Daily Board Buckets + Subcollection Entries (Zero PII)
+    match /daily_boards/{dayKey} {
+      allow get: if isValidDayKey(dayKey);
+      allow list: if false;
+      allow create: if isSignedIn()
+        && isValidDayKey(dayKey)
+        && isValidDailyBucket(incoming(), dayKey);
+      allow update, delete: if false;
+
+      match /entries/{uid} {
+        allow get: if isValidDayKey(dayKey) && isValidId(uid);
+        allow list: if isValidDayKey(dayKey);
+        allow create: if isSignedIn()
+          && isValidDayKey(dayKey)
+          && isValidId(uid)
+          && isValidDailyEntry(incoming(), dayKey, uid)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && existsAfter(/databases/$(database)/documents/daily_boards/$(dayKey));
+        allow update: if isSignedIn()
+          && isValidDayKey(dayKey)
+          && isValidId(uid)
+          && uid == request.auth.uid
+          && isValidDailyEntry(incoming(), dayKey, uid)
+          && exists(/databases/$(database)/documents/daily_boards/$(dayKey))
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'plate', 'carModel', 'score',
+            'distanceMeters', 'driftTotal', 'playerLevel', 'updatedAt'
+          ])
+          && incoming().uid == existing().uid
+          && incoming().dayKey == existing().dayKey
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().score >= existing().score;
+        allow delete: if false;
+      }
+    }
+
+    // Owner-Only Store Entitlements + Immutable Purchase Orders (Zero PII)
+    match /user_entitlements/{uid} {
+      allow get: if isSignedIn() && isValidId(uid) && uid == request.auth.uid;
+      allow list: if false;
+      allow create: if isSignedIn()
+        && isValidId(uid)
+        && isValidUserEntitlement(incoming(), uid)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(uid)
+        && uid == request.auth.uid
+        && isValidUserEntitlement(incoming(), uid)
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'adFreePurchased', 'claimedOneTimeSkus',
+          'totalGoldPurchased', 'totalCratesOpened', 'updatedAt'
+        ])
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (!existing().adFreePurchased || incoming().adFreePurchased)
+        && incoming().totalGoldPurchased >= existing().totalGoldPurchased
+        && incoming().totalCratesOpened >= existing().totalCratesOpened;
+      allow delete: if false;
+
+      match /orders/{orderId} {
+        allow get: if isSignedIn()
+          && isValidId(uid)
+          && isValidId(orderId)
+          && uid == request.auth.uid;
+        allow list: if isSignedIn()
+          && isValidId(uid)
+          && uid == request.auth.uid
+          && resource.data.uid == request.auth.uid;
+        allow create: if isSignedIn()
+          && isValidId(uid)
+          && isValidId(orderId)
+          && isValidStoreOrder(incoming(), uid, orderId)
+          && existsAfter(/databases/$(database)/documents/user_entitlements/$(uid));
+        allow update, delete: if false;
+      }
+    }
+
+    // Worldwide Single-Use Promo Code Redemptions (Immutable, Zero PII)
+    match /promo_redemptions/{codeId} {
+      allow get: if isSignedIn()
+        && isValidId(codeId)
+        && isValidPromoCode(codeId);
+      allow list: if false;
+      allow create: if isSignedIn()
+        && isValidId(codeId)
+        && isValidPromoCode(codeId)
+        && isValidPromoRedemption(incoming(), codeId);
+      allow update, delete: if false;
+    }
+  }
+}

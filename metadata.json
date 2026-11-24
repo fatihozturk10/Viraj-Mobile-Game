@@ -1,0 +1,6 @@
+{
+  "name": "Viraj — Sonsuz Otoyol",
+  "description": "Tek parmakla kontrol edilen, virajlı ve dinamik kameralı gerçekçi sonsuz 3D araba sürüş oyunu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
