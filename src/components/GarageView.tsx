@@ -204,9 +204,13 @@ const WheelRimPreview: React.FC<{ styleId: WheelStyleId; color: string }> = ({
               ? '#22d3ee'
               : styleId === 'animPrismVortex'
                 ? '#c084fc'
-                : styleId === 'animReactor'
-                  ? '#27272a'
-                  : color;
+                : styleId === 'animVenomRing'
+                  ? '#84cc16'
+                  : styleId === 'animRubyPulse'
+                    ? '#f43f5e'
+                    : styleId === 'animReactor'
+                      ? '#27272a'
+                      : color;
   return (
     <svg viewBox="0 0 40 40" className="h-11 w-11 shrink-0" aria-hidden="true">
       <circle
@@ -286,6 +290,26 @@ const WheelRimPreview: React.FC<{ styleId: WheelStyleId; color: string }> = ({
           r="16.2"
           fill="none"
           stroke="#f472b6"
+          strokeWidth="1.5"
+        />
+      )}
+      {styleId === 'animVenomRing' && (
+        <circle
+          cx="20"
+          cy="20"
+          r="16.2"
+          fill="none"
+          stroke="#84cc16"
+          strokeWidth="1.5"
+        />
+      )}
+      {styleId === 'animRubyPulse' && (
+        <circle
+          cx="20"
+          cy="20"
+          r="16.2"
+          fill="none"
+          stroke="#f43f5e"
           strokeWidth="1.5"
         />
       )}
@@ -671,6 +695,85 @@ const WheelRimPreview: React.FC<{ styleId: WheelStyleId; color: string }> = ({
           ))}
         </>
       )}
+      {styleId === 'triBlade' &&
+        [0, 120, 240].map((deg) => (
+          <line
+            key={deg}
+            x1="20"
+            y1="20"
+            x2="20"
+            y2="7.2"
+            stroke={color}
+            strokeWidth="4.2"
+            strokeLinecap="round"
+            transform={`rotate(${deg} 20 20)`}
+          />
+        ))}
+      {styleId === 'meshBBS' && (
+        <>
+          <circle cx="20" cy="20" r="8.2" fill="none" stroke={color} strokeWidth="1.1" />
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+            <g key={deg} transform={`rotate(${deg} 20 20)`}>
+              <line x1="20" y1="20" x2="17" y2="7.2" stroke={color} strokeWidth="1.05" />
+              <line x1="20" y1="20" x2="23" y2="7.2" stroke={color} strokeWidth="1.05" />
+            </g>
+          ))}
+        </>
+      )}
+      {styleId === 'hexMono' && (
+        <>
+          <polygon
+            points="20,9 29.5,14.5 29.5,25.5 20,31 10.5,25.5 10.5,14.5"
+            fill="none"
+            stroke={color}
+            strokeWidth="2.1"
+          />
+          {[0, 60, 120, 180, 240, 300].map((deg) => (
+            <line
+              key={deg}
+              x1="20"
+              y1="20"
+              x2="20"
+              y2="9"
+              stroke={color}
+              strokeWidth="2.1"
+              transform={`rotate(${deg} 20 20)`}
+            />
+          ))}
+        </>
+      )}
+      {styleId === 'animVenomRing' && (
+        <>
+          <circle cx="20" cy="20" r="7.5" fill="none" stroke="#34d399" strokeWidth="1.5" />
+          {[0, 72, 144, 216, 288].map((deg) => (
+            <path
+              key={deg}
+              d="M20 20 Q24 14 26 8.5"
+              fill="none"
+              stroke="#84cc16"
+              strokeWidth="2.1"
+              strokeLinecap="round"
+              transform={`rotate(${deg} 20 20)`}
+            />
+          ))}
+        </>
+      )}
+      {styleId === 'animRubyPulse' && (
+        <>
+          <circle cx="20" cy="20" r="8.4" fill="none" stroke="#facc15" strokeWidth="1.4" />
+          {[0, 60, 120, 180, 240, 300].map((deg) => (
+            <path
+              key={deg}
+              d="M20 20 Q17 14 15 8.5"
+              fill="none"
+              stroke="#f43f5e"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              transform={`rotate(${deg} 20 20)`}
+            />
+          ))}
+        </>
+      )}
       <circle
         cx="20"
         cy="20"
@@ -688,10 +791,14 @@ const WheelRimPreview: React.FC<{ styleId: WheelStyleId; color: string }> = ({
                     ? '#22d3ee'
                     : styleId === 'animPrismVortex'
                       ? '#e879f9'
-                      : styleId === 'animNeonPulse' ||
-                          styleId === 'animReactor'
-                        ? glowColor
-                        : '#e4e4e7'
+                      : styleId === 'animVenomRing'
+                        ? '#84cc16'
+                        : styleId === 'animRubyPulse'
+                          ? '#facc15'
+                          : styleId === 'animNeonPulse' ||
+                              styleId === 'animReactor'
+                            ? glowColor
+                            : '#e4e4e7'
         }
         stroke="#09090b"
         strokeWidth="1"

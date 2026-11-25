@@ -995,7 +995,8 @@ export function isAnimatedLivery(livery: LiveryId): boolean {
     livery === 'animPlasmaWave' ||
     livery === 'animHeatwave' ||
     livery === 'animMatrixRain' ||
-    livery === 'animInterstellar'
+    livery === 'animInterstellar' ||
+    livery === 'animThunderVolt'
   );
 }
 
@@ -1456,6 +1457,68 @@ function createAnimatedLiveryTextures(
     }
     ctx.globalAlpha = 1;
     ectx.globalAlpha = 1;
+  } else if (livery === 'animThunderVolt') {
+    // High-Voltage Crackling Electric Blue-White Lightning Veins on Obsidian Chassis
+    ctx.fillStyle = '#030712';
+    ctx.fillRect(0, 0, S, S);
+    ectx.fillStyle = '#000000';
+    ectx.fillRect(0, 0, S, S);
+
+    // Subtle deep electric grid
+    ctx.strokeStyle = 'rgba(37, 99, 235, 0.2)';
+    ctx.lineWidth = 2;
+    for (let g = 0; g < S; g += 32) {
+      ctx.beginPath();
+      ctx.moveTo(g, 0);
+      ctx.lineTo(g, S);
+      ctx.moveTo(0, g);
+      ctx.lineTo(S, g);
+      ctx.stroke();
+    }
+
+    let seed = 73319;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    // Seamless vertical lightning arcs scrolling down the chassis
+    for (let b = 0; b < 9; b++) {
+      let x = (b / 9) * S + 22;
+      const pts: [number, number][] = [[x, 0]];
+      const steps = 16;
+      for (let k = 1; k < steps; k++) {
+        x = ((x + (rand() - 0.5) * 48) % S + S) % S;
+        pts.push([x, (k / steps) * S]);
+      }
+      pts.push([pts[0][0], S]);
+
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.lineCap = 'round';
+        target.lineJoin = 'round';
+        // Outer electric blue glow
+        target.strokeStyle = '#2563eb';
+        target.lineWidth = target === ectx ? 11 : 13;
+        target.globalAlpha = 0.65;
+        target.beginPath();
+        pts.forEach(([px, py], i) => (i === 0 ? target.moveTo(px, py) : target.lineTo(px, py)));
+        target.stroke();
+        // Mid cyan arc
+        target.strokeStyle = '#38bdf8';
+        target.lineWidth = 5.5;
+        target.globalAlpha = 0.92;
+        target.stroke();
+        // Hot white plasma core
+        target.strokeStyle = '#ffffff';
+        target.lineWidth = 2.2;
+        target.globalAlpha = 1;
+        target.stroke();
+        target.restore();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
   }
 
   const map = new THREE.CanvasTexture(mapCanvas);
@@ -1496,7 +1559,9 @@ export function createLiveryTexture(
     paintFinish === 'frostedIce' ||
     paintFinish === 'satinGold' ||
     paintFinish === 'obsidianChrome' ||
-    paintFinish === 'emeraldLiquid';
+    paintFinish === 'emeraldLiquid' ||
+    paintFinish === 'brushedTitanium' ||
+    paintFinish === 'copperLiquid';
   if (livery === 'solid' && !needsBaseTex) return null;
 
   const canvas = document.createElement('canvas');
@@ -1508,7 +1573,8 @@ export function createLiveryTexture(
     paintFinish === 'chameleon' ||
     paintFinish === 'prismHolo' ||
     paintFinish === 'royalGoldHolo' ||
-    paintFinish === 'apexEclipse';
+    paintFinish === 'apexEclipse' ||
+    paintFinish === 'nebulaShift';
   const effectiveHex =
     paintFinish === 'satinGold'
       ? 0xd4af37
@@ -1516,9 +1582,11 @@ export function createLiveryTexture(
         ? 0x16161c
         : paintFinish === 'emeraldLiquid'
           ? 0x059669
-          : isDynamicFinish
-            ? 0xe2e8f0
-            : baseHex;
+          : paintFinish === 'copperLiquid'
+            ? 0xd97706
+            : isDynamicFinish
+              ? 0xe2e8f0
+              : baseHex;
 
   const baseColor = new THREE.Color(effectiveHex);
   const baseCss = `#${baseColor.getHexString()}`;
@@ -1684,6 +1752,38 @@ export function createLiveryTexture(
       const x = ((i * 113) % 440);
       ctx.fillStyle = i % 2 === 0 ? 'rgba(167, 243, 208, 0.16)' : 'rgba(6, 78, 59, 0.18)';
       ctx.fillRect(x, y, 88, 1.6);
+    }
+  } else if (paintFinish === 'brushedTitanium') {
+    // Horizontal brushed machined titanium tinted by selected car color
+    const metalBase = baseColor.clone().lerp(new THREE.Color(0x94a3b8), 0.52);
+    const metalDark = metalBase.clone().multiplyScalar(0.68);
+    const metalHi = metalBase.clone().lerp(new THREE.Color(0xf8fafc), 0.42);
+    const grad = ctx.createLinearGradient(0, 0, 512, 512);
+    grad.addColorStop(0, `#${metalHi.getHexString()}`);
+    grad.addColorStop(0.5, `#${metalBase.getHexString()}`);
+    grad.addColorStop(1, `#${metalDark.getHexString()}`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 460; i++) {
+      const y = (i * 37) % 512;
+      const x = (i * 89) % 420;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.16)' : 'rgba(15,23,42,0.15)';
+      ctx.fillRect(x, y, 110, 1.3);
+    }
+  } else if (paintFinish === 'copperLiquid') {
+    // Molten rose-copper mirror finish
+    const grad = ctx.createLinearGradient(0, 0, 512, 512);
+    grad.addColorStop(0, '#fed7aa');
+    grad.addColorStop(0.38, '#ea580c');
+    grad.addColorStop(0.72, '#9a3412');
+    grad.addColorStop(1, '#fb923c');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 220; i++) {
+      const y = (i * 59) % 512;
+      const x = (i * 107) % 440;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 237, 213, 0.16)' : 'rgba(124, 45, 18, 0.18)';
+      ctx.fillRect(x, y, 92, 1.5);
     }
   } else {
     ctx.fillStyle = baseCss;
@@ -2097,6 +2197,118 @@ export function createLiveryTexture(
     drawSlash(216, 40, 296, 120, 7, '#22d3ee', '#ecfeff');
     drawSlash(296, 40, 216, 120, 7, '#f43f5e', '#fff1f2');
     drawSlash(256, 240, 256, 492, 6, '#f43f5e', '#ffe4e6');
+  } else if (livery === 'gtNumber') {
+    // Classic Racing #01 Hood Roundel + Side Stripes
+    ctx.fillStyle = contrastPrimary;
+    ctx.fillRect(46, 0, 20, 512);
+    ctx.fillRect(446, 0, 20, 512);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(72, 0, 10, 512);
+    ctx.fillRect(430, 0, 10, 512);
+    // Hood & door white roundel
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.arc(256, 224, 72, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 7;
+    ctx.stroke();
+    ctx.fillStyle = '#09090b';
+    ctx.font = '900 72px "Oxanium", "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('01', 256, 228);
+  } else if (livery === 'tigerClaw') {
+    // Aggressive Triple Claw Scratch Marks across hood & flanks
+    const drawClaw = (x0: number, y0: number, x1: number, y1: number) => {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#18181b';
+      ctx.lineWidth = 20;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.quadraticCurveTo((x0 + x1) * 0.5 + 18, (y0 + y1) * 0.5, x1, y1);
+      ctx.stroke();
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 10;
+      ctx.stroke();
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+      ctx.restore();
+    };
+    drawClaw(115, 42, 235, 310);
+    drawClaw(178, 30, 298, 300);
+    drawClaw(242, 48, 362, 318);
+    drawClaw(34, 240, 146, 468);
+    drawClaw(478, 240, 366, 468);
+  } else if (livery === 'tokyoDrifter') {
+    // Bold Red/White Japanese Street Drift Diagonal Slashes & Graphic Blocks
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(0, 0, 512, 44);
+    ctx.beginPath();
+    ctx.moveTo(0, 160);
+    ctx.lineTo(220, 310);
+    ctx.lineTo(220, 385);
+    ctx.lineTo(0, 235);
+    ctx.closePath();
+    ctx.fillStyle = '#ef4444';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(512, 160);
+    ctx.lineTo(292, 310);
+    ctx.lineTo(292, 385);
+    ctx.lineTo(512, 235);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(236, 44, 40, 468);
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(256, 155, 46, 0, Math.PI * 2);
+    ctx.fill();
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#f8fafc' : '#ef4444';
+      ctx.fillRect(22 + i * 22, 420, 14, 52);
+      ctx.fillRect(476 - i * 22, 420, 14, 52);
+    }
+  } else if (livery === 'cyberHexArmor') {
+    // Full-Wrap Matte Carbon Slate Hexagonal Armor Plating with Amber/Cyan Seams
+    const bg = ctx.createLinearGradient(0, 0, 512, 512);
+    bg.addColorStop(0, '#090d16');
+    bg.addColorStop(0.5, '#182032');
+    bg.addColorStop(1, '#0b101b');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 512, 512);
+    const hexR = 26;
+    const dx = hexR * 1.5;
+    const dy = hexR * Math.sqrt(3);
+    for (let col = -1; col < 16; col++) {
+      for (let row = -1; row < 14; row++) {
+        const cx = col * dx;
+        const cy = row * dy + (col % 2 === 0 ? 0 : dy * 0.5);
+        ctx.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const a = (k * Math.PI) / 3;
+          const px = cx + Math.cos(a) * (hexR - 2);
+          const py = cy + Math.sin(a) * (hexR - 2);
+          if (k === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        const hi = (col + row * 3) % 7 === 0;
+        ctx.fillStyle = hi ? '#1e293b' : '#0f172a';
+        ctx.fill();
+        ctx.strokeStyle = hi ? '#f59e0b' : 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = hi ? 2.2 : 1.2;
+        ctx.stroke();
+      }
+    }
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(248, 0, 16, 512);
+    ctx.fillStyle = '#22d3ee';
+    ctx.fillRect(240, 0, 4, 512);
+    ctx.fillRect(268, 0, 4, 512);
   }
 
   const tex = new THREE.CanvasTexture(canvas);

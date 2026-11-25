@@ -1207,6 +1207,16 @@ export function createPlayerCar(
       wheelGlowPrimaryMat.emissive.setHex(0x7c3aed);
       wheelGlowSecondaryMat.color.setHex(0x22d3ee);
       wheelGlowSecondaryMat.emissive.setHex(0x06b6d4);
+    } else if (style === 'animVenomRing') {
+      wheelGlowPrimaryMat.color.setHex(0x84cc16);
+      wheelGlowPrimaryMat.emissive.setHex(0x65a30d);
+      wheelGlowSecondaryMat.color.setHex(0x34d399);
+      wheelGlowSecondaryMat.emissive.setHex(0x10b981);
+    } else if (style === 'animRubyPulse') {
+      wheelGlowPrimaryMat.color.setHex(0xf43f5e);
+      wheelGlowPrimaryMat.emissive.setHex(0xe11d48);
+      wheelGlowSecondaryMat.color.setHex(0xfacc15);
+      wheelGlowSecondaryMat.emissive.setHex(0xd97706);
     }
   };
 
@@ -1233,7 +1243,9 @@ export function createPlayerCar(
         style === 'animEmeraldPulse' ||
         style === 'animSolarFlare' ||
         style === 'animFrostCrystal' ||
-        style === 'animGalaxyOrb';
+        style === 'animGalaxyOrb' ||
+        style === 'animVenomRing' ||
+        style === 'animRubyPulse';
 
       const lipGeo = trackRimGeo(
         new THREE.TorusGeometry(
@@ -2363,6 +2375,150 @@ export function createPlayerCar(
         const galSide = new THREE.Mesh(galSideGeo, wheelGlowPrimaryMat);
         galSide.position.x = sidewallX;
         rimGroup.add(galSide);
+      } else if (style === 'triBlade') {
+        // Chunky 3-spoke retro JDM street drift wheels
+        const xIn = side * (tWidth * 0.34);
+        const xOut = side * (tWidth * 0.46);
+        for (let s = 0; s < 3; s++) {
+          const a = (s * Math.PI * 2) / 3;
+          for (const off of [-0.14, 0, 0.14]) {
+            addSpokeSeg3D(
+              rimGroup,
+              spokeUnit,
+              xIn,
+              Math.cos(a + off * 0.65) * rRadius * 0.22,
+              Math.sin(a + off * 0.65) * rRadius * 0.22,
+              xOut,
+              Math.cos(a + off) * rRadius * 0.94,
+              Math.sin(a + off) * rRadius * 0.94,
+              0.044,
+              0.032,
+              alloyMat,
+            );
+          }
+        }
+      } else if (style === 'meshBBS') {
+        // Iconic 16-spoke cross-lace BBS motorsport mesh + center lock ring
+        const xIn = side * (tWidth * 0.36);
+        const xOut = side * (tWidth * 0.462);
+        const midRingGeo = trackRimGeo(new THREE.TorusGeometry(rRadius * 0.56, 0.012, 8, 24));
+        midRingGeo.rotateY(Math.PI / 2);
+        const midRing = new THREE.Mesh(midRingGeo, alloyMat);
+        midRing.position.x = side * (tWidth * 0.415);
+        rimGroup.add(midRing);
+        for (let s = 0; s < 8; s++) {
+          const a = (s * Math.PI * 2) / 8;
+          for (const dir of [-1, 1]) {
+            addSpokeSeg3D(
+              rimGroup,
+              spokeUnit,
+              xIn,
+              Math.cos(a) * rRadius * 0.22,
+              Math.sin(a) * rRadius * 0.22,
+              xOut,
+              Math.cos(a + dir * 0.28) * rRadius * 0.95,
+              Math.sin(a + dir * 0.28) * rRadius * 0.95,
+              0.015,
+              0.017,
+              alloyMat,
+            );
+          }
+        }
+      } else if (style === 'hexMono') {
+        // Forged 6-window monoblock dish rim
+        const discGeo = trackRimGeo(new THREE.CylinderGeometry(rRadius * 0.88, rRadius * 0.88, 0.03, 6));
+        discGeo.rotateZ(Math.PI / 2);
+        const disc = new THREE.Mesh(discGeo, alloyMat);
+        disc.position.x = side * (tWidth * 0.41);
+        rimGroup.add(disc);
+        const xOut = side * (tWidth * 0.455);
+        for (let s = 0; s < 6; s++) {
+          const a = (s * Math.PI * 2) / 6;
+          addSpokeSeg3D(
+            rimGroup,
+            spokeUnit,
+            side * (tWidth * 0.42),
+            Math.cos(a) * rRadius * 0.24,
+            Math.sin(a) * rRadius * 0.24,
+            xOut,
+            Math.cos(a) * rRadius * 0.96,
+            Math.sin(a) * rRadius * 0.96,
+            0.038,
+            0.024,
+            chromeMat,
+          );
+        }
+      } else if (style === 'animVenomRing') {
+        // Spinning toxic lime bio-blades + glowing emerald sidewall ring
+        const spin = new THREE.Group();
+        rimGroup.add(spin);
+        wheelAnimSpinners.push({ group: spin, speed: side * 3.1 });
+        for (let s = 0; s < 5; s++) {
+          const a = (s * Math.PI * 2) / 5;
+          addSpokeSeg3D(
+            spin,
+            spokeUnit,
+            side * (tWidth * 0.42),
+            Math.cos(a) * rRadius * 0.16,
+            Math.sin(a) * rRadius * 0.16,
+            side * (tWidth * 0.46),
+            Math.cos(a + 0.42) * rRadius * 0.9,
+            Math.sin(a + 0.42) * rRadius * 0.9,
+            0.024,
+            0.022,
+            wheelGlowPrimaryMat,
+          );
+        }
+        const innerRingGeo = trackRimGeo(new THREE.TorusGeometry(rRadius * 0.54, 0.016, 10, 22));
+        innerRingGeo.rotateY(Math.PI / 2);
+        const innerRing = new THREE.Mesh(innerRingGeo, wheelGlowSecondaryMat);
+        innerRing.position.x = side * (tWidth * 0.45);
+        spin.add(innerRing);
+        const sideGeo = trackRimGeo(new THREE.TorusGeometry(rRadius * 1.15, 0.017, 10, 32));
+        sideGeo.rotateY(Math.PI / 2);
+        const sideRing = new THREE.Mesh(sideGeo, wheelGlowPrimaryMat);
+        sideRing.position.x = sidewallX;
+        rimGroup.add(sideRing);
+      } else if (style === 'animRubyPulse') {
+        // Counter-rotating crimson-gold ruby turbine + pulsing octahedron core
+        const turbA = new THREE.Group();
+        rimGroup.add(turbA);
+        wheelAnimSpinners.push({ group: turbA, speed: side * 2.8 });
+        for (let s = 0; s < 6; s++) {
+          const a = (s * Math.PI * 2) / 6;
+          addSpokeSeg3D(
+            turbA,
+            spokeUnit,
+            side * (tWidth * 0.41),
+            Math.cos(a) * rRadius * 0.2,
+            Math.sin(a) * rRadius * 0.2,
+            side * (tWidth * 0.46),
+            Math.cos(a - 0.34) * rRadius * 0.92,
+            Math.sin(a - 0.34) * rRadius * 0.92,
+            0.022,
+            0.02,
+            wheelGlowPrimaryMat,
+          );
+        }
+        const turbB = new THREE.Group();
+        rimGroup.add(turbB);
+        wheelAnimSpinners.push({ group: turbB, speed: -side * 4.0 });
+        const goldRingGeo = trackRimGeo(new THREE.TorusGeometry(rRadius * 0.62, 0.016, 10, 24));
+        goldRingGeo.rotateY(Math.PI / 2);
+        const goldRing = new THREE.Mesh(goldRingGeo, wheelGlowSecondaryMat);
+        goldRing.position.x = side * (tWidth * 0.445);
+        turbB.add(goldRing);
+        const rubyCore = new THREE.Mesh(
+          trackRimGeo(new THREE.OctahedronGeometry(rRadius * 0.23, 0)),
+          wheelGlowPrimaryMat,
+        );
+        rubyCore.position.x = side * (tWidth * 0.435);
+        turbB.add(rubyCore);
+        const sideGeo = trackRimGeo(new THREE.TorusGeometry(rRadius * 1.15, 0.017, 10, 32));
+        sideGeo.rotateY(Math.PI / 2);
+        const sideRing = new THREE.Mesh(sideGeo, wheelGlowPrimaryMat);
+        sideRing.position.x = sidewallX;
+        rimGroup.add(sideRing);
       } else {
         // twin5: 5 distinct V-twin spoke pairs
         const xIn = side * (tWidth * 0.36);
@@ -2824,7 +2980,9 @@ export function createPlayerCar(
     style === 'animFlameBorder' ||
     style === 'animHoloPrism' ||
     style === 'animStealthFlip' ||
-    style === 'apexChampionPlate';
+    style === 'apexChampionPlate' ||
+    style === 'animGoldPulse' ||
+    style === 'animCyberLightning';
 
   let currentPlateText = initialPlate;
   let lastAnimPlateDrawSec = -10;
@@ -3669,6 +3827,134 @@ export function createPlayerCar(
       plateFrameMat.emissive.setHex(0xf59e0b);
       plateFrameMat.emissiveIntensity = 0.9 + Math.sin(animTimeSec * 4.2) * 0.35;
       plateMat.emissiveIntensity = 1.24;
+    } else if (style === 'emeraldCarbon') {
+      plateCtx.fillStyle = '#06150f';
+      plateCtx.fillRect(0, 0, 512, 128);
+      plateCtx.strokeStyle = 'rgba(16, 185, 129, 0.16)';
+      plateCtx.lineWidth = 3;
+      for (let i = -128; i < 640; i += 18) {
+        plateCtx.beginPath();
+        plateCtx.moveTo(i, 0);
+        plateCtx.lineTo(i + 128, 128);
+        plateCtx.stroke();
+      }
+      plateCtx.strokeStyle = '#10b981';
+      plateCtx.lineWidth = 9;
+      plateCtx.strokeRect(5, 5, 502, 118);
+      plateCtx.fillStyle = '#6ee7b7';
+      plateCtx.font = `800 ${fontSize}px "Oxanium", "JetBrains Mono", "Arial Black", sans-serif`;
+      plateCtx.textAlign = 'center';
+      plateCtx.textBaseline = 'middle';
+      plateCtx.fillText(label, 256, 66, 434);
+      plateFrameMat.color.setHex(0x064e3b);
+      plateFrameMat.metalness = 0.8;
+      plateFrameMat.roughness = 0.22;
+      plateFrameMat.emissive.setHex(0x10b981);
+      plateFrameMat.emissiveIntensity = 0.6;
+      plateMat.emissiveIntensity = 0.95;
+    } else if (style === 'tokyoNeonPink') {
+      const bg = plateCtx.createLinearGradient(0, 0, 512, 128);
+      bg.addColorStop(0, '#180412');
+      bg.addColorStop(0.5, '#2b0822');
+      bg.addColorStop(1, '#120312');
+      plateCtx.fillStyle = bg;
+      plateCtx.fillRect(0, 0, 512, 128);
+      plateCtx.shadowColor = '#ec4899';
+      plateCtx.shadowBlur = 14;
+      plateCtx.strokeStyle = '#ec4899';
+      plateCtx.lineWidth = 8;
+      plateCtx.strokeRect(6, 6, 500, 116);
+      plateCtx.fillStyle = '#fbcfe8';
+      plateCtx.font = `800 ${fontSize}px "Oxanium", "JetBrains Mono", "Arial Black", sans-serif`;
+      plateCtx.textAlign = 'center';
+      plateCtx.textBaseline = 'middle';
+      plateCtx.fillText(label, 256, 66, 434);
+      plateFrameMat.color.setHex(0x831843);
+      plateFrameMat.metalness = 0.78;
+      plateFrameMat.roughness = 0.18;
+      plateFrameMat.emissive.setHex(0xec4899);
+      plateFrameMat.emissiveIntensity = 1.2;
+      plateMat.emissiveIntensity = 1.15;
+    } else if (style === 'arcticIce') {
+      const bg = plateCtx.createLinearGradient(0, 0, 512, 128);
+      bg.addColorStop(0, '#f0f9ff');
+      bg.addColorStop(0.5, '#bae6fd');
+      bg.addColorStop(1, '#e0f2fe');
+      plateCtx.fillStyle = bg;
+      plateCtx.fillRect(0, 0, 512, 128);
+      plateCtx.strokeStyle = '#0284c7';
+      plateCtx.lineWidth = 8;
+      plateCtx.strokeRect(5, 5, 502, 118);
+      plateCtx.fillStyle = '#0c4a6e';
+      plateCtx.font = `800 ${fontSize}px "Oxanium", "JetBrains Mono", "Arial Black", sans-serif`;
+      plateCtx.textAlign = 'center';
+      plateCtx.textBaseline = 'middle';
+      plateCtx.fillText(label, 256, 66, 434);
+      plateFrameMat.color.setHex(0x7dd3fc);
+      plateFrameMat.metalness = 0.92;
+      plateFrameMat.roughness = 0.12;
+      plateFrameMat.emissive.setHex(0x38bdf8);
+      plateFrameMat.emissiveIntensity = 0.55;
+      plateMat.emissiveIntensity = 0.85;
+    } else if (style === 'animGoldPulse') {
+      const bg = plateCtx.createLinearGradient(0, 0, 512, 128);
+      bg.addColorStop(0, '#140c02');
+      bg.addColorStop(0.5, '#2d1c05');
+      bg.addColorStop(1, '#140c02');
+      plateCtx.fillStyle = bg;
+      plateCtx.fillRect(0, 0, 512, 128);
+      const sx = (((animTimeSec * 0.65) % 1.4) - 0.2) * 512;
+      const sheen = plateCtx.createLinearGradient(sx - 64, 0, sx + 64, 128);
+      sheen.addColorStop(0, 'rgba(250,204,21,0)');
+      sheen.addColorStop(0.5, 'rgba(254,240,138,0.52)');
+      sheen.addColorStop(1, 'rgba(250,204,21,0)');
+      plateCtx.fillStyle = sheen;
+      plateCtx.fillRect(6, 6, 500, 116);
+      plateCtx.shadowColor = '#facc15';
+      plateCtx.shadowBlur = 16;
+      plateCtx.strokeStyle = '#facc15';
+      plateCtx.lineWidth = 9;
+      plateCtx.strokeRect(5, 5, 502, 118);
+      plateCtx.fillStyle = '#fef9c3';
+      plateCtx.font = `800 ${fontSize}px "Oxanium", "JetBrains Mono", "Arial Black", sans-serif`;
+      plateCtx.textAlign = 'center';
+      plateCtx.textBaseline = 'middle';
+      plateCtx.fillText(label, 256, 66, 434);
+      plateFrameMat.color.setHex(0x854d0e);
+      plateFrameMat.metalness = 0.96;
+      plateFrameMat.roughness = 0.12;
+      plateFrameMat.emissive.setHex(0xfacc15);
+      plateFrameMat.emissiveIntensity = 1.0 + Math.sin(animTimeSec * 4.8) * 0.5;
+      plateMat.emissiveIntensity = 1.25;
+    } else if (style === 'animCyberLightning') {
+      plateCtx.fillStyle = '#020617';
+      plateCtx.fillRect(0, 0, 512, 128);
+      plateCtx.strokeStyle = '#38bdf8';
+      plateCtx.lineWidth = 3;
+      plateCtx.beginPath();
+      const phase = Math.floor(animTimeSec * 14);
+      for (let x = 12; x <= 500; x += 28) {
+        const y = 64 + Math.sin(x * 0.08 + phase * 1.9) * 34;
+        if (x === 12) plateCtx.moveTo(x, y);
+        else plateCtx.lineTo(x, y);
+      }
+      plateCtx.stroke();
+      plateCtx.shadowColor = '#60a5fa';
+      plateCtx.shadowBlur = 16;
+      plateCtx.strokeStyle = '#60a5fa';
+      plateCtx.lineWidth = 8;
+      plateCtx.strokeRect(5, 5, 502, 118);
+      plateCtx.fillStyle = '#ffffff';
+      plateCtx.font = `800 ${fontSize}px "Oxanium", "JetBrains Mono", "Arial Black", sans-serif`;
+      plateCtx.textAlign = 'center';
+      plateCtx.textBaseline = 'middle';
+      plateCtx.fillText(label, 256, 66, 434);
+      plateFrameMat.color.setHex(0x1e3a8a);
+      plateFrameMat.metalness = 0.88;
+      plateFrameMat.roughness = 0.14;
+      plateFrameMat.emissive.setHex(0x3b82f6);
+      plateFrameMat.emissiveIntensity = 1.2 + Math.abs(Math.sin(animTimeSec * 12)) * 1.1;
+      plateMat.emissiveIntensity = 1.3;
     } else {
       // Classic reflective Turkish TR plate
       plateCtx.fillStyle = '#f4f4f5';
@@ -4245,6 +4531,49 @@ export function createPlayerCar(
       paintMaterial.iridescence = 1.0;
       paintMaterial.iridescenceIOR = 1.75;
       paintMaterial.iridescenceThicknessRange = [180, 780];
+    } else if (finish === 'velvetPearl') {
+      paintMaterial.metalness = 0.42;
+      paintMaterial.roughness = 0.32;
+      paintMaterial.clearcoat = 0.85;
+      paintMaterial.clearcoatRoughness = 0.14;
+      paintMaterial.envMapIntensity = 1.65;
+      paintMaterial.iridescence = 0.55;
+      paintMaterial.iridescenceIOR = 1.35;
+      paintMaterial.iridescenceThicknessRange = [200, 460];
+    } else if (finish === 'brushedTitanium') {
+      paintMaterial.metalness = 0.92;
+      paintMaterial.roughness = 0.24;
+      paintMaterial.clearcoat = 0.55;
+      paintMaterial.clearcoatRoughness = 0.12;
+      paintMaterial.envMapIntensity = 2.1;
+      paintMaterial.iridescence = 0.15;
+    } else if (finish === 'candyGloss') {
+      paintMaterial.metalness = 0.86;
+      paintMaterial.roughness = 0.07;
+      paintMaterial.clearcoat = 1.0;
+      paintMaterial.clearcoatRoughness = 0.015;
+      paintMaterial.envMapIntensity = 2.45;
+      paintMaterial.iridescence = 0.32;
+      paintMaterial.iridescenceIOR = 1.4;
+      paintMaterial.iridescenceThicknessRange = [180, 420];
+    } else if (finish === 'copperLiquid') {
+      paintMaterial.metalness = 0.97;
+      paintMaterial.roughness = 0.07;
+      paintMaterial.clearcoat = 1.0;
+      paintMaterial.clearcoatRoughness = 0.02;
+      paintMaterial.envMapIntensity = 2.55;
+      paintMaterial.iridescence = 0.65;
+      paintMaterial.iridescenceIOR = 1.48;
+      paintMaterial.iridescenceThicknessRange = [210, 520];
+    } else if (finish === 'nebulaShift') {
+      paintMaterial.metalness = 0.96;
+      paintMaterial.roughness = 0.06;
+      paintMaterial.clearcoat = 1.0;
+      paintMaterial.clearcoatRoughness = 0.02;
+      paintMaterial.envMapIntensity = 2.65;
+      paintMaterial.iridescence = 1.0;
+      paintMaterial.iridescenceIOR = 1.66;
+      paintMaterial.iridescenceThicknessRange = [190, 720];
     } else {
       paintMaterial.metalness = 0.78;
       paintMaterial.roughness = 0.17;
@@ -4379,16 +4708,28 @@ export function createPlayerCar(
     spoilerHoverBaseY = 0;
     kitNeonTrimMat = null;
 
-    const isWideKit = kit === 'widebody' || kit === 'cyberWide';
+    const isWideKit =
+      kit === 'widebody' ||
+      kit === 'cyberWide' ||
+      kit === 'rallyArmor' ||
+      kit === 'royalGoldWide' ||
+      kit === 'hyperPlasmaKit';
+    const isTrackAeroKit =
+      kit === 'f1TrackPro' || kit === 'gt3Endurance' || kit === 'hyperPlasmaKit';
+    const isNeonTrimKit = kit === 'cyberWide' || kit === 'hyperPlasmaKit';
     stockLowerAeroGroup.visible = kit === 'stock';
     stockArchFlareGroup.visible = !isWideKit;
 
     if (kit !== 'stock') {
       const lipDepth =
-        kit === 'street' ? 0.34 : kit === 'f1TrackPro' ? 0.58 : 0.48;
+        kit === 'street' || kit === 'driftSpec'
+          ? 0.36
+          : isTrackAeroKit
+            ? 0.58
+            : 0.48;
       const lipWidth = isWideKit
         ? bodyWidth * 1.13
-        : kit === 'f1TrackPro'
+        : isTrackAeroKit
           ? bodyWidth * 1.09
           : bodyWidth * 1.04;
 
@@ -4400,24 +4741,33 @@ export function createPlayerCar(
       frontLip.castShadow = true;
       customKitGroup.add(frontLip);
 
-      const trimMaterial =
-        kit === 'cyberWide'
-          ? (() => {
-              const m = trackCustomMat(
-                new THREE.MeshStandardMaterial({
-                  color: 0x22d3ee,
-                  emissive: 0x06b6d4,
-                  emissiveIntensity: 1.85,
-                  roughness: 0.18,
-                  metalness: 0.35,
-                }),
-              );
-              kitNeonTrimMat = m;
-              return m;
-            })()
-          : kit === 'f1TrackPro'
+      const trimMaterial = isNeonTrimKit
+        ? (() => {
+            const m = trackCustomMat(
+              new THREE.MeshStandardMaterial({
+                color: kit === 'hyperPlasmaKit' ? 0xe879f9 : 0x22d3ee,
+                emissive: kit === 'hyperPlasmaKit' ? 0xc026d3 : 0x06b6d4,
+                emissiveIntensity: 1.9,
+                roughness: 0.18,
+                metalness: 0.35,
+              }),
+            );
+            kitNeonTrimMat = m;
+            return m;
+          })()
+        : kit === 'royalGoldWide'
+          ? wheelGoldMat
+          : kit === 'f1TrackPro' || kit === 'gt3Endurance'
             ? brakeRedMat
-            : amberMat;
+            : kit === 'driftSpec'
+              ? trackCustomMat(
+                  new THREE.MeshStandardMaterial({
+                    color: 0x38bdf8,
+                    roughness: 0.25,
+                    metalness: 0.65,
+                  }),
+                )
+              : amberMat;
 
       const lipTrim = new THREE.Mesh(
         trackCustomGeo(new THREE.BoxGeometry(lipWidth * 0.96, 0.02, 0.045)),
@@ -4426,17 +4776,43 @@ export function createPlayerCar(
       lipTrim.position.set(0, lowLipY + 0.014, frontNoseZ - lipDepth * 0.72);
       customKitGroup.add(lipTrim);
 
+      if (kit === 'rallyArmor') {
+        // Rally tubular bullbar + quad rally spotlights on nose
+        const bar = new THREE.Mesh(
+          trackCustomGeo(new THREE.CylinderGeometry(0.024, 0.024, bodyWidth * 0.68, 10)),
+          matteTrimMat,
+        );
+        bar.rotation.z = Math.PI / 2;
+        bar.position.set(0, lowLipY + 0.26, frontNoseZ - 0.12);
+        customKitGroup.add(bar);
+        const podGeo = trackCustomGeo(new THREE.CylinderGeometry(0.075, 0.068, 0.07, 14));
+        podGeo.rotateX(Math.PI / 2);
+        const podLensMat = trackCustomMat(
+          new THREE.MeshStandardMaterial({
+            color: 0xfef08a,
+            emissive: 0xfacc15,
+            emissiveIntensity: 1.9,
+            roughness: 0.1,
+          }),
+        );
+        for (const px of [-0.34, -0.12, 0.12, 0.34]) {
+          const pod = new THREE.Mesh(podGeo, podLensMat);
+          pod.position.set(px, lowLipY + 0.32, frontNoseZ - 0.13);
+          customKitGroup.add(pod);
+        }
+      }
+
       const skirtLen = wheelBaseHalf * 1.64;
       const skirtOutX = isWideKit
         ? bodyWidth * 0.565
-        : kit === 'f1TrackPro'
+        : isTrackAeroKit
           ? bodyWidth * 0.545
           : bodyWidth * 0.525;
       const sideBladeGeo = trackCustomGeo(
         new THREE.BoxGeometry(isWideKit ? 0.17 : 0.125, 0.052, skirtLen),
       );
       const sideWingletGeo = trackCustomGeo(
-        new THREE.BoxGeometry(0.036, kit === 'f1TrackPro' ? 0.24 : 0.18, 0.28),
+        new THREE.BoxGeometry(0.036, isTrackAeroKit ? 0.24 : 0.18, 0.28),
       );
       for (const side of [-1, 1]) {
         const blade = new THREE.Mesh(sideBladeGeo, carbonMat);
@@ -4450,15 +4826,15 @@ export function createPlayerCar(
         );
         customKitGroup.add(winglet);
 
-        if (kit === 'cyberWide') {
+        if (isNeonTrimKit || kit === 'royalGoldWide') {
           const sideNeon = new THREE.Mesh(
             trackCustomGeo(new THREE.BoxGeometry(0.024, 0.024, skirtLen * 0.94)),
             trimMaterial,
           );
           sideNeon.position.set(side * (skirtOutX + 0.085), lowLipY + 0.028, 0.04);
           customKitGroup.add(sideNeon);
-        } else if (kit === 'f1TrackPro') {
-          // Track-Pro side bargeboard vane + red accent edge
+        } else if (kit === 'f1TrackPro' || kit === 'gt3Endurance') {
+          // Track-Pro / GT3 side bargeboard vane + red accent edge
           const barge = new THREE.Mesh(
             trackCustomGeo(new THREE.BoxGeometry(0.03, 0.22, 0.55)),
             carbonMat,
@@ -4480,8 +4856,8 @@ export function createPlayerCar(
         }
       }
 
-      const diffW = bodyWidth * (isWideKit ? 0.98 : kit === 'f1TrackPro' ? 0.95 : 0.88);
-      const diffDepth = kit === 'f1TrackPro' ? 0.3 : 0.22;
+      const diffW = bodyWidth * (isWideKit ? 0.98 : isTrackAeroKit ? 0.95 : 0.88);
+      const diffDepth = isTrackAeroKit ? 0.3 : 0.22;
       const rearValance = new THREE.Mesh(
         trackCustomGeo(new THREE.BoxGeometry(diffW, 0.13, diffDepth)),
         carbonMat,
@@ -4490,21 +4866,21 @@ export function createPlayerCar(
       customKitGroup.add(rearValance);
 
       const strakeOffsets =
-        kit === 'street'
+        kit === 'street' || kit === 'driftSpec'
           ? [-0.42, -0.34, 0.34, 0.42]
-          : kit === 'f1TrackPro'
+          : isTrackAeroKit
             ? [-0.46, -0.38, -0.3, -0.22, 0.22, 0.3, 0.38, 0.46]
             : [-0.44, -0.37, -0.3, 0.3, 0.37, 0.44];
       const strakeGeo = trackCustomGeo(
-        new THREE.BoxGeometry(0.03, kit === 'f1TrackPro' ? 0.16 : 0.13, diffDepth + 0.04),
+        new THREE.BoxGeometry(0.03, isTrackAeroKit ? 0.16 : 0.13, diffDepth + 0.04),
       );
       for (const frac of strakeOffsets) {
-        const strake = new THREE.Mesh(strakeGeo, matteTrimMat);
+        const strake = new THREE.Mesh(strakeGeo, kit === 'royalGoldWide' ? wheelGoldMat : matteTrimMat);
         strake.position.set(frac * diffW, lowLipY + 0.06, rearTailZ + 0.03);
         customKitGroup.add(strake);
       }
 
-      if (kit === 'cyberWide') {
+      if (isNeonTrimKit || kit === 'royalGoldWide') {
         const rearNeon = new THREE.Mesh(
           trackCustomGeo(new THREE.BoxGeometry(diffW * 0.94, 0.024, 0.03)),
           trimMaterial,
@@ -4513,20 +4889,29 @@ export function createPlayerCar(
         customKitGroup.add(rearNeon);
       }
 
-      if (kit === 'gtAero' || kit === 'widebody' || kit === 'cyberWide' || kit === 'f1TrackPro') {
+      if (
+        kit === 'gtAero' ||
+        kit === 'widebody' ||
+        kit === 'cyberWide' ||
+        kit === 'f1TrackPro' ||
+        kit === 'driftSpec' ||
+        kit === 'gt3Endurance' ||
+        kit === 'royalGoldWide' ||
+        kit === 'hyperPlasmaKit'
+      ) {
         const strutGeo = trackCustomGeo(new THREE.CylinderGeometry(0.012, 0.012, 0.25, 8));
-        const strutOffsets = kit === 'f1TrackPro' ? [-0.52, -0.22, 0.22, 0.52] : [-0.42, 0.42];
+        const strutOffsets = isTrackAeroKit ? [-0.52, -0.22, 0.22, 0.52] : [-0.42, 0.42];
         for (const sx of strutOffsets) {
-          const strut = new THREE.Mesh(strutGeo, chromeMat);
+          const strut = new THREE.Mesh(strutGeo, kit === 'royalGoldWide' ? wheelGoldMat : chromeMat);
           strut.position.set(sx, lowLipY + 0.12, frontNoseZ - lipDepth * 0.48);
           strut.rotation.x = 0.24;
           customKitGroup.add(strut);
         }
 
         const canardGeo = trackCustomGeo(
-          new THREE.BoxGeometry(kit === 'f1TrackPro' ? 0.18 : 0.14, 0.026, 0.3),
+          new THREE.BoxGeometry(isTrackAeroKit ? 0.18 : 0.14, 0.026, 0.3),
         );
-        const canardYs = kit === 'f1TrackPro' ? [0.28, 0.4, 0.52] : [0.34, 0.47];
+        const canardYs = isTrackAeroKit ? [0.28, 0.4, 0.52] : [0.34, 0.47];
         for (const side of [-1, 1]) {
           for (const cy of canardYs) {
             const canard = new THREE.Mesh(canardGeo, carbonMat);
@@ -5139,6 +5524,189 @@ export function createPlayerCar(
           );
           epStrip.position.set(ex, wY + 0.03, spZ + 0.25);
           customSpoilerGroup.add(epStrip);
+        }
+      } else if (spoiler === 'gt3Swan') {
+        // Swan-neck top-mounted GT3 track wing
+        const span = bodyWidth * 1.16;
+        const wY = deckY + 0.44;
+        const blade = new THREE.Mesh(
+          trackCustomGeo(
+            createExtrudedShapeGeo(
+              [
+                [-0.2, 0],
+                [0.24, 0.055],
+                [0.22, 0.105],
+                [-0.18, 0.04],
+              ],
+              span,
+              0.014,
+            ),
+          ),
+          carbonMat,
+        );
+        blade.position.set(0, wY, spZ + 0.05);
+        blade.castShadow = true;
+        customSpoilerGroup.add(blade);
+        const neckGeo = trackCustomGeo(new THREE.BoxGeometry(0.038, 0.5, 0.16));
+        const hookGeo = trackCustomGeo(new THREE.BoxGeometry(0.044, 0.05, 0.28));
+        for (const px of [-0.36, 0.36]) {
+          const neck = new THREE.Mesh(neckGeo, matteTrimMat);
+          neck.position.set(px, deckY + 0.27, spZ - 0.06);
+          neck.rotation.x = -0.14;
+          customSpoilerGroup.add(neck);
+          const hook = new THREE.Mesh(hookGeo, brakeRedMat);
+          hook.position.set(px, wY + 0.1, spZ + 0.04);
+          customSpoilerGroup.add(hook);
+        }
+        const epGeo = trackCustomGeo(new THREE.BoxGeometry(0.034, 0.28, 0.44));
+        for (const ex of [-span * 0.5, span * 0.5]) {
+          const ep = new THREE.Mesh(epGeo, carbonMat);
+          ep.position.set(ex, wY + 0.03, spZ + 0.05);
+          customSpoilerGroup.add(ep);
+        }
+      } else if (spoiler === 'twinBladeCarbon') {
+        // Stacked dual-element curved carbon biplane wing
+        const span = bodyWidth * 1.14;
+        for (const [idx, yOff] of [
+          [0, 0.28],
+          [1, 0.5],
+        ] as [number, number][]) {
+          const wY = deckY + yOff;
+          const b = new THREE.Mesh(
+            trackCustomGeo(new THREE.BoxGeometry(span * (idx === 1 ? 1.0 : 0.92), 0.045, 0.32)),
+            carbonMat,
+          );
+          b.position.set(0, wY, spZ + idx * 0.06);
+          b.rotation.x = idx === 1 ? -0.14 : -0.06;
+          customSpoilerGroup.add(b);
+        }
+        const pylonGeo = trackCustomGeo(new THREE.BoxGeometry(0.04, 0.54, 0.22));
+        for (const px of [-0.46, 0.46]) {
+          const p = new THREE.Mesh(pylonGeo, matteTrimMat);
+          p.position.set(px, deckY + 0.26, spZ + 0.02);
+          customSpoilerGroup.add(p);
+        }
+        const epGeo = trackCustomGeo(new THREE.BoxGeometry(0.035, 0.36, 0.42));
+        for (const ex of [-span * 0.5, span * 0.5]) {
+          const ep = new THREE.Mesh(epGeo, carbonMat);
+          ep.position.set(ex, deckY + 0.4, spZ + 0.04);
+          customSpoilerGroup.add(ep);
+        }
+      } else if (spoiler === 'viperArch') {
+        // Swept full-width wraparound supercar arch wing
+        const span = bodyWidth * 1.08;
+        const wY = deckY + 0.3;
+        const top = new THREE.Mesh(
+          trackCustomGeo(new THREE.BoxGeometry(span * 0.88, 0.06, 0.34)),
+          paintMaterial,
+        );
+        top.position.set(0, wY, spZ + 0.02);
+        top.rotation.x = -0.08;
+        customSpoilerGroup.add(top);
+        const legGeo = trackCustomGeo(new THREE.BoxGeometry(0.11, 0.34, 0.32));
+        for (const side of [-1, 1]) {
+          const leg = new THREE.Mesh(legGeo, paintMaterial);
+          leg.position.set(side * (span * 0.45), deckY + 0.15, spZ + 0.02);
+          leg.rotation.z = side * 0.28;
+          customSpoilerGroup.add(leg);
+        }
+      } else if (spoiler === 'animCyberHaloWing') {
+        // Pulsing cyan-magenta twin energy rings mounted on carbon aero towers
+        const span = bodyWidth * 1.12;
+        const wY = deckY + 0.44;
+        const glowA = trackCustomMat(
+          new THREE.MeshStandardMaterial({
+            color: 0x22d3ee,
+            emissive: 0x06b6d4,
+            emissiveIntensity: 2.2,
+            roughness: 0.12,
+          }),
+        );
+        const glowB = trackCustomMat(
+          new THREE.MeshStandardMaterial({
+            color: 0xe879f9,
+            emissive: 0xc026d3,
+            emissiveIntensity: 2.2,
+            roughness: 0.12,
+          }),
+        );
+        spoilerAnimPrimaryMat = glowA;
+        spoilerAnimSecondaryMat = glowB;
+        const blade = new THREE.Mesh(
+          trackCustomGeo(new THREE.BoxGeometry(span, 0.045, 0.26)),
+          wheelObsidianMat,
+        );
+        blade.position.set(0, wY, spZ + 0.04);
+        customSpoilerGroup.add(blade);
+        const strip = new THREE.Mesh(
+          trackCustomGeo(new THREE.BoxGeometry(span * 0.96, 0.024, 0.05)),
+          glowA,
+        );
+        strip.position.set(0, wY + 0.03, spZ + 0.16);
+        customSpoilerGroup.add(strip);
+        const pylonGeo = trackCustomGeo(new THREE.BoxGeometry(0.045, 0.46, 0.18));
+        const ringGeo = trackCustomGeo(new THREE.TorusGeometry(0.16, 0.018, 10, 24));
+        ringGeo.rotateY(Math.PI / 2);
+        for (const sx of [-1, 1]) {
+          const pylon = new THREE.Mesh(pylonGeo, carbonMat);
+          pylon.position.set(sx * 0.42, deckY + 0.22, spZ + 0.02);
+          customSpoilerGroup.add(pylon);
+          const ring = new THREE.Mesh(ringGeo, sx < 0 ? glowA : glowB);
+          ring.position.set(sx * (span * 0.5), wY, spZ + 0.04);
+          customSpoilerGroup.add(ring);
+        }
+      } else if (spoiler === 'animInfernoWing') {
+        // Obsidian track wing with glowing molten-lava trailing edge & tips
+        const span = bodyWidth * 1.18;
+        const wY = deckY + 0.48;
+        const lavaA = trackCustomMat(
+          new THREE.MeshStandardMaterial({
+            color: 0xf97316,
+            emissive: 0xea580c,
+            emissiveIntensity: 2.3,
+            roughness: 0.14,
+          }),
+        );
+        const lavaB = trackCustomMat(
+          new THREE.MeshStandardMaterial({
+            color: 0xfde047,
+            emissive: 0xf59e0b,
+            emissiveIntensity: 2.1,
+            roughness: 0.14,
+          }),
+        );
+        spoilerAnimPrimaryMat = lavaA;
+        spoilerAnimSecondaryMat = lavaB;
+        const blade = new THREE.Mesh(
+          trackCustomGeo(new THREE.BoxGeometry(span, 0.05, 0.34)),
+          wheelObsidianMat,
+        );
+        blade.position.set(0, wY, spZ + 0.05);
+        blade.rotation.x = -0.1;
+        customSpoilerGroup.add(blade);
+        const lavaEdge = new THREE.Mesh(
+          trackCustomGeo(new THREE.BoxGeometry(span * 0.98, 0.032, 0.065)),
+          lavaA,
+        );
+        lavaEdge.position.set(0, wY + 0.02, spZ + 0.21);
+        customSpoilerGroup.add(lavaEdge);
+        const pylonGeo = trackCustomGeo(new THREE.BoxGeometry(0.044, 0.5, 0.22));
+        for (const px of [-0.44, 0.44]) {
+          const p = new THREE.Mesh(pylonGeo, wheelObsidianMat);
+          p.position.set(px, deckY + 0.24, spZ + 0.02);
+          customSpoilerGroup.add(p);
+        }
+        const tipGeo = trackCustomGeo(new THREE.BoxGeometry(0.04, 0.28, 0.44));
+        for (const ex of [-span * 0.5, span * 0.5]) {
+          const ep = new THREE.Mesh(tipGeo, wheelObsidianMat);
+          ep.position.set(ex, wY + 0.02, spZ + 0.05);
+          customSpoilerGroup.add(ep);
+          const ember = new THREE.Mesh(
+            trackCustomGeo(new THREE.BoxGeometry(0.048, 0.24, 0.04)),
+            lavaB,
+          );
+          ember.position.set(ex, wY + 0.02, spZ + 0.25);
+          customSpoilerGroup.add(ember);
         }
       }
     }
@@ -6536,6 +7104,139 @@ export function createPlayerCar(
         orb.position.set(Math.sin(a) * 0.36, 0, Math.cos(a) * 0.36);
         orbit.add(orb);
       }
+    } else if (hatId === 'beret') {
+      // Rakish Crimson French Wool Beret
+      const woolMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xbe123c, roughness: 0.85, metalness: 0.04 }),
+      );
+      const grp = new THREE.Group();
+      grp.position.y = 0.09;
+      grp.rotation.z = 0.18;
+      customHatGroup.add(grp);
+      const disc = new THREE.Mesh(trackHatGeo(new THREE.SphereGeometry(0.29, 20, 14)), woolMat);
+      disc.scale.set(1.08, 0.36, 1.05);
+      grp.add(disc);
+      const stem = new THREE.Mesh(trackHatGeo(new THREE.CylinderGeometry(0.014, 0.018, 0.08, 8)), woolMat);
+      stem.position.set(0, 0.11, 0);
+      stem.rotation.z = -0.22;
+      grp.add(stem);
+    } else if (hatId === 'beanie') {
+      // Ribbed Navy-Amber Knit Winter Beanie with Pom-Pom
+      const navyMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.9, metalness: 0.02 }),
+      );
+      const amberBandMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.85, metalness: 0.05 }),
+      );
+      const pomMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.95, metalness: 0 }),
+      );
+      const cuff = new THREE.Mesh(trackHatGeo(new THREE.CylinderGeometry(0.24, 0.25, 0.09, 20)), amberBandMat);
+      cuff.position.y = 0.05;
+      customHatGroup.add(cuff);
+      const dome = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.235, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.55)),
+        navyMat,
+      );
+      dome.position.y = 0.08;
+      customHatGroup.add(dome);
+      const pom = new THREE.Mesh(trackHatGeo(new THREE.SphereGeometry(0.085, 14, 12)), pomMat);
+      pom.position.y = 0.35;
+      customHatGroup.add(pom);
+    } else if (hatId === 'astronaut') {
+      // Pearl White Space Helmet with Reflective 24K Gold Visor
+      const shellMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.18, metalness: 0.25 }),
+      );
+      const visorGoldMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xfacc15,
+          metalness: 0.98,
+          roughness: 0.06,
+          emissive: 0x92400e,
+          emissiveIntensity: 0.28,
+        }),
+      );
+      const collarMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.35, metalness: 0.5 }),
+      );
+      const collar = new THREE.Mesh(trackHatGeo(new THREE.TorusGeometry(0.21, 0.036, 10, 22)), collarMat);
+      collar.rotation.x = Math.PI / 2;
+      collar.position.y = 0.04;
+      customHatGroup.add(collar);
+      const sphere = new THREE.Mesh(trackHatGeo(new THREE.SphereGeometry(0.24, 22, 18)), shellMat);
+      sphere.position.y = 0.24;
+      customHatGroup.add(sphere);
+      const visor = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.246, 20, 16, -Math.PI * 0.85, Math.PI * 0.7, Math.PI * 0.22, Math.PI * 0.5)),
+        visorGoldMat,
+      );
+      visor.position.y = 0.24;
+      customHatGroup.add(visor);
+    } else if (hatId === 'devilHorns') {
+      // Curved Glowing Crimson-Obsidian Twin Devil Horns
+      const hornMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xdc2626,
+          emissive: 0x991b1b,
+          emissiveIntensity: 1.4,
+          roughness: 0.22,
+          metalness: 0.35,
+        }),
+      );
+      const baseMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.35, metalness: 0.7 }),
+      );
+      const hornGeo = trackHatGeo(new THREE.ConeGeometry(0.085, 0.38, 12));
+      const baseGeo = trackHatGeo(new THREE.TorusGeometry(0.09, 0.022, 8, 16));
+      for (const sx of [-1, 1]) {
+        const b = new THREE.Mesh(baseGeo, baseMat);
+        b.rotation.x = Math.PI / 2;
+        b.position.set(sx * 0.24, 0.03, 0);
+        customHatGroup.add(b);
+        const h = new THREE.Mesh(hornGeo, hornMat);
+        h.position.set(sx * 0.28, 0.2, 0.02);
+        h.rotation.z = sx * -0.34;
+        h.rotation.x = -0.18;
+        customHatGroup.add(h);
+      }
+    } else if (hatId === 'cyberVisorCrown') {
+      // Hovering Rotating Neon Cyan-Violet Holographic Crown
+      const hover = new THREE.Group();
+      hover.position.y = 0.26;
+      customHatGroup.add(hover);
+      hatHoverGroup = hover;
+      hatHoverBaseY = 0.26;
+      const orbit = new THREE.Group();
+      hover.add(orbit);
+      hatOrbitGroup = orbit;
+      const cyanMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x22d3ee,
+          emissive: 0x06b6d4,
+          emissiveIntensity: 2.4,
+          roughness: 0.1,
+        }),
+      );
+      const vioMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xe879f9,
+          emissive: 0xc026d3,
+          emissiveIntensity: 2.2,
+          roughness: 0.1,
+        }),
+      );
+      const ring = new THREE.Mesh(trackHatGeo(new THREE.TorusGeometry(0.24, 0.02, 10, 28)), cyanMat);
+      ring.rotation.x = Math.PI / 2;
+      orbit.add(ring);
+      const shardGeo = trackHatGeo(new THREE.OctahedronGeometry(0.055, 0));
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const shard = new THREE.Mesh(shardGeo, i % 2 === 0 ? cyanMat : vioMat);
+        shard.scale.set(0.65, 1.85, 0.65);
+        shard.position.set(Math.sin(a) * 0.24, 0.09, Math.cos(a) * 0.24);
+        orbit.add(shard);
+      }
     }
   };
 
@@ -6708,6 +7409,15 @@ export function createPlayerCar(
         }
         paintMaterial.color.copy(_fxColor);
       }
+    } else if (currentCustom.paintFinish === 'nebulaShift') {
+      if (isFullWrap) {
+        paintMaterial.color.copy(_whiteColor);
+      } else {
+        const wave = 0.5 + 0.5 * Math.sin(timeSec * 0.95);
+        const hue = (0.52 + wave * 0.36) % 1;
+        _fxColor.setHSL(hue, 0.9, 0.48 + wave * 0.1);
+        paintMaterial.color.copy(_fxColor);
+      }
     }
 
     // 2b. Rocket League-Style Animated Wraps (Pure GPU UV Scrolling + Emissive Pulse, Zero GC)
@@ -6748,6 +7458,13 @@ export function createPlayerCar(
         _fxColor.setHSL(hue, 0.55, 0.88);
         paintMaterial.emissive.copy(_fxColor);
         paintMaterial.emissiveIntensity = 1.05 + Math.sin(timeSec * 2.4) * 0.3;
+      } else if (liv === 'animThunderVolt') {
+        const oy = -(timeSec * 0.68) % 1;
+        activeLiveryTex.offset.set(0, oy);
+        activeLiveryEmissiveTex.offset.set(0, oy);
+        const zap = Math.sin(timeSec * 24) * Math.sin(timeSec * 7.5) > 0.25 ? 1 : 0;
+        paintMaterial.emissive.setHex(zap ? 0xe0f2fe : 0x93c5fd);
+        paintMaterial.emissiveIntensity = zap ? 2.1 : 1.05 + Math.sin(timeSec * 6) * 0.25;
       }
     }
 
@@ -6829,6 +7546,14 @@ export function createPlayerCar(
       wheelGlowSecondaryMat.color.copy(_fxColor);
       wheelGlowSecondaryMat.emissive.copy(_fxColor);
       wheelGlowSecondaryMat.emissiveIntensity = 1.4 + Math.cos(timeSec * 3.6) * 0.4;
+    } else if (activeWheelStyle === 'animVenomRing') {
+      const p = 0.5 + 0.5 * Math.sin(timeSec * 5.2);
+      wheelGlowPrimaryMat.emissiveIntensity = 1.2 + p * 1.5;
+      wheelGlowSecondaryMat.emissiveIntensity = 1.0 + (1 - p) * 1.3;
+    } else if (activeWheelStyle === 'animRubyPulse') {
+      const p = 0.5 + 0.5 * Math.sin(timeSec * 4.6);
+      wheelGlowPrimaryMat.emissiveIntensity = 1.3 + p * 1.55;
+      wheelGlowSecondaryMat.emissiveIntensity = 1.1 + (1 - p) * 1.4;
     }
 
     // 2d. Animated Nitro Exhaust Cone Color (Rainbow / Police Strobe / Aurora)
@@ -6864,7 +7589,13 @@ export function createPlayerCar(
       if (spoilerAnimPrimaryMat) {
         spoilerAnimPrimaryMat.emissiveIntensity = 1.3 + Math.sin(timeSec * 4.5) * 0.6;
       }
-    } else if (currentCustom.spoiler === 'animNeonBlade' && spoilerAnimPrimaryMat && spoilerAnimSecondaryMat) {
+    } else if (
+      (currentCustom.spoiler === 'animNeonBlade' ||
+        currentCustom.spoiler === 'animCyberHaloWing' ||
+        currentCustom.spoiler === 'animInfernoWing') &&
+      spoilerAnimPrimaryMat &&
+      spoilerAnimSecondaryMat
+    ) {
       const pA = 0.5 + 0.5 * Math.sin(timeSec * 4.4);
       const pB = 0.5 + 0.5 * Math.sin(timeSec * 4.4 + Math.PI);
       spoilerAnimPrimaryMat.emissiveIntensity = 1.2 + pA * 1.4;
@@ -8375,6 +9106,137 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         led.position.set((i - 4) * 0.022, 0.068, 0.016);
         wheelGroup.add(led);
       }
+    } else if (style === 'leatherRed') {
+      // Black perforated leather GT wheel + crimson spokes & top center marker
+      const leatherM = trackWMat(new THREE.MeshStandardMaterial({ color: 0x16161a, roughness: 0.72, metalness: 0.12 }));
+      const redM = trackWMat(new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.28, metalness: 0.65 }));
+      wheelGroup.add(new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.136, 0.017, 12, 32)), leatherM));
+      const mark = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.022, 0.024, 0.036)), redM);
+      mark.position.set(0, 0.136, 0);
+      wheelGroup.add(mark);
+      for (const sx of [-1, 1]) {
+        const sp = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.095, 0.02, 0.012)), redM);
+        sp.position.set(sx * 0.072, 0, -0.004);
+        wheelGroup.add(sp);
+      }
+      const bSp = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.024, 0.09, 0.012)), redM);
+      bSp.position.set(0, -0.072, -0.004);
+      wheelGroup.add(bSp);
+      wheelGroup.add(new THREE.Mesh(hubGeo, leatherM));
+    } else if (style === 'titaniumSport') {
+      // Machined Brushed Titanium Flat-Bottom Sport Wheel + Sapphire Center Ring
+      const tiM = trackWMat(new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.22, metalness: 0.92 }));
+      const blueM = trackWMat(new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.24, metalness: 0.7 }));
+      const topArc = new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.136, 0.016, 12, 28, Math.PI * 1.48)), tiM);
+      topArc.rotation.z = -Math.PI * 0.24;
+      wheelGroup.add(topArc);
+      const flatBot = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.19, 0.024, 0.024)), tiM);
+      flatBot.position.set(0, -0.118, 0);
+      wheelGroup.add(flatBot);
+      for (const sx of [-1, 1]) {
+        const sp = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.092, 0.018, 0.012)), tiM);
+        sp.position.set(sx * 0.072, 0, -0.004);
+        wheelGroup.add(sp);
+      }
+      wheelGroup.add(new THREE.Mesh(hubGeo, tiM));
+      const ring = new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.028, 0.005, 8, 20)), blueM);
+      ring.position.z = 0.018;
+      wheelGroup.add(ring);
+    } else if (style === 'driftSuedeBlue') {
+      // Deep-Dish Cobalt Blue Suede Drift Wheel + Yellow Top Center Band
+      const suedeM = trackWMat(new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.92, metalness: 0.04 }));
+      const yelM = trackWMat(new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.35, metalness: 0.2 }));
+      const darkM = trackWMat(new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.35, metalness: 0.72 }));
+      const rim = new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.138, 0.018, 12, 32)), suedeM);
+      rim.position.z = 0.024;
+      wheelGroup.add(rim);
+      const band = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.024, 0.026, 0.038)), yelM);
+      band.position.set(0, 0.138, 0.024);
+      wheelGroup.add(band);
+      for (const sx of [-1, 1]) {
+        const sp = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.098, 0.02, 0.012)), darkM);
+        sp.position.set(sx * 0.072, 0, 0.01);
+        sp.rotation.y = sx * -0.22;
+        wheelGroup.add(sp);
+      }
+      wheelGroup.add(new THREE.Mesh(hubGeo, darkM));
+    } else if (style === 'emeraldCarbon') {
+      // Forged Carbon D-Wheel with Glowing Emerald Trim + 9 Shift LEDs
+      const carbM = trackWMat(new THREE.MeshStandardMaterial({ color: 0x12151a, roughness: 0.3, metalness: 0.68 }));
+      const emM = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x10b981,
+          emissive: 0x059669,
+          emissiveIntensity: 1.8,
+          roughness: 0.16,
+        }),
+      );
+      wheelPulseMat = emM;
+      wheelGroup.add(new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.136, 0.017, 12, 32)), carbM));
+      const innerNeon = new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.118, 0.005, 8, 28)), emM);
+      innerNeon.position.z = 0.01;
+      wheelGroup.add(innerNeon);
+      for (const sx of [-1, 1]) {
+        const sp = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.092, 0.02, 0.012)), carbM);
+        sp.position.set(sx * 0.072, 0, -0.002);
+        wheelGroup.add(sp);
+      }
+      wheelGroup.add(new THREE.Mesh(hubGeo, carbM));
+      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
+      for (let i = 0; i < 9; i++) {
+        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
+        shiftLedMats.push(lMat);
+        const a = Math.PI * 0.5 + (4 - i) * 0.11;
+        const led = new THREE.Mesh(ledGeo, lMat);
+        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.019);
+        led.rotation.z = a - Math.PI * 0.5;
+        wheelGroup.add(led);
+      }
+    } else if (style === 'plasmaYoke') {
+      // Animated Obsidian Butterfly Yoke with Pulsing Violet-Cyan Plasma Rim + 9 Shift LEDs
+      const obsM = trackWMat(new THREE.MeshStandardMaterial({ color: 0x10101c, roughness: 0.22, metalness: 0.85 }));
+      const plasM = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xa855f7,
+          emissive: 0x9333ea,
+          emissiveIntensity: 2.2,
+          roughness: 0.12,
+        }),
+      );
+      const cyanM = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x22d3ee,
+          emissive: 0x06b6d4,
+          emissiveIntensity: 2.0,
+          roughness: 0.12,
+        }),
+      );
+      wheelPulseMat = plasM;
+      wheelGroup.add(new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.24, 0.1, 0.018)), obsM));
+      const bar = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.22, 0.014, 0.022)), cyanM);
+      bar.position.set(0, -0.052, 0.005);
+      wheelGroup.add(bar);
+      for (const sx of [-1, 1]) {
+        const grip = new THREE.Mesh(trackWGeo(new THREE.CapsuleGeometry(0.022, 0.105, 8, 12)), obsM);
+        grip.position.set(sx * 0.134, 0, 0.004);
+        wheelGroup.add(grip);
+        const trim = new THREE.Mesh(trackWGeo(new THREE.BoxGeometry(0.008, 0.095, 0.024)), plasM);
+        trim.position.set(sx * 0.114, 0, 0.008);
+        wheelGroup.add(trim);
+      }
+      const spinCore = new THREE.Group();
+      spinCore.position.z = 0.018;
+      wheelGroup.add(spinCore);
+      wheelHoloSpinGroup = spinCore;
+      spinCore.add(new THREE.Mesh(trackWGeo(new THREE.OctahedronGeometry(0.02, 0)), cyanM));
+      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.011, 0.008, 0.008));
+      for (let i = 0; i < 9; i++) {
+        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
+        shiftLedMats.push(lMat);
+        const led = new THREE.Mesh(ledGeo, lMat);
+        led.position.set((i - 4) * 0.022, 0.064, 0.016);
+        wheelGroup.add(led);
+      }
     }
   };
 
@@ -9450,6 +10312,104 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         ray.rotation.z = a - Math.PI / 2;
         starGrp.add(ray);
       }
+    } else if (charm === 'luckyClover') {
+      // Emerald Four-Leaf Clover Charm
+      const leafM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.35, metalness: 0.2 }));
+      const stemM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.25, metalness: 0.85 }));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.078, 0));
+      const leafGeo = trackCGeo(new THREE.SphereGeometry(0.014, 10, 8));
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const leaf = new THREE.Mesh(leafGeo, leafM);
+        leaf.scale.set(1, 1, 0.45);
+        leaf.position.set(Math.cos(a) * 0.015, -0.105 + Math.sin(a) * 0.015, 0);
+        mirrorCharmPivot.add(leaf);
+      }
+      const center = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.007, 8, 8)), stemM);
+      center.position.set(0, -0.105, 0.002);
+      mirrorCharmPivot.add(center);
+    } else if (charm === 'miniTrophy') {
+      // Miniature Gold-Silver Racing Cup
+      const goldM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.94, roughness: 0.14 }));
+      const baseM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.6, roughness: 0.3 }));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.076, 0));
+      const cup = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.02, 0.009, 0.028, 14)), goldM);
+      cup.position.set(0, -0.095, 0);
+      mirrorCharmPivot.add(cup);
+      const base = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.013, 0.016, 0.012, 12)), baseM);
+      base.position.set(0, -0.116, 0);
+      mirrorCharmPivot.add(base);
+    } else if (charm === 'miniNitro') {
+      // Metallic Blue NOS Bottle with Chrome Valve
+      const nosM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85, roughness: 0.16 }));
+      const chromeM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.95, roughness: 0.1 }));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.072, 0));
+      const valve = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.005, 0.007, 0.012, 10)), chromeM);
+      valve.position.set(0, -0.078, 0);
+      mirrorCharmPivot.add(valve);
+      const tank = new THREE.Mesh(trackCGeo(new THREE.CapsuleGeometry(0.013, 0.032, 8, 12)), nosM);
+      tank.position.set(0, -0.106, 0);
+      mirrorCharmPivot.add(tank);
+    } else if (charm === 'diamondGem') {
+      // Spinning Faceted Ice-Sapphire Diamond Gem
+      const diaM = trackCMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x7dd3fc,
+          emissive: 0x0284c7,
+          emissiveIntensity: 1.6,
+          metalness: 0.35,
+          roughness: 0.06,
+          transparent: true,
+          opacity: 0.9,
+        }),
+      );
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.075, 0));
+      const dGrp = new THREE.Group();
+      dGrp.position.set(0, -0.105, 0);
+      mirrorCharmPivot.add(dGrp);
+      charmTurboImpeller = dGrp;
+      const top = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.013, 0.022, 0.012, 8)), diaM);
+      top.position.y = 0.009;
+      dGrp.add(top);
+      const bot = new THREE.Mesh(trackCGeo(new THREE.ConeGeometry(0.022, 0.024, 8)), diaM);
+      bot.rotation.x = Math.PI;
+      bot.position.y = -0.009;
+      dGrp.add(bot);
+    } else if (charm === 'cyberSkull') {
+      // Matte Black Skull with Pulsing Cyan-Magenta Neon Eyes & Spinning Halo
+      const skullM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.35, metalness: 0.65 }));
+      const eyeM = trackCMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x22d3ee,
+          emissive: 0x06b6d4,
+          emissiveIntensity: 2.6,
+          roughness: 0.1,
+        }),
+      );
+      const haloM = trackCMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xec4899,
+          emissive: 0xdb2777,
+          emissiveIntensity: 2.2,
+          roughness: 0.12,
+        }),
+      );
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.076, 0));
+      const head = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.018, 12, 10)), skullM);
+      head.position.set(0, -0.098, 0);
+      mirrorCharmPivot.add(head);
+      const jaw = new THREE.Mesh(trackCGeo(new THREE.BoxGeometry(0.018, 0.012, 0.016)), skullM);
+      jaw.position.set(0, -0.114, 0.004);
+      mirrorCharmPivot.add(jaw);
+      for (const sx of [-0.007, 0.007]) {
+        const eye = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.0042, 8, 8)), eyeM);
+        eye.position.set(sx, -0.098, 0.016);
+        mirrorCharmPivot.add(eye);
+      }
+      const ring = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.028, 0.0026, 8, 22)), haloM);
+      ring.position.set(0, -0.102, 0);
+      mirrorCharmPivot.add(ring);
+      charmPlasmaRingA = ring;
     }
   };
 

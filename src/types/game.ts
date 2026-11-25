@@ -61,7 +61,12 @@ export type CarColorId =
   | 'solarCopper'
   | 'royalViolet'
   | 'championGold'
-  | 'celestialCyan';
+  | 'celestialCyan'
+  | 'midnightTeal'
+  | 'cherryMagenta'
+  | 'champagneSilver'
+  | 'toxicAcid'
+  | 'volcanicRed';
 
 export type CarModelId =
   | 'dogan'
@@ -543,7 +548,12 @@ export type WheelStyleId =
   | 'animEmeraldPulse'
   | 'animSolarFlare'
   | 'animFrostCrystal'
-  | 'animGalaxyOrb';
+  | 'animGalaxyOrb'
+  | 'meshBBS'
+  | 'triBlade'
+  | 'hexMono'
+  | 'animVenomRing'
+  | 'animRubyPulse';
 
 export type WheelColorId =
   | 'silver'
@@ -553,7 +563,12 @@ export type WheelColorId =
   | 'bronze'
   | 'crimson'
   | 'cobalt'
-  | 'chrome';
+  | 'chrome'
+  | 'roseGoldRim'
+  | 'emeraldRim'
+  | 'violetRim'
+  | 'whiteRim'
+  | 'copperRim';
 
 export interface WheelStyleSpec {
   id: WheelStyleId;
@@ -981,6 +996,87 @@ export const WHEEL_STYLES: WheelStyleSpec[] = [
     handlingRatingBonus: 0.6,
     effectLabel: '+5.8 km/h · +8% Tutuş',
   },
+  {
+    id: 'triBlade',
+    rarity: 'rare',
+    name: '3-Kol JDM Drift',
+    subtitle: 'Geniş 3 kollu klasik Japon sokak drift jantı',
+    category: 'classic',
+    colorMode: 'colorable',
+    priceGold: 440,
+    speedBonusMs: 0.65,
+    gripBonus: 0.055,
+    steerBonus: 0.46,
+    speedRatingBonus: 0.2,
+    handlingRatingBonus: 0.4,
+    effectLabel: '+2.3 km/h · +5.5% Tutuş',
+  },
+  {
+    id: 'meshBBS',
+    rarity: 'rare',
+    name: 'Klasik Yarış Örgü',
+    subtitle: '16 çapraz telli merkez kilitli efsane GT örgüsü',
+    category: 'classic',
+    colorMode: 'colorable',
+    priceGold: 580,
+    speedBonusMs: 0.85,
+    gripBonus: 0.055,
+    steerBonus: 0.48,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.4,
+    effectLabel: '+3.1 km/h · +5.5% Tutuş',
+  },
+  {
+    id: 'hexMono',
+    rarity: 'epic',
+    name: 'Monoblok Altıgen',
+    subtitle: 'Dövme alüminyum 6 pencereli lüks monoblok jant',
+    category: 'classic',
+    colorMode: 'colorable',
+    priceGold: 790,
+    speedBonusMs: 1.05,
+    gripBonus: 0.06,
+    steerBonus: 0.52,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+3.8 km/h · +6% Tutuş',
+  },
+  {
+    id: 'animVenomRing',
+    rarity: 'legendary',
+    name: 'Zehirli Girdap',
+    subtitle: 'Dönen asit yeşili biyo-bıçaklar ve neon yanak halkası',
+    category: 'animated',
+    animated: true,
+    colorMode: 'fixed',
+    fixedColorReason:
+      'Zehirli Girdap neon asit yeşili ve zümrüt enerji paletini kullanır.',
+    priceGold: 1980,
+    speedBonusMs: 1.48,
+    gripBonus: 0.075,
+    steerBonus: 0.6,
+    speedRatingBonus: 0.5,
+    handlingRatingBonus: 0.6,
+    effectLabel: '+5.3 km/h · +7.5% Tutuş',
+  },
+  {
+    id: 'animRubyPulse',
+    rarity: 'legendary',
+    name: 'Yakut Reaktör',
+    subtitle: 'Ters dönen yakut-altın türbin bıçakları ve nabız çekirdeği',
+    category: 'animated',
+    animated: true,
+    colorMode: 'fixed',
+    fixedColorReason:
+      'Yakut Reaktör kızıl yakut ve 24K altın ışık paletini kullanır.',
+    priceGold: 2320,
+    speedBonusMs: 1.56,
+    gripBonus: 0.08,
+    steerBonus: 0.64,
+    speedRatingBonus: 0.6,
+    handlingRatingBonus: 0.6,
+    effectLabel: '+5.6 km/h · +8% Tutuş',
+  },
 ];
 
 export const WHEEL_COLORS: WheelColorOption[] = [
@@ -1056,6 +1152,51 @@ export const WHEEL_COLORS: WheelColorOption[] = [
     metalness: 0.82,
     roughness: 0.2,
   },
+  {
+    id: 'whiteRim',
+    rarity: 'common',
+    label: 'Ralli Beyazı',
+    hex: 0xf8fafc,
+    swatch: '#f8fafc',
+    metalness: 0.45,
+    roughness: 0.22,
+  },
+  {
+    id: 'emeraldRim',
+    rarity: 'rare',
+    label: 'Zümrüt Yeşil',
+    hex: 0x10b981,
+    swatch: '#10b981',
+    metalness: 0.82,
+    roughness: 0.2,
+  },
+  {
+    id: 'copperRim',
+    rarity: 'rare',
+    label: 'Yanık Bakır',
+    hex: 0xc2410c,
+    swatch: '#c2410c',
+    metalness: 0.86,
+    roughness: 0.22,
+  },
+  {
+    id: 'violetRim',
+    rarity: 'epic',
+    label: 'Ametist Mor',
+    hex: 0x9333ea,
+    swatch: '#9333ea',
+    metalness: 0.84,
+    roughness: 0.18,
+  },
+  {
+    id: 'roseGoldRim',
+    rarity: 'epic',
+    label: 'Roze Altın',
+    hex: 0xf4a4a4,
+    swatch: '#f4a4a4',
+    metalness: 0.92,
+    roughness: 0.15,
+  },
 ];
 
 export function getDefaultWheelForCar(modelId: CarModelId): CarWheelConfig {
@@ -1090,7 +1231,12 @@ export type BodyKitId =
   | 'gtAero'
   | 'widebody'
   | 'cyberWide'
-  | 'f1TrackPro';
+  | 'f1TrackPro'
+  | 'driftSpec'
+  | 'rallyArmor'
+  | 'gt3Endurance'
+  | 'royalGoldWide'
+  | 'hyperPlasmaKit';
 export type SpoilerId =
   | 'none'
   | 'ducktail'
@@ -1105,7 +1251,12 @@ export type SpoilerId =
   | 'animActiveAero'
   | 'animNeonBlade'
   | 'animPlasmaWing'
-  | 'animRgbPrismWing';
+  | 'animRgbPrismWing'
+  | 'gt3Swan'
+  | 'twinBladeCarbon'
+  | 'viperArch'
+  | 'animCyberHaloWing'
+  | 'animInfernoWing';
 export type LiveryId =
   | 'solid'
   | 'racingStripes'
@@ -1124,7 +1275,12 @@ export type LiveryId =
   | 'animPlasmaWave'
   | 'animHeatwave'
   | 'animMatrixRain'
-  | 'animInterstellar';
+  | 'animInterstellar'
+  | 'gtNumber'
+  | 'tigerClaw'
+  | 'tokyoDrifter'
+  | 'cyberHexArmor'
+  | 'animThunderVolt';
 
 export interface BodyKitSpec {
   id: BodyKitId;
@@ -1179,7 +1335,12 @@ export type PaintFinishId =
   | 'obsidianChrome'
   | 'emeraldLiquid'
   | 'royalGoldHolo'
-  | 'apexEclipse';
+  | 'apexEclipse'
+  | 'velvetPearl'
+  | 'brushedTitanium'
+  | 'candyGloss'
+  | 'copperLiquid'
+  | 'nebulaShift';
 
 export type PlateStyleId =
   | 'classic'
@@ -1203,7 +1364,12 @@ export type PlateStyleId =
   | 'animHoloPrism'
   | 'animStealthFlip'
   | 'levelBronzePlate'
-  | 'apexChampionPlate';
+  | 'apexChampionPlate'
+  | 'emeraldCarbon'
+  | 'tokyoNeonPink'
+  | 'arcticIce'
+  | 'animGoldPulse'
+  | 'animCyberLightning';
 
 export type UnderglowId =
   | 'none'
@@ -1222,7 +1388,12 @@ export type UnderglowId =
   | 'cyberBreathe'
   | 'lavaPulse'
   | 'levelGoldPulse'
-  | 'apexSpectrum';
+  | 'apexSpectrum'
+  | 'cobaltBlue'
+  | 'amberFire'
+  | 'mintIce'
+  | 'royalVioletPulse'
+  | 'emeraldWave';
 
 export type HeadlightId =
   | 'stock'
@@ -1235,7 +1406,12 @@ export type HeadlightId =
   | 'solarGold'
   | 'prismWhite'
   | 'apexGoldBeam'
-  | 'crimsonNovaBeam';
+  | 'crimsonNovaBeam'
+  | 'sapphireLaser'
+  | 'amberDrift'
+  | 'mintNeonLed'
+  | 'violetPhantom'
+  | 'roseDiamond';
 
 export type NitroFlameId =
   | 'blue'
@@ -1254,7 +1430,12 @@ export type NitroFlameId =
   | 'animPoliceNitro'
   | 'animAuroraPlasma'
   | 'emeraldNitro'
-  | 'imperialNitro';
+  | 'imperialNitro'
+  | 'cobaltJet'
+  | 'amberSpark'
+  | 'toxicLime'
+  | 'rubyPlasma'
+  | 'animGoldenStorm';
 
 export type DriftSmokeId =
   | 'white'
@@ -1274,7 +1455,12 @@ export type DriftSmokeId =
   | 'animLavaTrail'
   | 'animPoliceSmoke'
   | 'bronzeSparkSmoke'
-  | 'apexChampionSmoke';
+  | 'apexChampionSmoke'
+  | 'orange'
+  | 'lime'
+  | 'iceBlue'
+  | 'magenta'
+  | 'animGoldGlitter';
 
 export type RoofHatId =
   | 'none'
@@ -1297,7 +1483,12 @@ export type RoofHatId =
   | 'flameMohawk'
   | 'racingHelmet'
   | 'goldenTrophy'
-  | 'apexCrown';
+  | 'apexCrown'
+  | 'beret'
+  | 'beanie'
+  | 'astronaut'
+  | 'devilHorns'
+  | 'cyberVisorCrown';
 
 export type SteeringWheelId =
   | 'stock'
@@ -1318,7 +1509,12 @@ export type SteeringWheelId =
   | 'stealthJet'
   | 'hyperHolo'
   | 'levelCarbonPro'
-  | 'apexEmperorWheel';
+  | 'apexEmperorWheel'
+  | 'leatherRed'
+  | 'titaniumSport'
+  | 'driftSuedeBlue'
+  | 'emeraldCarbon'
+  | 'plasmaYoke';
 
 export type MirrorCharmId =
   | 'none'
@@ -1341,7 +1537,12 @@ export type MirrorCharmId =
   | 'miniJet'
   | 'checkeredFlag'
   | 'goldPiston'
-  | 'apexStar';
+  | 'apexStar'
+  | 'luckyClover'
+  | 'miniTrophy'
+  | 'miniNitro'
+  | 'diamondGem'
+  | 'cyberSkull';
 
 export type VisualCategory =
   | 'paintFinish'
@@ -1578,6 +1779,67 @@ export const BODY_KITS: BodyKitSpec[] = [
     handlingRatingBonus: 0.6,
     effectLabel: '+4.8 km/h · +7.5% Tutuş',
   },
+  {
+    id: 'driftSpec',
+    rarity: 'rare',
+    name: 'Drift Spec Kit',
+    subtitle: 'Alçak drift ön bıçak, yan rüzgar etekleri ve ikiz difüzör',
+    priceGold: 360,
+    speedBonusMs: 0.6,
+    gripBonus: 0.035,
+    speedRatingBonus: 0.2,
+    handlingRatingBonus: 0.3,
+    effectLabel: '+2.2 km/h · +3.5% Tutuş',
+  },
+  {
+    id: 'rallyArmor',
+    rarity: 'rare',
+    name: 'Ralli Zırh Kiti',
+    subtitle: 'Ön koruma plakası, geniş çamurluk korumaları ve ralli barı',
+    priceGold: 520,
+    speedBonusMs: 0.55,
+    gripBonus: 0.055,
+    speedRatingBonus: 0.2,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+2 km/h · +5.5% Tutuş',
+  },
+  {
+    id: 'gt3Endurance',
+    rarity: 'epic',
+    name: 'GT3 Dayanıklılık',
+    subtitle: 'Üç katlı ön kanard, uzun karbon splitter ve GT3 difüzörü',
+    priceGold: 820,
+    speedBonusMs: 1.0,
+    gripBonus: 0.06,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+3.6 km/h · +6% Tutuş',
+  },
+  {
+    id: 'royalGoldWide',
+    rarity: 'epic',
+    name: '24K Altın Geniş Kit',
+    subtitle: 'Geniş çamurluklar ve 24K fırçalanmış altın aero kenarları',
+    priceGold: 1120,
+    speedBonusMs: 1.15,
+    gripBonus: 0.07,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.6,
+    effectLabel: '+4.1 km/h · +7% Tutuş',
+  },
+  {
+    id: 'hyperPlasmaKit',
+    rarity: 'legendary',
+    name: 'Plazma Hiper Kit',
+    subtitle: 'Geniş karbon gövde, atan mor-altın plazma şeritleri ve bıçaklar',
+    priceGold: 1480,
+    speedBonusMs: 1.45,
+    gripBonus: 0.08,
+    speedRatingBonus: 0.5,
+    handlingRatingBonus: 0.7,
+    effectLabel: '+5.2 km/h · +8% Tutuş',
+    animated: true,
+  },
 ];
 
 export const SPOILERS: SpoilerSpec[] = [
@@ -1751,6 +2013,68 @@ export const SPOILERS: SpoilerSpec[] = [
     speedRatingBonus: 0.5,
     handlingRatingBonus: 0.7,
     effectLabel: '+4.8 km/h · +8.2% Tutuş',
+    animated: true,
+  },
+  {
+    id: 'gt3Swan',
+    rarity: 'rare',
+    name: 'Kuğu Boyun GT3',
+    subtitle: 'Üstten askılı kuğu boyun karbon pist kanadı',
+    priceGold: 490,
+    speedBonusMs: 0.5,
+    gripBonus: 0.052,
+    speedRatingBonus: 0.2,
+    handlingRatingBonus: 0.4,
+    effectLabel: '+1.8 km/h · +5.2% Tutuş',
+  },
+  {
+    id: 'twinBladeCarbon',
+    rarity: 'epic',
+    name: 'Çift Bıçak Aero',
+    subtitle: 'Üst üste çift profilli kavisli karbon pist kanadı',
+    priceGold: 740,
+    speedBonusMs: 0.72,
+    gripBonus: 0.064,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+2.6 km/h · +6.4% Tutuş',
+  },
+  {
+    id: 'viperArch',
+    rarity: 'epic',
+    name: 'Köprü Kemer Kanat',
+    subtitle: 'Gövdeye entegre tam genişlikte hiper otomobil kemer kanadı',
+    priceGold: 920,
+    speedBonusMs: 0.88,
+    gripBonus: 0.066,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.6,
+    effectLabel: '+3.2 km/h · +6.6% Tutuş',
+  },
+  {
+    id: 'animCyberHaloWing',
+    rarity: 'legendary',
+    name: 'Siber Halka Kanat',
+    subtitle: 'İki kule üzerinde atan neon enerji halkalı siber kanat',
+    priceGold: 1490,
+    speedBonusMs: 1.18,
+    gripBonus: 0.076,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.7,
+    effectLabel: '+4.2 km/h · +7.6% Tutuş',
+    animated: true,
+  },
+  {
+    id: 'animInfernoWing',
+    rarity: 'legendary',
+    name: 'İnferno Alev Kanat',
+    subtitle: 'Obsidiyen gövdeli, kor ateş şeritli nabız atan yarış kanadı',
+    priceGold: 1720,
+    speedBonusMs: 1.28,
+    gripBonus: 0.08,
+    speedRatingBonus: 0.5,
+    handlingRatingBonus: 0.7,
+    effectLabel: '+4.6 km/h · +8% Tutuş',
     animated: true,
   },
 ];
@@ -1927,6 +2251,54 @@ export const LIVERIES: LiverySpec[] = [
     overridesBaseColor: true,
     animated: true,
   },
+  {
+    id: 'gtNumber',
+    rarity: 'common',
+    name: 'Pist Numara #01',
+    subtitle: 'Kaput numara dairesi ve klasik yarış yan şeritleri',
+    priceGold: 280,
+    accentSwatch: 'linear-gradient(135deg, #f8fafc 0%, #f8fafc 46%, #ef4444 46%, #ef4444 62%, #18181b 62%)',
+    category: 'decal',
+  },
+  {
+    id: 'tigerClaw',
+    rarity: 'rare',
+    name: 'Kaplan Pençesi',
+    subtitle: 'Kaputtan çamurluklara yırtıcı üçlü pençe izi grafiği',
+    priceGold: 490,
+    accentSwatch: 'linear-gradient(125deg, #18181b 0%, #f97316 42%, #fde047 68%, #18181b 100%)',
+    category: 'decal',
+  },
+  {
+    id: 'tokyoDrifter',
+    rarity: 'epic',
+    name: 'Tokyo Gece Şeridi',
+    subtitle: 'Japon sokak drifti kızıl-beyaz keskin grafik şeritler',
+    priceGold: 820,
+    accentSwatch: 'linear-gradient(120deg, #09090b 0%, #ef4444 45%, #f8fafc 72%, #18181b 100%)',
+    category: 'decal',
+  },
+  {
+    id: 'cyberHexArmor',
+    rarity: 'epic',
+    name: 'Altıgen Zırh',
+    subtitle: 'Koyu karbon altıgen zırh plakaları ve neon kenar vurgusu',
+    priceGold: 1240,
+    accentSwatch: 'linear-gradient(135deg, #090d16 0%, #1e293b 45%, #f59e0b 65%, #06b6d4 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'animThunderVolt',
+    rarity: 'legendary',
+    name: 'Yüksek Voltaj',
+    subtitle: 'Gövdede sürekli akan yüksek voltajlı mavi-beyaz şimşek damarları',
+    priceGold: 2280,
+    accentSwatch: 'linear-gradient(120deg, #020617 0%, #2563eb 42%, #38bdf8 70%, #ffffff 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
 ];
 
 export const PAINT_FINISHES: PaintFinishSpec[] = [
@@ -2057,6 +2429,53 @@ export const PAINT_FINISHES: PaintFinishSpec[] = [
     colorMode: 'fixed',
     fixedColorReason: 'Apex Tutulma Seviye 100 özel dinamik şampiyon boyasıdır.',
     levelRoadLevel: 100,
+  },
+  {
+    id: 'velvetPearl',
+    rarity: 'rare',
+    name: 'Kadife Sedef',
+    subtitle: 'Yumuşak inci parıltılı ipeksi sedef vernik yüzeyi',
+    priceGold: 340,
+    swatch: 'linear-gradient(135deg, #f8fafc 0%, #e9d5ff 50%, #94a3b8 100%)',
+    colorMode: 'full',
+  },
+  {
+    id: 'brushedTitanium',
+    rarity: 'rare',
+    name: 'Fırçalanmış Titanyum',
+    subtitle: 'Yatay fırçalanmış metal doku · Seçtiğin renk metale ton verir',
+    priceGold: 520,
+    swatch: 'repeating-linear-gradient(0deg, #64748b 0px, #94a3b8 2px, #475569 4px)',
+    colorMode: 'tinted',
+  },
+  {
+    id: 'candyGloss',
+    rarity: 'epic',
+    name: 'Şeker Cam Vernik',
+    subtitle: 'Ultra derin ıslak şeker kaplama ve ayna parlaklığı',
+    priceGold: 680,
+    swatch: 'linear-gradient(135deg, #fb7185 0%, #e11d48 48%, #4c0519 100%)',
+    colorMode: 'full',
+  },
+  {
+    id: 'copperLiquid',
+    rarity: 'epic',
+    name: 'Sıvı Bakır Krom',
+    subtitle: 'Erimiş rose-bakır yansımalı ayna metal yüzeyi',
+    priceGold: 920,
+    swatch: 'linear-gradient(135deg, #fed7aa 0%, #ea580c 48%, #7c2d12 100%)',
+    colorMode: 'fixed',
+    fixedColorReason: 'Sıvı Bakır Krom kendi özel metalik bakır ayna tonunu kullanır.',
+  },
+  {
+    id: 'nebulaShift',
+    rarity: 'legendary',
+    name: 'Nebula Bukalemun',
+    subtitle: 'Derin mor, turkuaz ve fuşya arasında dinamik uzay geçişi',
+    priceGold: 1580,
+    swatch: 'linear-gradient(125deg, #3b0764 0%, #7c3aed 34%, #06b6d4 68%, #ec4899 100%)',
+    colorMode: 'fixed',
+    fixedColorReason: 'Nebula Bukalemun kozmik renkler arasında otomatik geçiş yapar.',
   },
 ];
 
@@ -2292,6 +2711,58 @@ export const PLATE_STYLES: PlateStyleSpec[] = [
     animated: true,
     levelRoadLevel: 55,
   },
+  {
+    id: 'emeraldCarbon',
+    rarity: 'rare',
+    name: 'Zümrüt Karbon',
+    subtitle: 'Karbon örgü zemin ve neon zümrüt yarış çerçevesi',
+    priceGold: 340,
+    bgSwatch: '#061912',
+    frameSwatch: '#10b981',
+    textSwatch: '#6ee7b7',
+  },
+  {
+    id: 'tokyoNeonPink',
+    rarity: 'epic',
+    name: 'Tokyo Neon Pembe',
+    subtitle: 'Gece yarışı sıcak pembe LED çerçeve ve Japon şeritleri',
+    priceGold: 480,
+    bgSwatch: '#190514',
+    frameSwatch: '#ec4899',
+    textSwatch: '#fbcfe8',
+  },
+  {
+    id: 'arcticIce',
+    rarity: 'epic',
+    name: 'Buzul Kristal',
+    subtitle: 'Buzlu gümüş-mavi kristal zemin ve ayna çerçeve',
+    priceGold: 540,
+    bgSwatch: 'linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%)',
+    frameSwatch: '#38bdf8',
+    textSwatch: '#0c4a6e',
+  },
+  {
+    id: 'animGoldPulse',
+    rarity: 'legendary',
+    name: 'Altın Nabız LED',
+    subtitle: 'Nefes alan 24K altın LED çerçeve ve parlak ışık taraması',
+    priceGold: 980,
+    bgSwatch: 'linear-gradient(135deg, #1c1304 0%, #422006 100%)',
+    frameSwatch: '#facc15',
+    textSwatch: '#fef08a',
+    animated: true,
+  },
+  {
+    id: 'animCyberLightning',
+    rarity: 'legendary',
+    name: 'Siber Şimşek',
+    subtitle: 'Plaka boyunca çakan yüksek voltaj mavi-beyaz elektrik arkları',
+    priceGold: 1220,
+    bgSwatch: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)',
+    frameSwatch: '#60a5fa',
+    textSwatch: '#e0f2fe',
+    animated: true,
+  },
 ];
 
 export const UNDERGLOWS: UnderglowSpec[] = [
@@ -2467,6 +2938,56 @@ export const UNDERGLOWS: UnderglowSpec[] = [
     mode: 'rainbow',
     levelRoadLevel: 70,
   },
+  {
+    id: 'cobaltBlue',
+    rarity: 'common',
+    name: 'Safir Mavi',
+    subtitle: 'Derin okyanus mavisi LED şasi altı ışık',
+    priceGold: 260,
+    hex: 0x2563eb,
+    swatch: '#2563eb',
+    mode: 'static',
+  },
+  {
+    id: 'amberFire',
+    rarity: 'rare',
+    name: 'Kehribar Turuncu',
+    subtitle: 'Sıcak amber-turuncu sokak yarışı neonu',
+    priceGold: 330,
+    hex: 0xf97316,
+    swatch: '#f97316',
+    mode: 'static',
+  },
+  {
+    id: 'mintIce',
+    rarity: 'rare',
+    name: 'Nane Buz',
+    subtitle: 'Ferah nane-turkuaz buz LED aydınlatma',
+    priceGold: 360,
+    hex: 0x2dd4bf,
+    swatch: '#2dd4bf',
+    mode: 'static',
+  },
+  {
+    id: 'royalVioletPulse',
+    rarity: 'epic',
+    name: 'Kraliyet Mor Nabız',
+    subtitle: 'Derin mor ve safir arasında nefes alan VIP neon',
+    priceGold: 620,
+    hex: 0x9333ea,
+    swatch: 'linear-gradient(90deg, #7e22ce 0%, #3b82f6 100%)',
+    mode: 'pulse',
+  },
+  {
+    id: 'emeraldWave',
+    rarity: 'epic',
+    name: 'Zümrüt Dalga',
+    subtitle: 'Zümrüt yeşili ve turkuaz arasında akan dinamik ışık',
+    priceGold: 740,
+    hex: 0x10b981,
+    swatch: 'linear-gradient(90deg, #059669 0%, #2dd4bf 55%, #38bdf8 100%)',
+    mode: 'aurora',
+  },
 ];
 
 export const HEADLIGHTS: HeadlightSpec[] = [
@@ -2592,6 +3113,61 @@ export const HEADLIGHTS: HeadlightSpec[] = [
     beamHex: 0xfb7185,
     swatch: 'linear-gradient(135deg, #ffe4e6 0%, #e11d48 100%)',
     levelRoadLevel: 88,
+  },
+  {
+    id: 'sapphireLaser',
+    rarity: 'rare',
+    name: 'Safir Lazer',
+    subtitle: 'Derin safir mavi uzun menzilli optik lazer far',
+    priceGold: 290,
+    bulbHex: 0xdbeafe,
+    emissiveHex: 0x3b82f6,
+    beamHex: 0x60a5fa,
+    swatch: '#3b82f6',
+  },
+  {
+    id: 'amberDrift',
+    rarity: 'rare',
+    name: 'Kehribar Drift',
+    subtitle: 'Ralli sis delici sıcak turuncu-kehribar LED far',
+    priceGold: 320,
+    bulbHex: 0xffedd5,
+    emissiveHex: 0xf97316,
+    beamHex: 0xfb923c,
+    swatch: '#f97316',
+  },
+  {
+    id: 'mintNeonLed',
+    rarity: 'epic',
+    name: 'Nane Neon LED',
+    subtitle: 'Buzlu nane-turkuaz yüksek parlaklıkta neon mercek',
+    priceGold: 420,
+    bulbHex: 0xccfbf1,
+    emissiveHex: 0x14b8a6,
+    beamHex: 0x2dd4bf,
+    swatch: '#2dd4bf',
+  },
+  {
+    id: 'violetPhantom',
+    rarity: 'epic',
+    name: 'Hayalet Mor',
+    subtitle: 'Karanlık gece otoyolu için elektrik mor lazer huzmesi',
+    priceGold: 510,
+    bulbHex: 0xf3e8ff,
+    emissiveHex: 0x9333ea,
+    beamHex: 0xa855f7,
+    swatch: '#9333ea',
+  },
+  {
+    id: 'roseDiamond',
+    rarity: 'legendary',
+    name: 'Roze Elmas Lazer',
+    subtitle: 'Pembe elmas parıltılı ultra keskin kristal lazer far',
+    priceGold: 680,
+    bulbHex: 0xfff1f2,
+    emissiveHex: 0xfb7185,
+    beamHex: 0xfda4af,
+    swatch: 'linear-gradient(135deg, #fff1f2 0%, #fb7185 100%)',
   },
 ];
 
@@ -2810,6 +3386,68 @@ export const NITRO_FLAMES: NitroFlameSpec[] = [
     animatedMode: 'aurora',
     levelRoadLevel: 60,
   },
+  {
+    id: 'cobaltJet',
+    rarity: 'rare',
+    name: 'Kobalt Jet',
+    subtitle: 'Yüksek basınçlı derin safir mavi jet egzoz alevi',
+    priceGold: 360,
+    coreHex: 0xdbeafe,
+    midHex: 0x2563eb,
+    tipHex: 0x1e3a8a,
+    coneHex: 0x3b82f6,
+    swatch: 'linear-gradient(90deg, #dbeafe 0%, #2563eb 55%, #1e3a8a 100%)',
+  },
+  {
+    id: 'amberSpark',
+    rarity: 'rare',
+    name: 'Kehribar Kor',
+    subtitle: 'Kızgın kehribar-bakır kıvılcımlı egzoz alevi',
+    priceGold: 410,
+    coreHex: 0xffedd5,
+    midHex: 0xf59e0b,
+    tipHex: 0x9a3412,
+    coneHex: 0xfb923c,
+    swatch: 'linear-gradient(90deg, #ffedd5 0%, #f59e0b 55%, #9a3412 100%)',
+  },
+  {
+    id: 'toxicLime',
+    rarity: 'epic',
+    name: 'Asit Yeşil Jet',
+    subtitle: 'Parlak radyoaktif sarı-yeşil yüksek ısı alevi',
+    priceGold: 540,
+    coreHex: 0xf7fee7,
+    midHex: 0xa3e635,
+    tipHex: 0x3f6212,
+    coneHex: 0xbef264,
+    swatch: 'linear-gradient(90deg, #f7fee7 0%, #a3e635 55%, #3f6212 100%)',
+  },
+  {
+    id: 'rubyPlasma',
+    rarity: 'epic',
+    name: 'Yakut Plazma',
+    subtitle: 'Yoğun yakut-fuşya yüksek yoğunluklu plazma jeti',
+    priceGold: 660,
+    coreHex: 0xffe4e6,
+    midHex: 0xe11d48,
+    tipHex: 0x4c0519,
+    coneHex: 0xf43f5e,
+    swatch: 'linear-gradient(90deg, #ffe4e6 0%, #e11d48 55%, #4c0519 100%)',
+  },
+  {
+    id: 'animGoldenStorm',
+    rarity: 'legendary',
+    name: 'Altın Fırtına',
+    subtitle: 'Altın-beyaz şimşek gibi dalgalanan dinamik süper jet',
+    priceGold: 1240,
+    coreHex: 0xffffff,
+    midHex: 0xfacc15,
+    tipHex: 0xd97706,
+    coneHex: 0xfde047,
+    swatch: 'linear-gradient(90deg, #ffffff 0%, #facc15 48%, #f97316 100%)',
+    animated: true,
+    animatedMode: 'aurora',
+  },
 ];
 
 export const DRIFT_SMOKES: DriftSmokeSpec[] = [
@@ -2989,6 +3627,53 @@ export const DRIFT_SMOKES: DriftSmokeSpec[] = [
     animated: true,
     colorMode: 'lava',
     levelRoadLevel: 80,
+  },
+  {
+    id: 'orange',
+    rarity: 'common',
+    name: 'Turuncu Duman',
+    subtitle: 'Canlı gün batımı turuncusu gösteri drift dumanı',
+    priceGold: 250,
+    smokeHex: 0xfb923c,
+    swatch: '#fb923c',
+  },
+  {
+    id: 'lime',
+    rarity: 'rare',
+    name: 'Asit Yeşil Duman',
+    subtitle: 'Neon fıstık yeşili yüksek görünürlüklü drift bulutu',
+    priceGold: 280,
+    smokeHex: 0xa3e635,
+    swatch: '#a3e635',
+  },
+  {
+    id: 'iceBlue',
+    rarity: 'rare',
+    name: 'Buzul Sis',
+    subtitle: 'Buz mavisi-beyaz serin arktik lastik dumanı',
+    priceGold: 310,
+    smokeHex: 0xbae6fd,
+    swatch: '#bae6fd',
+  },
+  {
+    id: 'magenta',
+    rarity: 'epic',
+    name: 'Fuşya Duman',
+    subtitle: 'Parlak elektrik fuşya gece drift sis perdesi',
+    priceGold: 420,
+    smokeHex: 0xe879f9,
+    swatch: '#e879f9',
+  },
+  {
+    id: 'animGoldGlitter',
+    rarity: 'legendary',
+    name: 'Altın Parıltı İzi',
+    subtitle: 'Altın-kehribar kor tonlarında parıldayan dinamik drift izi',
+    priceGold: 860,
+    smokeHex: 0xfde047,
+    swatch: 'linear-gradient(90deg, #fef08a 0%, #eab308 50%, #f97316 100%)',
+    animated: true,
+    colorMode: 'lava',
   },
 ];
 
@@ -3174,6 +3859,48 @@ export const ROOF_HATS: RoofHatSpec[] = [
     animated: true,
     levelRoadLevel: 95,
   },
+  {
+    id: 'beret',
+    rarity: 'common',
+    name: 'Paris Beresi',
+    subtitle: 'Hafif yana yatık şık kızıl yün bere',
+    priceGold: 210,
+    swatch: 'linear-gradient(135deg, #be123c 0%, #e11d48 68%, #4c0519 100%)',
+  },
+  {
+    id: 'beanie',
+    rarity: 'common',
+    name: 'Kışlık Bere',
+    subtitle: 'Lacivert-amber örgü bere ve üst ponpon',
+    priceGold: 230,
+    swatch: 'linear-gradient(135deg, #1e3a8a 0%, #f59e0b 65%, #f8fafc 100%)',
+  },
+  {
+    id: 'astronaut',
+    rarity: 'epic',
+    name: 'Astronot Kaskı',
+    subtitle: 'İnci beyazı uzay kaskı ve yansıtıcı 24K altın vizör',
+    priceGold: 560,
+    swatch: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 52%, #eab308 100%)',
+  },
+  {
+    id: 'devilHorns',
+    rarity: 'epic',
+    name: 'Şeytan Boynuzları',
+    subtitle: 'Kıvrımlı parlak kızıl-obsidyen ikiz tavan boynuzları',
+    priceGold: 620,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #dc2626 55%, #f97316 100%)',
+    animated: true,
+  },
+  {
+    id: 'cyberVisorCrown',
+    rarity: 'legendary',
+    name: 'Siber Holo Taç',
+    subtitle: 'Tavan üstünde süzülüp dönen neon cyan-mor hologram taç',
+    priceGold: 980,
+    swatch: 'linear-gradient(135deg, #22d3ee 0%, #a855f7 55%, #ec4899 100%)',
+    animated: true,
+  },
 ];
 
 export const STEERING_WHEELS: SteeringWheelSpec[] = [
@@ -3349,6 +4076,50 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     hasShiftLeds: true,
     animated: true,
     levelRoadLevel: 92,
+  },
+  {
+    id: 'leatherRed',
+    rarity: 'common',
+    name: 'Kırmızı Dikiş GT',
+    subtitle: 'Siyah delikli deri simit, kızıl kollar ve kırmızı merkez şeridi',
+    priceGold: 240,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #27272a 62%, #dc2626 100%)',
+  },
+  {
+    id: 'titaniumSport',
+    rarity: 'rare',
+    name: 'Fırçalanmış Titanyum',
+    subtitle: 'Altı düz CNC titanyum simit ve mavi yarış halkası',
+    priceGold: 390,
+    swatch: 'linear-gradient(135deg, #94a3b8 0%, #cbd5e1 62%, #0284c7 100%)',
+  },
+  {
+    id: 'driftSuedeBlue',
+    rarity: 'rare',
+    name: 'Mavi Süet Drift',
+    subtitle: 'Kobalt mavi derin süet simit ve sarı üst hizalama bandı',
+    priceGold: 450,
+    swatch: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 68%, #facc15 100%)',
+  },
+  {
+    id: 'emeraldCarbon',
+    rarity: 'epic',
+    name: 'Zümrüt Karbon GT',
+    subtitle: 'Karbon D-kesim simit, zümrüt neon şerit ve 9 RPM LED',
+    priceGold: 740,
+    swatch: 'linear-gradient(135deg, #09090b 0%, #10b981 62%, #6ee7b7 100%)',
+    hasShiftLeds: true,
+    animated: true,
+  },
+  {
+    id: 'plasmaYoke',
+    rarity: 'legendary',
+    name: 'Plazma Fütürist Yoke',
+    subtitle: 'Atan mor-camgöbeği plazma kelebek kumanda ve 9 RPM LED',
+    priceGold: 1280,
+    swatch: 'linear-gradient(135deg, #1e1b4b 0%, #a855f7 52%, #22d3ee 100%)',
+    hasShiftLeds: true,
+    animated: true,
   },
 ];
 
@@ -3530,6 +4301,48 @@ export const MIRROR_CHARMS: MirrorCharmSpec[] = [
     swatch: 'linear-gradient(135deg, #fde047 0%, #fb7185 55%, #38bdf8 100%)',
     animated: true,
     levelRoadLevel: 85,
+  },
+  {
+    id: 'luckyClover',
+    rarity: 'common',
+    name: 'Dört Yaprak Yonca',
+    subtitle: 'Zümrüt yeşili uğurlu dört yapraklı yonca süsü',
+    priceGold: 180,
+    swatch: 'linear-gradient(135deg, #15803d 0%, #22c55e 62%, #bbf7d0 100%)',
+  },
+  {
+    id: 'miniTrophy',
+    rarity: 'rare',
+    name: 'Mini Şampiyon Kupası',
+    subtitle: 'Parlak altın-gümüş minyatür yarış kupası',
+    priceGold: 250,
+    swatch: 'linear-gradient(135deg, #fef08a 0%, #f59e0b 62%, #e4e4e7 100%)',
+  },
+  {
+    id: 'miniNitro',
+    rarity: 'rare',
+    name: 'Mini Nitro Tüpü',
+    subtitle: 'Metalik mavi NOS tüpü ve krom basınç vanası',
+    priceGold: 310,
+    swatch: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 62%, #e4e4e7 100%)',
+  },
+  {
+    id: 'diamondGem',
+    rarity: 'epic',
+    name: 'Safir Elmas',
+    subtitle: 'Dönerek parıldayan buz mavisi kesme elmas taşı',
+    priceGold: 520,
+    swatch: 'linear-gradient(135deg, #e0f2fe 0%, #38bdf8 55%, #1d4ed8 100%)',
+    animated: true,
+  },
+  {
+    id: 'cyberSkull',
+    rarity: 'legendary',
+    name: 'Siber Neon Kurukafa',
+    subtitle: 'Mat siyah kurukafa, atan neon gözler ve dönen siber halka',
+    priceGold: 790,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #22d3ee 52%, #ec4899 100%)',
+    animated: true,
   },
 ];
 
@@ -4352,6 +5165,46 @@ export const CAR_COLORS: CarColorOption[] = [
     swatch: '#06b6d4',
     accentHex: 0xf43f5e,
     levelRoadLevel: 90,
+  },
+  {
+    id: 'midnightTeal',
+    rarity: 'rare',
+    label: 'Gece Turkuazı',
+    hex: 0x0f766e,
+    swatch: '#0f766e',
+    accentHex: 0x5eead4,
+  },
+  {
+    id: 'cherryMagenta',
+    rarity: 'rare',
+    label: 'Kiraz Fuşyası',
+    hex: 0xdb2777,
+    swatch: '#db2777',
+    accentHex: 0xfbcfe8,
+  },
+  {
+    id: 'champagneSilver',
+    rarity: 'epic',
+    label: 'Şampanya Platin',
+    hex: 0xd6cbb8,
+    swatch: '#d6cbb8',
+    accentHex: 0xf59e0b,
+  },
+  {
+    id: 'toxicAcid',
+    rarity: 'epic',
+    label: 'Asit Sarı-Yeşil',
+    hex: 0xa3e635,
+    swatch: '#a3e635',
+    accentHex: 0x18181b,
+  },
+  {
+    id: 'volcanicRed',
+    rarity: 'legendary',
+    label: 'Volkanik Kızıl',
+    hex: 0xb91c1c,
+    swatch: '#b91c1c',
+    accentHex: 0xfde047,
   },
 ];
 
