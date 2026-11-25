@@ -535,10 +535,191 @@ export function createPlayerCar(
   const lowerBodyGeo = trackGeo(
     buildSculptedBodyGeometry(bp.stations, bp.sculpt),
   );
+  lowerBodyGeo.computeBoundingBox();
   const lowerBody = new THREE.Mesh(lowerBodyGeo, paintMaterial);
   lowerBody.castShadow = true;
   lowerBody.receiveShadow = true;
   chassisGroup.add(lowerBody);
+
+  // 1b. Special 3D Liquid Aquarium Tank Interior (Visible only when livery === 'animLiquidAquarium')
+  // Sloshing blue water physics + low-poly swimming orange goldfish + rising air bubbles inside translucent glass chassis!
+  const aquariumGroup = new THREE.Group();
+  aquariumGroup.visible = false;
+  chassisGroup.add(aquariumGroup);
+
+  const lbBox = lowerBodyGeo.boundingBox!;
+  const aqW = Math.max(0.6, (lbBox.max.x - lbBox.min.x) * 0.78);
+  const aqH = Math.max(0.28, (lbBox.max.y - lbBox.min.y) * 0.64);
+  const aqL = Math.max(1.2, (lbBox.max.z - lbBox.min.z) * 0.72);
+  const aqCenterY = lbBox.min.y + (lbBox.max.y - lbBox.min.y) * 0.44;
+  const aqCenterZ = (lbBox.min.z + lbBox.max.z) * 0.5;
+
+  const aquariumWaterPivot = new THREE.Group();
+  aquariumWaterPivot.position.set(0, aqCenterY, aqCenterZ);
+  aquariumGroup.add(aquariumWaterPivot);
+
+  const aqWaterMat = trackMat(
+    new THREE.MeshPhysicalMaterial({
+      color: 0x0ea5e9,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.48,
+      roughness: 0.08,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0.64,
+      depthWrite: false,
+    }),
+  );
+  const aqSurfaceMat = trackMat(
+    new THREE.MeshStandardMaterial({
+      color: 0x7dd3fc,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.85,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.78,
+      side: THREE.DoubleSide,
+    }),
+  );
+  const aqWaterBox = new THREE.Mesh(
+    trackGeo(new THREE.BoxGeometry(aqW, aqH, aqL)),
+    aqWaterMat,
+  );
+  aquariumWaterPivot.add(aqWaterBox);
+
+  const aqWaterSurface = new THREE.Mesh(
+    trackGeo(new THREE.PlaneGeometry(aqW * 0.99, aqL * 0.99, 6, 10)),
+    aqSurfaceMat,
+  );
+  aqWaterSurface.rotation.x = -Math.PI * 0.5;
+  aqWaterSurface.position.y = aqH * 0.5;
+  aquariumWaterPivot.add(aqWaterSurface);
+
+  // Subtle swaying emerald aquarium seaweed tufts along tank bottom
+  const aqPlantMat = trackMat(
+    new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.75 }),
+  );
+  const aqPlantGeo = trackGeo(new THREE.ConeGeometry(0.032, aqH * 0.52, 5));
+  for (const [px, pz] of [
+    [-aqW * 0.3, -aqL * 0.25],
+    [aqW * 0.28, -aqL * 0.12],
+    [-aqW * 0.24, aqL * 0.22],
+    [aqW * 0.26, aqL * 0.28],
+  ]) {
+    const plant = new THREE.Mesh(aqPlantGeo, aqPlantMat);
+    plant.position.set(px, -aqH * 0.24, pz);
+    aquariumWaterPivot.add(plant);
+  }
+
+  // 5 Low-Poly 3D Orange Goldfish swimming dynamically inside the water tank!
+  const fishOrangeMat = trackMat(
+    new THREE.MeshStandardMaterial({
+      color: 0xff7a18,
+      emissive: 0xea580c,
+      emissiveIntensity: 0.65,
+      roughness: 0.26,
+      metalness: 0.12,
+    }),
+  );
+  const fishGoldFinMat = trackMat(
+    new THREE.MeshStandardMaterial({
+      color: 0xfde047,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 0.5,
+      roughness: 0.28,
+    }),
+  );
+  const fishEyeMat = trackMat(
+    new THREE.MeshBasicMaterial({ color: 0x09090b }),
+  );
+  const fishBodyGeo = trackGeo(new THREE.OctahedronGeometry(0.068, 0));
+  const fishTailGeo = trackGeo(new THREE.ConeGeometry(0.052, 0.088, 3));
+  const fishFinGeo = trackGeo(new THREE.ConeGeometry(0.028, 0.056, 3));
+  const fishEyeGeo = trackGeo(new THREE.SphereGeometry(0.012, 6, 6));
+
+  interface AquariumFishEntry {
+    root: THREE.Group;
+    tail: THREE.Mesh;
+    phase: number;
+    speed: number;
+    radiusX: number;
+    radiusZ: number;
+    baseY: number;
+    dir: number;
+  }
+  const aquariumFishes: AquariumFishEntry[] = [];
+  for (let i = 0; i < 5; i++) {
+    const fg = new THREE.Group();
+    const scale = 0.85 + (i % 3) * 0.18;
+    fg.scale.setScalar(scale);
+
+    // Low-poly diamond goldfish body oriented along +Z
+    const fBody = new THREE.Mesh(fishBodyGeo, fishOrangeMat);
+    fBody.scale.set(0.62, 0.92, 1.48);
+    fg.add(fBody);
+
+    // Dorsal fin
+    const dorsal = new THREE.Mesh(fishFinGeo, fishGoldFinMat);
+    dorsal.position.set(0, 0.062, -0.01);
+    dorsal.rotation.x = -0.5;
+    fg.add(dorsal);
+
+    // Wagging fanned goldfish tail fin at rear (-Z)
+    const fTail = new THREE.Mesh(fishTailGeo, fishGoldFinMat);
+    fTail.rotation.x = Math.PI * 0.5;
+    fTail.scale.set(0.32, 1.0, 1.15);
+    fTail.position.set(0, 0, -0.115);
+    fg.add(fTail);
+
+    // Cute tiny black eyes on both sides of head (+Z)
+    for (const sx of [-1, 1]) {
+      const eye = new THREE.Mesh(fishEyeGeo, fishEyeMat);
+      eye.position.set(sx * 0.032, 0.016, 0.055);
+      fg.add(eye);
+    }
+
+    aquariumWaterPivot.add(fg);
+    aquariumFishes.push({
+      root: fg,
+      tail: fTail,
+      phase: i * 1.28,
+      speed: 0.72 + (i % 3) * 0.24,
+      radiusX: aqW * (0.22 + (i % 2) * 0.12),
+      radiusZ: aqL * (0.24 + ((i + 1) % 3) * 0.08),
+      baseY: (i - 2) * (aqH * 0.13),
+      dir: i % 2 === 0 ? 1 : -1,
+    });
+  }
+
+  // 14 Rising Air Bubbles floating upward through the aquarium water
+  const aqBubbleMat = trackMat(
+    new THREE.MeshBasicMaterial({
+      color: 0xe0f2fe,
+      transparent: true,
+      opacity: 0.72,
+    }),
+  );
+  const aqBubbleGeo = trackGeo(new THREE.SphereGeometry(0.018, 6, 6));
+  const aquariumBubbles: { mesh: THREE.Mesh; x: number; z: number; phase: number; speed: number }[] = [];
+  for (let i = 0; i < 14; i++) {
+    const bm = new THREE.Mesh(aqBubbleGeo, aqBubbleMat);
+    const s = 0.65 + (i % 4) * 0.28;
+    bm.scale.setScalar(s);
+    const bx = (((i * 73) % 100) / 100 - 0.5) * aqW * 0.78;
+    const bz = (((i * 41) % 100) / 100 - 0.5) * aqL * 0.78;
+    aquariumWaterPivot.add(bm);
+    aquariumBubbles.push({
+      mesh: bm,
+      x: bx,
+      z: bz,
+      phase: i * 0.47,
+      speed: 0.35 + (i % 4) * 0.12,
+    });
+  }
+
+  let aquariumSloshAngle = 0;
+  let aquariumSloshVel = 0;
+  let lastAqTimeSec = -1;
 
   const unitBoxGeo = trackGeo(new THREE.BoxGeometry(1, 1, 1));
   const stockArchFlareGroup = new THREE.Group();
@@ -4621,6 +4802,41 @@ export function createPlayerCar(
       paintMaterial.emissive.setHex(0x000000);
       paintMaterial.emissiveIntensity = 0;
     }
+
+    const isAquarium = currentCustom.livery === 'animLiquidAquarium';
+    aquariumGroup.visible = isAquarium;
+    if (isAquarium) {
+      paintMaterial.transparent = true;
+      paintMaterial.opacity = 0.34;
+      paintMaterial.roughness = 0.05;
+      paintMaterial.metalness = 0.08;
+      paintMaterial.clearcoat = 1.0;
+      paintMaterial.clearcoatRoughness = 0.02;
+      paintMaterial.depthWrite = false;
+      paintMaterial.emissiveIntensity = 0.42;
+    } else {
+      paintMaterial.transparent = false;
+      paintMaterial.opacity = 1.0;
+      paintMaterial.depthWrite = true;
+      if (currentCustom.livery === 'animVenomSymbiote') {
+        paintMaterial.roughness = 0.12;
+        paintMaterial.metalness = 0.35;
+        paintMaterial.clearcoat = 1.0;
+        paintMaterial.clearcoatRoughness = 0.03;
+      } else if (
+        currentCustom.livery === 'knittedSweater' ||
+        currentCustom.livery === 'lushGrassTurf'
+      ) {
+        paintMaterial.roughness = 0.94;
+        paintMaterial.metalness = 0.02;
+        paintMaterial.clearcoat = 0.0;
+      } else if (currentCustom.livery === 'carvedWood') {
+        paintMaterial.roughness = 0.44;
+        paintMaterial.metalness = 0.06;
+        paintMaterial.clearcoat = 0.35;
+        paintMaterial.clearcoatRoughness = 0.28;
+      }
+    }
     paintMaterial.needsUpdate = true;
   };
 
@@ -7237,6 +7453,1375 @@ export function createPlayerCar(
         shard.position.set(Math.sin(a) * 0.24, 0.09, Math.cos(a) * 0.24);
         orbit.add(shard);
       }
+    } else if (hatId === 'trafficCone') {
+      // Hilarious slightly-tilted fluorescent orange Traffic Cone with white reflective bands!
+      const coneGroup = new THREE.Group();
+      coneGroup.rotation.z = -0.07;
+      coneGroup.rotation.x = 0.05;
+      customHatGroup.add(coneGroup);
+
+      const rubberMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.88, metalness: 0.08 }),
+      );
+      const orangeMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.38, metalness: 0.08 }),
+      );
+      const reflectMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xf8fafc,
+          emissive: 0xe2e8f0,
+          emissiveIntensity: 0.35,
+          roughness: 0.22,
+          metalness: 0.3,
+        }),
+      );
+
+      // Heavy black square rubber base
+      const base = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.44, 0.045, 0.44)),
+        rubberMat,
+      );
+      base.position.y = 0.022;
+      base.castShadow = true;
+      coneGroup.add(base);
+
+      // Tall tapered orange cone body
+      const body = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.048, 0.175, 0.52, 20)),
+        orangeMat,
+      );
+      body.position.y = 0.29;
+      body.castShadow = true;
+      coneGroup.add(body);
+
+      // Two crisp white reflective collar stripes
+      const band1 = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.089, 0.112, 0.092, 20)),
+        reflectMat,
+      );
+      band1.position.y = 0.36;
+      coneGroup.add(band1);
+      const band2 = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.128, 0.146, 0.068, 20)),
+        reflectMat,
+      );
+      band2.position.y = 0.21;
+      coneGroup.add(band2);
+    } else if (hatId === 'taxiSign') {
+      // Illuminated Classic Yellow Roof TAXI Sign with Checkered Side Trim
+      const baseMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.45, metalness: 0.65 }),
+      );
+      const yellowGlowMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xfacc15,
+          emissive: 0xeab308,
+          emissiveIntensity: 1.35,
+          roughness: 0.22,
+          metalness: 0.1,
+        }),
+      );
+      const whiteMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4, metalness: 0.1 }),
+      );
+      hatCrownGemMats = [yellowGlowMat];
+
+      // Magnetic black roof base mount
+      const mount = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.54, 0.042, 0.22)),
+        baseMat,
+      );
+      mount.position.y = 0.02;
+      mount.castShadow = true;
+      customHatGroup.add(mount);
+
+      // Glowing trapezoidal yellow light dome
+      const dome = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.11, 0.14, 0.48, 4)),
+        yellowGlowMat,
+      );
+      dome.rotation.z = Math.PI * 0.5;
+      dome.rotation.x = Math.PI * 0.25;
+      dome.scale.set(1.0, 1.0, 0.85);
+      dome.position.y = 0.115;
+      dome.castShadow = true;
+      customHatGroup.add(dome);
+
+      // Black & white checkered trim + bold dark "TAXI" letter-blocks on front (-Z) & back (+Z)
+      const checkerGeo = trackHatGeo(new THREE.BoxGeometry(0.052, 0.036, 0.014));
+      for (const sz of [-1, 1]) {
+        for (let i = 0; i < 8; i++) {
+          const sq = new THREE.Mesh(checkerGeo, i % 2 === 0 ? baseMat : whiteMat);
+          sq.position.set(-0.185 + i * 0.053, 0.052, sz * 0.098);
+          customHatGroup.add(sq);
+        }
+        // Stylized black bar emblem representing TAXI badge
+        const badge = new THREE.Mesh(
+          trackHatGeo(new THREE.BoxGeometry(0.32, 0.055, 0.012)),
+          baseMat,
+        );
+        badge.position.set(0, 0.125, sz * 0.088);
+        customHatGroup.add(badge);
+        for (const ox of [-0.105, -0.035, 0.035, 0.105]) {
+          const letterPip = new THREE.Mesh(
+            trackHatGeo(new THREE.BoxGeometry(0.042, 0.032, 0.016)),
+            yellowGlowMat,
+          );
+          letterPip.position.set(ox, 0.125, sz * 0.089);
+          customHatGroup.add(letterPip);
+        }
+      }
+    } else if (hatId === 'sharkFinHat') {
+      // Giant Sleek Great-White Shark Dorsal Fin slicing up from the roof (facing -Z)
+      const sharkTopMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.42, metalness: 0.25 }),
+      );
+      const sharkBellyMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xdbeafe, roughness: 0.55, metalness: 0.12 }),
+      );
+
+      const finShape = new THREE.Shape();
+      finShape.moveTo(-0.34, 0);      // Front leading base (-Z after rotateY)
+      finShape.quadraticCurveTo(-0.08, 0.36, 0.24, 0.48); // Sweeping leading edge to tip
+      finShape.quadraticCurveTo(0.14, 0.3, 0.2, 0.24);    // Battle notch
+      finShape.quadraticCurveTo(0.11, 0.14, 0.22, 0);     // Curved trailing edge
+      finShape.closePath();
+
+      const finGeo = trackHatGeo(
+        new THREE.ExtrudeGeometry(finShape, {
+          depth: 0.055,
+          bevelEnabled: true,
+          bevelThickness: 0.022,
+          bevelSize: 0.018,
+          bevelSegments: 4,
+        }),
+      );
+      finGeo.translate(0, 0, -0.0275);
+      // Orient shape's -X (leading edge) toward car's -Z (forward)
+      finGeo.rotateY(-Math.PI * 0.5);
+      const fin = new THREE.Mesh(finGeo, sharkTopMat);
+      fin.position.set(0, -0.005, 0.02);
+      fin.castShadow = true;
+      customHatGroup.add(fin);
+
+      // Subtle white-slate dorsal collar seam at roof base
+      const collar = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.055, 0.095, 0.04, 14)),
+        sharkBellyMat,
+      );
+      collar.scale.set(0.9, 1.0, 3.1);
+      collar.position.set(0, 0.015, 0.02);
+      customHatGroup.add(collar);
+    } else if (hatId === 'pumpkinLantern') {
+      // Glowing Carved Halloween Jack-o'-Lantern Pumpkin on the roof!
+      const pumpkinMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xea580c, roughness: 0.58, metalness: 0.06 }),
+      );
+      const pumpkinShadeMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.65, metalness: 0.05 }),
+      );
+      const stemMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.85, metalness: 0.05 }),
+      );
+      const candleGlowMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xfef08a,
+          emissive: 0xf59e0b,
+          emissiveIntensity: 2.3,
+          roughness: 0.15,
+        }),
+      );
+      hatCrownGemMats = [candleGlowMat];
+
+      // 8 sculpted overlapping vertical pumpkin ribs for authentic gourd silhouette
+      const ribGeo = trackHatGeo(new THREE.SphereGeometry(0.185, 14, 12));
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        const rib = new THREE.Mesh(ribGeo, i % 2 === 0 ? pumpkinMat : pumpkinShadeMat);
+        rib.scale.set(0.74, 0.88, 0.74);
+        rib.position.set(Math.sin(a) * 0.125, 0.165, Math.cos(a) * 0.125);
+        rib.castShadow = true;
+        customHatGroup.add(rib);
+      }
+
+      // Twisted green pumpkin stem on top
+      const stem = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.028, 0.048, 0.14, 8)),
+        stemMat,
+      );
+      stem.position.set(0.01, 0.35, 0.01);
+      stem.rotation.z = -0.24;
+      stem.rotation.x = 0.15;
+      customHatGroup.add(stem);
+
+      // Glowing carved Jack-o'-Lantern face on BOTH front (-Z) & rear (+Z) so visible from chase & garage views!
+      const eyeGeo = trackHatGeo(new THREE.ConeGeometry(0.052, 0.068, 3));
+      const noseGeo = trackHatGeo(new THREE.ConeGeometry(0.03, 0.044, 3));
+      for (const sz of [-1, 1]) {
+        for (const sx of [-1, 1]) {
+          const eye = new THREE.Mesh(eyeGeo, candleGlowMat);
+          eye.position.set(sx * 0.088, 0.215, sz * 0.232);
+          eye.rotation.y = sz > 0 ? 0 : Math.PI;
+          eye.rotation.z = sx * -0.14;
+          customHatGroup.add(eye);
+        }
+        const nose = new THREE.Mesh(noseGeo, candleGlowMat);
+        nose.position.set(0, 0.162, sz * 0.242);
+        nose.rotation.y = sz > 0 ? 0 : Math.PI;
+        customHatGroup.add(nose);
+
+        // Jagged glowing grin teeth
+        for (let t = -2; t <= 2; t++) {
+          const grinSeg = new THREE.Mesh(
+            trackHatGeo(new THREE.BoxGeometry(0.04, t % 2 === 0 ? 0.044 : 0.026, 0.024)),
+            candleGlowMat,
+          );
+          grinSeg.position.set(
+            t * 0.044,
+            0.095 + Math.abs(t) * 0.014,
+            sz * (0.236 - Math.abs(t) * 0.016),
+          );
+          grinSeg.rotation.y = sz * t * -0.18;
+          customHatGroup.add(grinSeg);
+        }
+      }
+    } else if (hatId === 'headcrabHat') {
+      // Full 3D Half-Life Headcrab clinging straight onto the car roof!
+      const fleshMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xc99c72, roughness: 0.72, metalness: 0.06 }),
+      );
+      const mottleMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x9b5e42, roughness: 0.78, metalness: 0.08 }),
+      );
+      const mawMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x7f1d2d, roughness: 0.42, metalness: 0.12 }),
+      );
+      const clawMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x3b2316, roughness: 0.34, metalness: 0.24 }),
+      );
+
+      // Plump rounded fleshy Headcrab dome body hunched over the roof
+      const body = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.24, 18, 14)),
+        fleshMat,
+      );
+      body.scale.set(1.12, 0.82, 1.24);
+      body.position.set(0, 0.22, 0.01);
+      body.castShadow = true;
+      customHatGroup.add(body);
+
+      // Organic mottled dorsal ridges & rear haunch lump
+      for (const [rx, ry, rz, sx, sy, sz] of [
+        [0, 0.34, 0.04, 0.18, 0.09, 0.22],
+        [-0.13, 0.27, -0.05, 0.11, 0.1, 0.18],
+        [0.13, 0.27, -0.05, 0.11, 0.1, 0.18],
+      ]) {
+        const lump = new THREE.Mesh(
+          trackHatGeo(new THREE.SphereGeometry(1, 12, 10)),
+          mottleMat,
+        );
+        lump.scale.set(sx, sy, sz);
+        lump.position.set(rx, ry, rz);
+        customHatGroup.add(lump);
+      }
+
+      // Crimson under-maw peeking beneath the belly
+      const belly = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.15, 12, 8)),
+        mawMat,
+      );
+      belly.scale.set(1.0, 0.45, 1.05);
+      belly.position.set(0, 0.08, -0.02);
+      customHatGroup.add(belly);
+
+      // 4 Chunky Articulated Crab Legs gripping onto the roof (2 big front pincers toward -Z, 2 rear legs toward +Z)
+      const upperLegGeo = trackHatGeo(new THREE.CylinderGeometry(0.042, 0.056, 0.24, 9));
+      const lowerClawGeo = trackHatGeo(new THREE.ConeGeometry(0.042, 0.26, 7));
+      const legs = [
+        // Front left & right long pincer legs reaching forward (-Z) and downward onto roof
+        { sx: -1, zMul: -1, kx: -0.32, ky: 0.25, kz: -0.26, tx: -0.29, ty: 0.02, tz: -0.36 },
+        { sx: 1, zMul: -1, kx: 0.32, ky: 0.25, kz: -0.26, tx: 0.29, ty: 0.02, tz: -0.36 },
+        // Rear left & right bracing legs reaching backward (+Z) onto roof
+        { sx: -1, zMul: 1, kx: -0.3, ky: 0.2, kz: 0.22, tx: -0.32, ty: 0.015, tz: 0.31 },
+        { sx: 1, zMul: 1, kx: 0.3, ky: 0.2, kz: 0.22, tx: 0.32, ty: 0.015, tz: 0.31 },
+      ];
+      for (const leg of legs) {
+        const start = new THREE.Vector3(leg.sx * 0.15, 0.2, leg.zMul * 0.09);
+        const knee = new THREE.Vector3(leg.kx, leg.ky, leg.kz);
+        const tip = new THREE.Vector3(leg.tx, leg.ty, leg.tz);
+
+        const seg1Dir = knee.clone().sub(start);
+        const seg1 = new THREE.Mesh(upperLegGeo, leg.zMul < 0 ? fleshMat : mottleMat);
+        seg1.position.copy(start).addScaledVector(seg1Dir, 0.5);
+        seg1.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), seg1Dir.clone().normalize());
+        seg1.castShadow = true;
+        customHatGroup.add(seg1);
+
+        const joint = new THREE.Mesh(
+          trackHatGeo(new THREE.SphereGeometry(0.052, 8, 8)),
+          mottleMat,
+        );
+        joint.position.copy(knee);
+        customHatGroup.add(joint);
+
+        const seg2Dir = tip.clone().sub(knee);
+        const seg2 = new THREE.Mesh(lowerClawGeo, clawMat);
+        seg2.position.copy(knee).addScaledVector(seg2Dir, 0.5);
+        seg2.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), seg2Dir.clone().normalize());
+        seg2.castShadow = true;
+        customHatGroup.add(seg2);
+      }
+    } else if (hatId === 'pharaohNemes') {
+      // Regal Ancient Egyptian Pharaoh Nemes Headdress (Gold & Lapis Stripes + Royal Cobra Uraeus!)
+      const goldMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.24, metalness: 0.88 }),
+      );
+      const lapisMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.35, metalness: 0.42 }),
+      );
+      const turqGlowMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x22d3ee,
+          emissive: 0x06b6d4,
+          emissiveIntensity: 1.9,
+          roughness: 0.14,
+        }),
+      );
+      hatCrownGemMats = [turqGlowMat];
+
+      // Rounded golden-striped crown dome
+      const dome = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.27, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.56)),
+        goldMat,
+      );
+      dome.scale.set(1.06, 1.02, 1.15);
+      dome.position.y = 0.05;
+      dome.castShadow = true;
+      customHatGroup.add(dome);
+
+      // Alternating Lapis Blue & Gold Nemes fan wings flaring out on both sides!
+      for (const sx of [-1, 1]) {
+        const wing = new THREE.Mesh(
+          trackHatGeo(new THREE.BoxGeometry(0.18, 0.3, 0.34)),
+          goldMat,
+        );
+        wing.position.set(sx * 0.28, 0.16, 0.03);
+        wing.rotation.z = sx * 0.32;
+        wing.castShadow = true;
+        customHatGroup.add(wing);
+
+        // Horizontal lapis stripes across the sweeping Nemes side wings
+        for (let s = 0; s < 5; s++) {
+          const stripe = new THREE.Mesh(
+            trackHatGeo(new THREE.BoxGeometry(0.195, 0.026, 0.355)),
+            lapisMat,
+          );
+          stripe.position.set(sx * (0.25 + s * 0.015), 0.05 + s * 0.054, 0.03);
+          stripe.rotation.z = sx * 0.32;
+          customHatGroup.add(stripe);
+        }
+      }
+
+      // Golden forehead headband + Royal Cobra (Uraeus) crest rising at front (-Z)
+      const band = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.285, 0.295, 0.058, 24)),
+        lapisMat,
+      );
+      band.position.y = 0.075;
+      customHatGroup.add(band);
+
+      const cobraNeck = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.026, 0.034, 0.17, 10)),
+        goldMat,
+      );
+      cobraNeck.position.set(0, 0.19, -0.29);
+      cobraNeck.rotation.x = 0.18;
+      customHatGroup.add(cobraNeck);
+
+      const cobraHood = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.068, 12, 10)),
+        goldMat,
+      );
+      cobraHood.scale.set(1.1, 1.3, 0.45);
+      cobraHood.position.set(0, 0.26, -0.275);
+      customHatGroup.add(cobraHood);
+
+      // Glowing turquoise scarab jewel on cobra hood
+      const scarab = new THREE.Mesh(
+        trackHatGeo(new THREE.OctahedronGeometry(0.038, 0)),
+        turqGlowMat,
+      );
+      scarab.scale.set(0.85, 1.25, 0.6);
+      scarab.position.set(0, 0.25, -0.308);
+      customHatGroup.add(scarab);
+    } else if (hatId === 'companionCube') {
+      // Portal Weighted Companion Cube — Hovering gently above the roof with glowing 3D Pink Hearts!
+      const hover = new THREE.Group();
+      hover.position.y = 0.28;
+      customHatGroup.add(hover);
+      hatHoverGroup = hover;
+      hatHoverBaseY = 0.28;
+
+      const cubeSpin = new THREE.Group();
+      hover.add(cubeSpin);
+      hatOrbitGroup = cubeSpin;
+
+      const shellGreyMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xdbe2ec, roughness: 0.34, metalness: 0.42 }),
+      );
+      const innerDarkMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x272d38, roughness: 0.48, metalness: 0.72 }),
+      );
+      const heartPinkMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xf472b6,
+          emissive: 0xec4899,
+          emissiveIntensity: 2.1,
+          roughness: 0.16,
+        }),
+      );
+      hatCrownGemMats = [heartPinkMat];
+
+      // Dark metallic Aperture inner cube core
+      const core = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.32, 0.32, 0.32)),
+        innerDarkMat,
+      );
+      core.castShadow = true;
+      cubeSpin.add(core);
+
+      // Glowing pink cross-channel strips around all 3 axes
+      for (const rot of [
+        [0, 0, 0],
+        [Math.PI * 0.5, 0, 0],
+        [0, 0, Math.PI * 0.5],
+      ]) {
+        const strip = new THREE.Mesh(
+          trackHatGeo(new THREE.BoxGeometry(0.334, 0.042, 0.334)),
+          heartPinkMat,
+        );
+        strip.rotation.set(rot[0], rot[1], rot[2]);
+        cubeSpin.add(strip);
+      }
+
+      // 8 Iconic Heavy Aperture Light-Grey Corner Bumper Blocks
+      const cornerGeo = trackHatGeo(new THREE.BoxGeometry(0.135, 0.135, 0.135));
+      for (const sx of [-1, 1]) {
+        for (const sy of [-1, 1]) {
+          for (const sz of [-1, 1]) {
+            const corner = new THREE.Mesh(cornerGeo, shellGreyMat);
+            corner.position.set(sx * 0.115, sy * 0.115, sz * 0.115);
+            cubeSpin.add(corner);
+          }
+        }
+      }
+
+      // Raised White Circular Medallions + Sculpted Glowing Pink Hearts on all 4 side faces + top!
+      const discGeo = trackHatGeo(new THREE.CylinderGeometry(0.088, 0.088, 0.022, 20));
+      const heartLobeGeo = trackHatGeo(new THREE.SphereGeometry(0.028, 10, 10));
+      const heartTipGeo = trackHatGeo(new THREE.ConeGeometry(0.042, 0.062, 4));
+      const faceConfigs: { pos: [number, number, number]; rot: [number, number, number] }[] = [
+        { pos: [0, 0, 0.166], rot: [Math.PI * 0.5, 0, 0] },
+        { pos: [0, 0, -0.166], rot: [-Math.PI * 0.5, 0, 0] },
+        { pos: [0.166, 0, 0], rot: [0, 0, -Math.PI * 0.5] },
+        { pos: [-0.166, 0, 0], rot: [0, 0, Math.PI * 0.5] },
+        { pos: [0, 0.166, 0], rot: [0, 0, 0] },
+      ];
+      for (const fc of faceConfigs) {
+        const fg = new THREE.Group();
+        fg.position.set(fc.pos[0], fc.pos[1], fc.pos[2]);
+        fg.rotation.set(fc.rot[0], fc.rot[1], fc.rot[2]);
+        const disc = new THREE.Mesh(discGeo, shellGreyMat);
+        fg.add(disc);
+        // 3D Pink Heart resting flat on top of the circular disc (+Y in disc local space)
+        for (const hx of [-0.02, 0.02]) {
+          const lobe = new THREE.Mesh(heartLobeGeo, heartPinkMat);
+          lobe.scale.set(1.0, 0.45, 1.0);
+          lobe.position.set(hx, 0.015, -0.012);
+          fg.add(lobe);
+        }
+        const hTip = new THREE.Mesh(heartTipGeo, heartPinkMat);
+        hTip.rotation.x = Math.PI * 0.5;
+        hTip.rotation.y = Math.PI * 0.25;
+        hTip.scale.set(1.0, 1.0, 0.42);
+        hTip.position.set(0, 0.015, 0.016);
+        fg.add(hTip);
+        cubeSpin.add(fg);
+      }
+    } else if (hatId === 'diamondHelmet') {
+      // Iconic Minecraft Enchanted Voxel Diamond Helmet + Orbiting Enchantment Cubes!
+      const diaBrightMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x38e8ff,
+          emissive: 0x06b6d4,
+          emissiveIntensity: 0.75,
+          roughness: 0.18,
+          metalness: 0.48,
+        }),
+      );
+      const diaDeepMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x0891b2,
+          emissive: 0x7c3aed,
+          emissiveIntensity: 0.45,
+          roughness: 0.24,
+          metalness: 0.55,
+        }),
+      );
+      const enchantGlowMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xe879f9,
+          emissive: 0xa855f7,
+          emissiveIntensity: 2.2,
+          roughness: 0.12,
+        }),
+      );
+      hatCrownGemMats = [diaBrightMat, enchantGlowMat];
+
+      // Blocky hollow-front Minecraft Diamond Helmet shell (facing -Z)
+      // Top helmet crown cap
+      const topCap = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.46, 0.11, 0.46)),
+        diaBrightMat,
+      );
+      topCap.position.y = 0.34;
+      topCap.castShadow = true;
+      customHatGroup.add(topCap);
+
+      // Left, Right & Back helmet armor walls
+      for (const sx of [-1, 1]) {
+        const sideWall = new THREE.Mesh(
+          trackHatGeo(new THREE.BoxGeometry(0.085, 0.32, 0.46)),
+          diaDeepMat,
+        );
+        sideWall.position.set(sx * 0.19, 0.16, 0);
+        sideWall.castShadow = true;
+        customHatGroup.add(sideWall);
+      }
+      const backWall = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.46, 0.32, 0.085)),
+        diaDeepMat,
+      );
+      backWall.position.set(0, 0.16, 0.19);
+      backWall.castShadow = true;
+      customHatGroup.add(backWall);
+
+      // Iconic Minecraft Helmet Front Brow + Center Nose-Guard Pixel (facing -Z)
+      const brow = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.46, 0.11, 0.085)),
+        diaBrightMat,
+      );
+      brow.position.set(0, 0.27, -0.19);
+      customHatGroup.add(brow);
+      const noseGuard = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.1, 0.12, 0.088)),
+        diaBrightMat,
+      );
+      noseGuard.position.set(0, 0.16, -0.195);
+      customHatGroup.add(noseGuard);
+
+      // Inner dark voxel shadow lining inside helmet face opening
+      const innerShadow = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.32, 0.27, 0.32)),
+        trackHatMat(new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85 })),
+      );
+      innerShadow.position.set(0, 0.14, 0.01);
+      customHatGroup.add(innerShadow);
+
+      // Top raised pixel highlight ridge
+      const crest = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.14, 0.045, 0.36)),
+        enchantGlowMat,
+      );
+      crest.position.set(0, 0.41, 0);
+      customHatGroup.add(crest);
+
+      // Orbiting mini glowing enchantment voxel cubes around the helmet!
+      const orbit = new THREE.Group();
+      orbit.position.y = 0.26;
+      customHatGroup.add(orbit);
+      hatOrbitGroup = orbit;
+      const miniCubeGeo = trackHatGeo(new THREE.BoxGeometry(0.055, 0.055, 0.055));
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2;
+        const mc = new THREE.Mesh(miniCubeGeo, i % 2 === 0 ? enchantGlowMat : diaBrightMat);
+        mc.position.set(Math.sin(a) * 0.38, (i % 2 === 0 ? 0.08 : -0.05), Math.cos(a) * 0.38);
+        mc.rotation.set(0.5, a, 0.4);
+        orbit.add(mc);
+      }
+    } else if (hatId === 'rubberDuck') {
+      // Adorable Glossy Yellow Bath-Time Rubber Duck facing forward (-Z)!
+      const duckYellowMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.24, metalness: 0.06 }),
+      );
+      const duckBillMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.32, metalness: 0.05 }),
+      );
+      const eyeMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.12, metalness: 0.4 }),
+      );
+      const glintMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 }),
+      );
+
+      // Plump rounded duck body
+      const body = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.21, 18, 14)),
+        duckYellowMat,
+      );
+      body.scale.set(0.96, 0.78, 1.32);
+      body.position.set(0, 0.14, 0.03);
+      body.castShadow = true;
+      customHatGroup.add(body);
+
+      // Cute upturned tail nub at rear (+Z)
+      const tail = new THREE.Mesh(
+        trackHatGeo(new THREE.ConeGeometry(0.08, 0.16, 10)),
+        duckYellowMat,
+      );
+      tail.position.set(0, 0.23, 0.28);
+      tail.rotation.x = 0.72;
+      customHatGroup.add(tail);
+
+      // Tucked side wings
+      for (const sx of [-1, 1]) {
+        const wing = new THREE.Mesh(
+          trackHatGeo(new THREE.SphereGeometry(0.11, 12, 10)),
+          duckYellowMat,
+        );
+        wing.scale.set(0.45, 0.72, 1.35);
+        wing.position.set(sx * 0.195, 0.15, 0.04);
+        wing.rotation.z = sx * -0.15;
+        customHatGroup.add(wing);
+      }
+
+      // Rounded duck head up front (-Z)
+      const head = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.145, 16, 14)),
+        duckYellowMat,
+      );
+      head.position.set(0, 0.33, -0.13);
+      head.castShadow = true;
+      customHatGroup.add(head);
+
+      // Flat cute orange duck bill protruding forward (-Z)
+      const bill = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.082, 14, 10)),
+        duckBillMat,
+      );
+      bill.scale.set(1.15, 0.44, 1.28);
+      bill.position.set(0, 0.305, -0.285);
+      customHatGroup.add(bill);
+
+      // Glossy black eyes with tiny white highlight
+      for (const sx of [-1, 1]) {
+        const eye = new THREE.Mesh(
+          trackHatGeo(new THREE.SphereGeometry(0.024, 10, 10)),
+          eyeMat,
+        );
+        eye.position.set(sx * 0.085, 0.365, -0.232);
+        customHatGroup.add(eye);
+        const glint = new THREE.Mesh(
+          trackHatGeo(new THREE.SphereGeometry(0.008, 6, 6)),
+          glintMat,
+        );
+        glint.position.set(sx * 0.092, 0.374, -0.252);
+        customHatGroup.add(glint);
+      }
+    } else if (hatId === 'hardHat') {
+      // Classic Construction Yellow Safety Hard Hat with Central Rib, Front Brim & Forehead Headlamp
+      const safetyYellowMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.24, metalness: 0.12 }),
+      );
+      const darkTrimMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.55, metalness: 0.45 }),
+      );
+      const lampLensMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xfef9c3,
+          emissive: 0xfde047,
+          emissiveIntensity: 1.8,
+          roughness: 0.12,
+        }),
+      );
+
+      // Sturdy dome shell
+      const dome = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.31, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.54)),
+        safetyYellowMat,
+      );
+      dome.scale.set(0.98, 0.92, 1.08);
+      dome.position.y = 0.02;
+      dome.castShadow = true;
+      customHatGroup.add(dome);
+
+      // Raised center reinforcement ridge running front-to-back
+      const centerRib = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.295, 0.036, 10, 22, Math.PI * 0.84)),
+        safetyYellowMat,
+      );
+      centerRib.rotation.y = Math.PI * 0.5;
+      centerRib.rotation.z = Math.PI * 0.08;
+      centerRib.position.y = 0.03;
+      customHatGroup.add(centerRib);
+
+      // Lower rolled perimeter rain-channel brim + extended front visor (-Z)
+      const rim = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.325, 0.026, 8, 28)),
+        safetyYellowMat,
+      );
+      rim.rotation.x = Math.PI * 0.5;
+      rim.scale.set(1.0, 1.12, 1.0);
+      rim.position.y = 0.03;
+      customHatGroup.add(rim);
+
+      const frontBill = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.24, 0.28, 0.024, 16, 1, false, -Math.PI * 0.38, Math.PI * 0.76)),
+        safetyYellowMat,
+      );
+      frontBill.rotation.y = Math.PI;
+      frontBill.position.set(0, 0.034, -0.18);
+      customHatGroup.add(frontBill);
+
+      // Clip-on black elastic strap & forehead construction headlamp (-Z)
+      const strap = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.318, 0.014, 6, 26)),
+        darkTrimMat,
+      );
+      strap.rotation.x = Math.PI * 0.5;
+      strap.scale.set(1.0, 1.08, 1.0);
+      strap.position.y = 0.1;
+      customHatGroup.add(strap);
+
+      const lampBody = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.12, 0.072, 0.06)),
+        darkTrimMat,
+      );
+      lampBody.position.set(0, 0.135, -0.34);
+      customHatGroup.add(lampBody);
+      const lampLens = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.028, 0.028, 0.012, 14)),
+        lampLensMat,
+      );
+      lampLens.rotation.x = Math.PI * 0.5;
+      lampLens.position.set(0, 0.135, -0.372);
+      customHatGroup.add(lampLens);
+    } else if (hatId === 'sushiRoll') {
+      // Giant Mouthwatering Salmon Nigiri Sushi with Nori Belt & Wasabi Dab!
+      const riceMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.92, metalness: 0.02 }),
+      );
+      const salmonMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.34, metalness: 0.08 }),
+      );
+      const fatStripeMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xffedd5, roughness: 0.42, metalness: 0.04 }),
+      );
+      const noriMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x0f291e, roughness: 0.85, metalness: 0.06 }),
+      );
+      const wasabiMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x84cc16, roughness: 0.78, metalness: 0.04 }),
+      );
+
+      // Plump shaped sushi rice pillow
+      const rice = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.34, 0.16, 0.56)),
+        riceMat,
+      );
+      rice.position.y = 0.085;
+      rice.castShadow = true;
+      customHatGroup.add(rice);
+      for (const sz of [-0.26, 0.26]) {
+        const endCap = new THREE.Mesh(
+          trackHatGeo(new THREE.CylinderGeometry(0.08, 0.08, 0.34, 12)),
+          riceMat,
+        );
+        endCap.rotation.z = Math.PI * 0.5;
+        endCap.position.set(0, 0.085, sz);
+        customHatGroup.add(endCap);
+      }
+
+      // Glossy fresh orange salmon slice draped over the rice
+      const salmon = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.39, 0.075, 0.68)),
+        salmonMat,
+      );
+      salmon.position.y = 0.195;
+      salmon.castShadow = true;
+      customHatGroup.add(salmon);
+
+      // Crisp white salmon marbling diagonal lines
+      for (let i = -2; i <= 2; i++) {
+        const marble = new THREE.Mesh(
+          trackHatGeo(new THREE.BoxGeometry(0.4, 0.016, 0.022)),
+          fatStripeMat,
+        );
+        marble.position.set(0, 0.23, i * 0.115);
+        marble.rotation.y = 0.28;
+        customHatGroup.add(marble);
+      }
+
+      // Dark green-black Nori seaweed belt wrapping tightly around the middle
+      const nori = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.41, 0.245, 0.14)),
+        noriMat,
+      );
+      nori.position.y = 0.125;
+      customHatGroup.add(nori);
+
+      // Cute bright green wasabi dab on top
+      const wasabi = new THREE.Mesh(
+        trackHatGeo(new THREE.ConeGeometry(0.048, 0.065, 8)),
+        wasabiMat,
+      );
+      wasabi.position.set(0.04, 0.265, -0.02);
+      customHatGroup.add(wasabi);
+    } else if (hatId === 'graduationCap') {
+      // Classic Matte-Black Academic Mortarboard Graduation Cap + Dynamic Wind-Swinging Golden Tassel!
+      const capBlackMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.78, metalness: 0.08 }),
+      );
+      const goldTasselMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.34, metalness: 0.76 }),
+      );
+
+      // Fitted skull cap base
+      const skull = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.24, 0.28, 0.17, 22)),
+        capBlackMat,
+      );
+      skull.position.y = 0.085;
+      skull.castShadow = true;
+      customHatGroup.add(skull);
+
+      // Iconic diamond-oriented flat square mortarboard
+      const board = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.56, 0.026, 0.56)),
+        capBlackMat,
+      );
+      board.position.y = 0.185;
+      board.rotation.y = Math.PI * 0.25;
+      board.rotation.x = 0.05;
+      board.castShadow = true;
+      customHatGroup.add(board);
+
+      // Center button + golden cord running to right edge
+      const btn = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.032, 0.032, 0.024, 14)),
+        goldTasselMat,
+      );
+      btn.position.y = 0.205;
+      customHatGroup.add(btn);
+
+      const cord = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.32, 0.012, 0.012)),
+        goldTasselMat,
+      );
+      cord.position.set(0.16, 0.206, 0);
+      customHatGroup.add(cord);
+
+      // Wind-reactive hanging golden tassel (reuses hatFezTasselPivot for lively drive physics!)
+      const tasselPivot = new THREE.Group();
+      tasselPivot.position.set(0.33, 0.202, 0);
+      customHatGroup.add(tasselPivot);
+      hatFezTasselPivot = tasselPivot;
+
+      const dropCord = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.008, 0.008, 0.14, 6)),
+        goldTasselMat,
+      );
+      dropCord.position.y = -0.07;
+      tasselPivot.add(dropCord);
+      const tasselBrush = new THREE.Mesh(
+        trackHatGeo(new THREE.ConeGeometry(0.038, 0.11, 10)),
+        goldTasselMat,
+      );
+      tasselBrush.position.y = -0.17;
+      tasselPivot.add(tasselBrush);
+    } else if (hatId === 'knightHelmet') {
+      // Medieval Crusader Steel Great Helm with Brass Cross Face-Guard & Sweeping Crimson Plume!
+      const steelMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xb8c2cc, roughness: 0.22, metalness: 0.88 }),
+      );
+      const brassMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.28, metalness: 0.85 }),
+      );
+      const visorSlitMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.85, metalness: 0.2 }),
+      );
+      const plumeMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.65, metalness: 0.08 }),
+      );
+
+      // Cylindrical flat-top steel Crusader Great Helm
+      const helm = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.24, 0.265, 0.4, 20)),
+        steelMat,
+      );
+      helm.position.y = 0.2;
+      helm.castShadow = true;
+      customHatGroup.add(helm);
+
+      // Slightly domed top crown plate
+      const topPlate = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.21, 0.242, 0.055, 20)),
+        steelMat,
+      );
+      topPlate.position.y = 0.42;
+      customHatGroup.add(topPlate);
+
+      // Recessed black visor eye-slit facing forward (-Z)
+      const eyeSlit = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.32, 0.042, 0.04)),
+        visorSlitMat,
+      );
+      eyeSlit.position.set(0, 0.26, -0.242);
+      customHatGroup.add(eyeSlit);
+
+      // Iconic Golden Brass Crusader Cross riveted to front face (-Z)
+      const crossV = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.046, 0.34, 0.036)),
+        brassMat,
+      );
+      crossV.position.set(0, 0.21, -0.252);
+      customHatGroup.add(crossV);
+      const crossH = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.38, 0.042, 0.036)),
+        brassMat,
+      );
+      crossH.position.set(0, 0.26, -0.248);
+      customHatGroup.add(crossH);
+
+      // Dramatic Crimson Horsehair Plume arching from crown back toward +Z!
+      const plumeMount = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.038, 0.05, 0.08, 10)),
+        brassMat,
+      );
+      plumeMount.position.set(0, 0.47, 0);
+      customHatGroup.add(plumeMount);
+      for (let i = 0; i < 6; i++) {
+        const tuft = new THREE.Mesh(
+          trackHatGeo(new THREE.SphereGeometry(0.068 - i * 0.004, 10, 8)),
+          plumeMat,
+        );
+        tuft.scale.set(0.62, 1.0, 1.35);
+        tuft.position.set(0, 0.54 - i * 0.038, -0.02 + i * 0.075);
+        tuft.castShadow = true;
+        customHatGroup.add(tuft);
+      }
+    } else if (hatId === 'catEars') {
+      // Sleek Carbon Gaming Headset Band with Oversized Glowing Neon Pink Cat Ears!
+      const carbonMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.32, metalness: 0.65 }),
+      );
+      const pinkGlowMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xf472b6,
+          emissive: 0xec4899,
+          emissiveIntensity: 2.3,
+          roughness: 0.14,
+        }),
+      );
+      hatCrownGemMats = [pinkGlowMat];
+
+      // Low-profile curved headset band hugging the roof
+      const band = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.36, 0.036, 10, 26, Math.PI * 0.72)),
+        carbonMat,
+      );
+      band.rotation.z = Math.PI * 0.14;
+      band.position.y = -0.14;
+      customHatGroup.add(band);
+
+      // Twin oversized sharp triangular Cat Ears + glowing inner neon pink inserts
+      const outerEarGeo = trackHatGeo(new THREE.ConeGeometry(0.155, 0.34, 3));
+      const innerEarGeo = trackHatGeo(new THREE.ConeGeometry(0.095, 0.23, 3));
+      for (const sx of [-1, 1]) {
+        const earGrp = new THREE.Group();
+        earGrp.position.set(sx * 0.25, 0.24, 0);
+        earGrp.rotation.z = sx * -0.26;
+        earGrp.rotation.y = sx * 0.15;
+        customHatGroup.add(earGrp);
+
+        const outer = new THREE.Mesh(outerEarGeo, carbonMat);
+        outer.scale.set(1.0, 1.0, 0.48);
+        outer.castShadow = true;
+        earGrp.add(outer);
+
+        // Glowing neon pink inner ear facing BOTH front (-Z) & rear (+Z) so visible in garage & chase cam!
+        for (const sz of [-1, 1]) {
+          const inner = new THREE.Mesh(innerEarGeo, pinkGlowMat);
+          inner.scale.set(1.0, 1.0, 0.32);
+          inner.position.set(0, -0.025, sz * 0.036);
+          earGrp.add(inner);
+        }
+      }
+    } else if (hatId === 'ramenBowl') {
+      // Steaming Traditional Japanese Ramen Bowl with Noodles, Egg, Narutomaki & Chopsticks!
+      const bowlBlackMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.24, metalness: 0.35 }),
+      );
+      const bowlRedMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.26, metalness: 0.25 }),
+      );
+      const brothMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.18, metalness: 0.12 }),
+      );
+      const noodleMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xfde047, roughness: 0.65, metalness: 0.04 }),
+      );
+      const eggWhiteMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.35 }),
+      );
+      const eggYolkMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.25 }),
+      );
+      const narutoPinkMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.4 }),
+      );
+      const chopstickMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.6 }),
+      );
+      const steamMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          emissive: 0xe2e8f0,
+          emissiveIntensity: 0.65,
+          transparent: true,
+          opacity: 0.62,
+          roughness: 0.8,
+        }),
+      );
+
+      // Lacquered footed ramen bowl
+      const foot = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.14, 0.15, 0.045, 20)),
+        bowlBlackMat,
+      );
+      foot.position.y = 0.022;
+      customHatGroup.add(foot);
+
+      const bowlOuter = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.32, 0.16, 0.22, 24)),
+        bowlBlackMat,
+      );
+      bowlOuter.position.y = 0.15;
+      bowlOuter.castShadow = true;
+      customHatGroup.add(bowlOuter);
+
+      // Red lacquer lip band
+      const lip = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.315, 0.018, 8, 24)),
+        bowlRedMat,
+      );
+      lip.rotation.x = Math.PI * 0.5;
+      lip.position.y = 0.255;
+      customHatGroup.add(lip);
+
+      // Golden ramen broth surface
+      const broth = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.295, 0.295, 0.02, 22)),
+        brothMat,
+      );
+      broth.position.y = 0.24;
+      customHatGroup.add(broth);
+
+      // Mound of wavy yellow ramen noodles
+      for (let i = 0; i < 4; i++) {
+        const noodleRing = new THREE.Mesh(
+          trackHatGeo(new THREE.TorusGeometry(0.11 + (i % 2) * 0.04, 0.024, 6, 14)),
+          noodleMat,
+        );
+        noodleRing.rotation.x = Math.PI * 0.5 + (i - 1.5) * 0.08;
+        noodleRing.position.set((i % 2 === 0 ? -0.05 : 0.05), 0.255, (i < 2 ? -0.04 : 0.04));
+        customHatGroup.add(noodleRing);
+      }
+
+      // Half soft-boiled ramen egg + pink narutomaki fish cake
+      const eggW = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.075, 12, 10)),
+        eggWhiteMat,
+      );
+      eggW.scale.set(1.0, 0.35, 1.25);
+      eggW.position.set(-0.11, 0.265, -0.08);
+      customHatGroup.add(eggW);
+      const eggY = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.042, 10, 8)),
+        eggYolkMat,
+      );
+      eggY.scale.set(1.0, 0.45, 1.0);
+      eggY.position.set(-0.11, 0.278, -0.08);
+      customHatGroup.add(eggY);
+
+      const naruto = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.068, 0.068, 0.024, 14)),
+        eggWhiteMat,
+      );
+      naruto.position.set(0.12, 0.268, 0.07);
+      customHatGroup.add(naruto);
+      const swirl = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.035, 0.011, 6, 14)),
+        narutoPinkMat,
+      );
+      swirl.rotation.x = Math.PI * 0.5;
+      swirl.position.set(0.12, 0.282, 0.07);
+      customHatGroup.add(swirl);
+
+      // Pair of wooden chopsticks resting diagonally across the bowl rim
+      const stickGeo = trackHatGeo(new THREE.CylinderGeometry(0.008, 0.015, 0.72, 8));
+      for (const offset of [-0.022, 0.022]) {
+        const stick = new THREE.Mesh(stickGeo, chopstickMat);
+        stick.rotation.z = Math.PI * 0.5;
+        stick.rotation.y = 0.28 + offset * 1.4;
+        stick.position.set(0.04, 0.295, -0.14 + offset);
+        customHatGroup.add(stick);
+      }
+
+      // Gently floating rising steam puffs above the hot ramen!
+      const steamGrp = new THREE.Group();
+      steamGrp.position.y = 0.39;
+      customHatGroup.add(steamGrp);
+      hatHoverGroup = steamGrp;
+      hatHoverBaseY = 0.39;
+      for (const [sx, sy, sz, sr] of [
+        [-0.08, 0.0, 0.02, 0.055],
+        [0.06, 0.07, -0.05, 0.068],
+        [-0.02, 0.14, 0.04, 0.048],
+      ]) {
+        const puff = new THREE.Mesh(trackHatGeo(new THREE.SphereGeometry(sr, 10, 8)), steamMat);
+        puff.position.set(sx, sy, sz);
+        steamGrp.add(puff);
+      }
+    } else if (hatId === 'creeperHead') {
+      // Iconic Minecraft Pixelated Creeper Head Cube with Mottled Green Pixels & Classic Black Face!
+      const creepLightMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x4ade80,
+          emissive: 0x22c55e,
+          emissiveIntensity: 0.45,
+          roughness: 0.78,
+        }),
+      );
+      const creepMidMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.82 }),
+      );
+      const creepDarkMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.86 }),
+      );
+      const creepBlackMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.9 }),
+      );
+      hatCrownGemMats = [creepLightMat];
+
+      // Main 0.38m Minecraft Creeper Head Block
+      const headCube = new THREE.Mesh(
+        trackHatGeo(new THREE.BoxGeometry(0.38, 0.38, 0.38)),
+        creepMidMat,
+      );
+      headCube.position.y = 0.195;
+      headCube.castShadow = true;
+      customHatGroup.add(headCube);
+
+      // Mottled pixel mosaic patches on sides & top for authentic 8x8 Minecraft texture feel
+      const px = 0.0475; // 0.38 / 8
+      const patchGeo = trackHatGeo(new THREE.BoxGeometry(px * 1.02, px * 1.02, 0.01));
+      const sidePatches: [number, number, boolean][] = [
+        [-2.5, 2.5, true], [1.5, 2.5, false], [-1.5, 0.5, false], [2.5, 0.5, true],
+        [-2.5, -1.5, false], [0.5, -2.5, true], [2.5, -2.5, false],
+      ];
+      for (const sx of [-1, 1]) {
+        for (const [pz, py, light] of sidePatches) {
+          const p = new THREE.Mesh(patchGeo, light ? creepLightMat : creepDarkMat);
+          p.rotation.y = Math.PI * 0.5;
+          p.position.set(sx * 0.193, 0.195 + py * px, pz * px);
+          customHatGroup.add(p);
+        }
+      }
+      // Top pixel patches
+      for (const [gx, gz, light] of [
+        [-2, -2, true], [1, -1, false], [-1, 2, false], [2, 1, true], [0, 0, true],
+      ] as [number, number, boolean][]) {
+        const tp = new THREE.Mesh(
+          trackHatGeo(new THREE.BoxGeometry(px * 1.4, 0.01, px * 1.4)),
+          light ? creepLightMat : creepDarkMat,
+        );
+        tp.position.set(gx * px, 0.388, gz * px);
+        customHatGroup.add(tp);
+      }
+
+      // Iconic Pixelated Pitch-Black Creeper Face on BOTH front (-Z) & rear (+Z) so awesome in garage & chase cam!
+      const facePxGeo = trackHatGeo(new THREE.BoxGeometry(px, px, 0.016));
+      // 8x8 grid centered around 0: x in {-3.5..3.5}, y in {-3.5..3.5}
+      const faceBlocks: [number, number][] = [
+        // Left eye (2x2)
+        [-2.5, 1.5], [-1.5, 1.5], [-2.5, 0.5], [-1.5, 0.5],
+        // Right eye (2x2)
+        [1.5, 1.5], [2.5, 1.5], [1.5, 0.5], [2.5, 0.5],
+        // Nose bridge (2x1)
+        [-0.5, -0.5], [0.5, -0.5],
+        // Upper mouth bar (4x2)
+        [-1.5, -1.5], [-0.5, -1.5], [0.5, -1.5], [1.5, -1.5],
+        [-1.5, -2.5], [-0.5, -2.5], [0.5, -2.5], [1.5, -2.5],
+        // Lower frown corners (2x1 each side)
+        [-1.5, -3.5], [1.5, -3.5],
+      ];
+      for (const sz of [-1, 1]) {
+        for (const [fx, fy] of faceBlocks) {
+          const cell = new THREE.Mesh(facePxGeo, creepBlackMat);
+          cell.position.set(fx * px, 0.195 + fy * px, sz * 0.192);
+          customHatGroup.add(cell);
+        }
+      }
+    } else if (hatId === 'miniHeliRotor') {
+      // Tactical Roof Helicopter Rotor Mast — Spins wildly faster as car speed climbs!
+      const metalDarkMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.38, metalness: 0.82 }),
+      );
+      const bladeCarbonMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.28, metalness: 0.65 }),
+      );
+      const tipYellowMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.35, metalness: 0.25 }),
+      );
+      const beaconRedMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xef4444,
+          emissive: 0xdc2626,
+          emissiveIntensity: 2.5,
+          roughness: 0.12,
+        }),
+      );
+      hatCrownGemMats = [beaconRedMat];
+
+      // Armored circular base plate + vertical steel rotor mast
+      const mountBase = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.16, 0.22, 0.06, 18)),
+        metalDarkMat,
+      );
+      mountBase.position.y = 0.03;
+      customHatGroup.add(mountBase);
+
+      const mast = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.042, 0.056, 0.26, 12)),
+        metalDarkMat,
+      );
+      mast.position.y = 0.16;
+      mast.castShadow = true;
+      customHatGroup.add(mast);
+
+      // High-speed rotating dual-blade Helicopter Rotor Assembly!
+      const rotorGrp = new THREE.Group();
+      rotorGrp.position.y = 0.295;
+      customHatGroup.add(rotorGrp);
+      hatPropellerGroup = rotorGrp;
+
+      const hubCap = new THREE.Mesh(
+        trackHatGeo(new THREE.CylinderGeometry(0.075, 0.085, 0.06, 16)),
+        metalDarkMat,
+      );
+      rotorGrp.add(hubCap);
+
+      // 4 Long Sweeping Carbon Rotor Blades with Yellow Caution Tips!
+      for (let i = 0; i < 4; i++) {
+        const bladeHolder = new THREE.Group();
+        bladeHolder.rotation.y = (i / 4) * Math.PI * 2;
+        const blade = new THREE.Mesh(
+          trackHatGeo(new THREE.BoxGeometry(0.66, 0.014, 0.082)),
+          bladeCarbonMat,
+        );
+        blade.position.set(0.36, 0, 0);
+        blade.rotation.x = 0.12;
+        blade.castShadow = true;
+        bladeHolder.add(blade);
+        const tip = new THREE.Mesh(
+          trackHatGeo(new THREE.BoxGeometry(0.085, 0.016, 0.084)),
+          tipYellowMat,
+        );
+        tip.position.set(0.68, 0, 0);
+        tip.rotation.x = 0.12;
+        bladeHolder.add(tip);
+        rotorGrp.add(bladeHolder);
+      }
+
+      // Red aviation warning beacon dome right atop the rotor hub
+      const beacon = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.042, 12, 10)),
+        beaconRedMat,
+      );
+      beacon.position.y = 0.05;
+      rotorGrp.add(beacon);
+    } else if (hatId === 'blackHoleOrb') {
+      // Hovering Singularity / Black Hole with Blazing Molten-Violet Accretion Disk & Orbiting Shards!
+      const hover = new THREE.Group();
+      hover.position.y = 0.34;
+      customHatGroup.add(hover);
+      hatHoverGroup = hover;
+      hatHoverBaseY = 0.34;
+
+      const voidBlackMat = trackHatMat(
+        new THREE.MeshStandardMaterial({ color: 0x020205, roughness: 0.06, metalness: 0.95 }),
+      );
+      const accretionFireMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xffedd5,
+          emissive: 0xf97316,
+          emissiveIntensity: 2.8,
+          roughness: 0.1,
+        }),
+      );
+      const accretionVioletMat = trackHatMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xe879f9,
+          emissive: 0x9333ea,
+          emissiveIntensity: 2.3,
+          roughness: 0.12,
+        }),
+      );
+      hatCrownGemMats = [accretionFireMat, accretionVioletMat];
+
+      // Pitch-black Event Horizon Sphere
+      const eventHorizon = new THREE.Mesh(
+        trackHatGeo(new THREE.SphereGeometry(0.145, 22, 18)),
+        voidBlackMat,
+      );
+      hover.add(eventHorizon);
+
+      // Vertical gravitational-lensing photon halo framing the black sphere
+      const photonHalo = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.165, 0.013, 10, 32)),
+        accretionFireMat,
+      );
+      hover.add(photonHalo);
+
+      // Spinning Tilted Blazing Accretion Disk & Orbiting Star Shards
+      const orbit = new THREE.Group();
+      hover.add(orbit);
+      hatOrbitGroup = orbit;
+
+      const innerDisk = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.24, 0.024, 10, 32)),
+        accretionFireMat,
+      );
+      innerDisk.rotation.x = Math.PI * 0.5;
+      innerDisk.scale.set(1.0, 1.0, 0.32);
+      orbit.add(innerDisk);
+
+      const outerDisk = new THREE.Mesh(
+        trackHatGeo(new THREE.TorusGeometry(0.32, 0.016, 10, 32)),
+        accretionVioletMat,
+      );
+      outerDisk.rotation.x = Math.PI * 0.5;
+      outerDisk.scale.set(1.0, 1.0, 0.25);
+      orbit.add(outerDisk);
+
+      const shardGeo = trackHatGeo(new THREE.OctahedronGeometry(0.032, 0));
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const shard = new THREE.Mesh(shardGeo, i % 2 === 0 ? accretionFireMat : accretionVioletMat);
+        shard.position.set(Math.sin(a) * 0.38, (i % 2 === 0 ? 0.04 : -0.04), Math.cos(a) * 0.38);
+        orbit.add(shard);
+      }
     }
   };
 
@@ -7465,6 +9050,118 @@ export function createPlayerCar(
         const zap = Math.sin(timeSec * 24) * Math.sin(timeSec * 7.5) > 0.25 ? 1 : 0;
         paintMaterial.emissive.setHex(zap ? 0xe0f2fe : 0x93c5fd);
         paintMaterial.emissiveIntensity = zap ? 2.1 : 1.05 + Math.sin(timeSec * 6) * 0.25;
+      } else if (liv === 'animSynthwave') {
+        const oy = -(timeSec * 0.34) % 1;
+        activeLiveryTex.offset.set(0, oy);
+        activeLiveryEmissiveTex.offset.set(0, oy);
+        paintMaterial.emissive.setHex(0xffffff);
+        paintMaterial.emissiveIntensity = 1.05 + Math.sin(timeSec * 4.0) * 0.32;
+      } else if (liv === 'animAuroraFrost') {
+        const ox = Math.sin(timeSec * 0.42) * 0.14;
+        const oy = -(timeSec * 0.16) % 1;
+        activeLiveryTex.offset.set(ox, oy);
+        activeLiveryEmissiveTex.offset.set(ox, oy);
+        const hue = (0.46 + Math.sin(timeSec * 0.5) * 0.12 + 1) % 1;
+        _fxColor.setHSL(hue, 0.55, 0.88);
+        paintMaterial.emissive.copy(_fxColor);
+        paintMaterial.emissiveIntensity = 1.0 + Math.sin(timeSec * 2.8) * 0.32;
+      } else if (liv === 'animGoldenDragon') {
+        const oy = -(timeSec * 0.26) % 1;
+        activeLiveryTex.offset.set(0, oy);
+        activeLiveryEmissiveTex.offset.set(0, oy);
+        paintMaterial.emissive.setHex(0xffe08a);
+        paintMaterial.emissiveIntensity = 1.1 + Math.sin(timeSec * 3.6) * 0.38;
+      } else if (liv === 'animComicSpeed') {
+        const oy = -(timeSec * 0.85) % 1;
+        activeLiveryTex.offset.set(0, oy);
+        activeLiveryEmissiveTex.offset.set(0, oy);
+        paintMaterial.emissive.setHex(0xffffff);
+        paintMaterial.emissiveIntensity = 1.0 + Math.sin(timeSec * 12.0) * 0.3;
+      } else if (liv === 'animCandyPop') {
+        const ox = Math.sin(timeSec * 0.55) * 0.14;
+        const oy = -(timeSec * 0.28) % 1;
+        activeLiveryTex.offset.set(ox, oy);
+        activeLiveryEmissiveTex.offset.set(ox, oy);
+        paintMaterial.emissive.setHex(0xffffff);
+        paintMaterial.emissiveIntensity = 0.95 + Math.sin(timeSec * 3.4) * 0.28;
+      } else if (liv === 'animVenomSymbiote') {
+        // Subtle living organic symbiote ripple keeping white Venom eyes & spider veins locked on hood/flanks
+        const ox = Math.sin(timeSec * 2.1) * 0.011;
+        const oy = Math.cos(timeSec * 1.65) * 0.011;
+        activeLiveryTex.offset.set(ox, oy);
+        activeLiveryEmissiveTex.offset.set(ox, oy);
+        paintMaterial.emissive.setHex(0xf8fafc);
+        paintMaterial.emissiveIntensity = 0.52 + Math.sin(timeSec * 3.2) * 0.24;
+      } else if (liv === 'animLiquidAquarium') {
+        // Glass caustic surface shimmer + REAL physics-driven sloshing water tank & swimming low-poly goldfish!
+        const ox = Math.sin(timeSec * 0.6) * 0.06;
+        const oy = -(timeSec * 0.18) % 1;
+        activeLiveryTex.offset.set(ox, oy);
+        activeLiveryEmissiveTex.offset.set(ox, oy);
+        paintMaterial.emissive.setHex(0x7dd3fc);
+        paintMaterial.emissiveIntensity = 0.38 + Math.sin(timeSec * 2.5) * 0.12;
+
+        // Damped harmonic water-slosh spring reacting to lateral steering/drift forces!
+        const dt =
+          lastAqTimeSec < 0
+            ? 0.016
+            : Math.min(0.05, Math.max(0.001, timeSec - lastAqTimeSec));
+        lastAqTimeSec = timeSec;
+        const targetSlosh =
+          THREE.MathUtils.clamp(-steerNorm * 0.26, -0.28, 0.28) +
+          Math.sin(timeSec * 2.4) * 0.032;
+        const accel = (targetSlosh - aquariumSloshAngle) * 32 - aquariumSloshVel * 4.4;
+        aquariumSloshVel += accel * dt;
+        aquariumSloshAngle = THREE.MathUtils.clamp(
+          aquariumSloshAngle + aquariumSloshVel * dt,
+          -0.34,
+          0.34,
+        );
+        aquariumWaterPivot.rotation.z = aquariumSloshAngle;
+        aquariumWaterPivot.rotation.x =
+          THREE.MathUtils.clamp(speedMs * 0.0014, -0.08, 0.09) +
+          Math.cos(timeSec * 2.1) * 0.02;
+
+        // Animate all 5 low-poly orange goldfish along smooth figure-8 swimming paths inside the tank!
+        for (let i = 0; i < aquariumFishes.length; i++) {
+          const f = aquariumFishes[i];
+          const t = timeSec * f.speed * f.dir + f.phase;
+          const x = Math.sin(t) * f.radiusX;
+          const z = Math.sin(t * 0.5) * f.radiusZ;
+          const dx = Math.cos(t) * f.radiusX * f.speed * f.dir;
+          const dz = 0.5 * Math.cos(t * 0.5) * f.radiusZ * f.speed * f.dir;
+          const bobY = f.baseY + Math.sin(timeSec * 2.6 + f.phase) * (aqH * 0.08);
+          f.root.position.set(x, bobY, z);
+          f.root.rotation.y = Math.atan2(dx, dz);
+          f.tail.rotation.y = Math.sin(timeSec * 14 + f.phase * 2) * 0.42;
+        }
+
+        // Rise & loop translucent air bubbles continuously inside the water volume
+        for (let i = 0; i < aquariumBubbles.length; i++) {
+          const b = aquariumBubbles[i];
+          const frac = ((timeSec * b.speed + b.phase) % 1 + 1) % 1;
+          b.mesh.position.set(
+            b.x + Math.sin(timeSec * 3.2 + b.phase) * 0.035,
+            -aqH * 0.44 + frac * aqH * 0.88,
+            b.z + Math.cos(timeSec * 2.8 + b.phase) * 0.035,
+          );
+        }
+      } else if (liv === 'animWindStream') {
+        // Dynamic aerodynamic wind-tunnel slipstream: scrolls faster as vehicle speed climbs!
+        const windSpeed = 0.55 + THREE.MathUtils.clamp(speedMs, 0, 85) * 0.014;
+        const oy = -(timeSec * windSpeed) % 1;
+        const ox = Math.sin(timeSec * 1.6) * 0.025;
+        activeLiveryTex.offset.set(ox, oy);
+        activeLiveryEmissiveTex.offset.set(ox, oy);
+        paintMaterial.emissive.setHex(0xbae6fd);
+        paintMaterial.emissiveIntensity = 0.82 + Math.sin(timeSec * 5.2) * 0.25;
+      } else if (liv === 'omnitrixAlien') {
+        // Keep Omnitrix hourglass dial locked squarely on hood/roof while pulsing alien neon-green energy!
+        activeLiveryTex.offset.set(0, 0);
+        activeLiveryEmissiveTex.offset.set(0, 0);
+        const surge = Math.pow(0.5 + 0.5 * Math.sin(timeSec * 3.6), 2);
+        paintMaterial.emissive.setHex(0x86efac);
+        paintMaterial.emissiveIntensity = 0.78 + surge * 0.92;
       }
     }
 
@@ -9235,6 +10932,1047 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         shiftLedMats.push(lMat);
         const led = new THREE.Mesh(ledGeo, lMat);
         led.position.set((i - 4) * 0.022, 0.064, 0.016);
+        wheelGroup.add(led);
+      }
+    } else if (style === 'scrapMadMax') {
+      // Wasteland Rusted Scrap-Iron Mad Max Steering Wheel:
+      // Welded iron ring, jagged perimeter spikes, ragged cloth grip wraps, bolted rebar spokes & cog hub
+      const rustMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x6b3a24, roughness: 0.92, metalness: 0.52 }),
+      );
+      const scrapSteelMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x3b3d42, roughness: 0.78, metalness: 0.76 }),
+      );
+      const wrapMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x8c7355, roughness: 0.96, metalness: 0.04 }),
+      );
+      const boltMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.45, metalness: 0.85 }),
+      );
+      const hazardMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xca8a04, roughness: 0.72, metalness: 0.25 }),
+      );
+
+      // Base rough forged iron ring (low-poly faceted feel)
+      wheelGroup.add(
+        new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.136, 0.016, 7, 18)), rustMat),
+      );
+
+      // Welded scrap metal splice collars + perimeter wasteland spikes
+      const collarGeo = trackWGeo(new THREE.TorusGeometry(0.021, 0.0055, 6, 8));
+      const spikeGeo = trackWGeo(new THREE.ConeGeometry(0.0085, 0.026, 5));
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + 0.2;
+        if (i % 2 === 0) {
+          const collar = new THREE.Mesh(collarGeo, scrapSteelMat);
+          collar.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0);
+          collar.rotation.set(Math.PI * 0.5, 0, a);
+          wheelGroup.add(collar);
+        }
+        const spike = new THREE.Mesh(spikeGeo, i % 2 === 0 ? scrapSteelMat : rustMat);
+        spike.position.set(Math.cos(a) * 0.156, Math.sin(a) * 0.156, 0);
+        spike.rotation.z = a - Math.PI * 0.5;
+        wheelGroup.add(spike);
+      }
+
+      // Asymmetric ragged cloth/leather grip tape strips on left & right grips
+      const wrapBandGeo = trackWGeo(new THREE.TorusGeometry(0.0195, 0.0045, 6, 10));
+      for (const sideBase of [0, Math.PI]) {
+        for (let k = -3; k <= 3; k++) {
+          const a = sideBase + k * 0.11;
+          const band = new THREE.Mesh(wrapBandGeo, wrapMat);
+          band.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0);
+          band.rotation.set(Math.PI * 0.5, k % 2 === 0 ? 0.22 : -0.18, a);
+          wheelGroup.add(band);
+        }
+      }
+
+      // 3 Welded rebar spokes + mismatched gusset plates & oversized bolts
+      const boltGeo = trackWGeo(new THREE.CylinderGeometry(0.0055, 0.0055, 0.018, 6));
+      boltGeo.rotateX(Math.PI * 0.5);
+      for (const ang of [Math.PI * 0.08, Math.PI - Math.PI * 0.08, -Math.PI * 0.5]) {
+        const sg = new THREE.Group();
+        sg.rotation.z = ang;
+        const bar = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.118, 0.022, 0.012)),
+          scrapSteelMat,
+        );
+        bar.position.set(0.064, 0, -0.002);
+        sg.add(bar);
+        const plate = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.044, 0.032, 0.006)),
+          rustMat,
+        );
+        plate.position.set(0.068, 0.003, 0.006);
+        plate.rotation.z = 0.14;
+        sg.add(plate);
+        for (const bx of [0.052, 0.086]) {
+          const b = new THREE.Mesh(boltGeo, boltMat);
+          b.position.set(bx, 0, 0.006);
+          sg.add(b);
+        }
+        wheelGroup.add(sg);
+      }
+
+      // Salvaged industrial gear-cog center hub with hazard center nut
+      wheelGroup.add(new THREE.Mesh(hubGeo, scrapSteelMat));
+      const toothGeo = trackWGeo(new THREE.BoxGeometry(0.014, 0.018, 0.014));
+      for (let t = 0; t < 10; t++) {
+        const a = (t / 10) * Math.PI * 2;
+        const tooth = new THREE.Mesh(toothGeo, rustMat);
+        tooth.position.set(Math.cos(a) * 0.044, Math.sin(a) * 0.044, 0.004);
+        tooth.rotation.z = a;
+        wheelGroup.add(tooth);
+      }
+      const cap = new THREE.Mesh(
+        trackWGeo(new THREE.CylinderGeometry(0.024, 0.026, 0.016, 6)),
+        hazardMat,
+      );
+      cap.rotation.x = Math.PI * 0.5;
+      cap.position.z = 0.014;
+      wheelGroup.add(cap);
+      const centerBolt = new THREE.Mesh(boltGeo, boltMat);
+      centerBolt.position.z = 0.02;
+      wheelGroup.add(centerBolt);
+    } else if (style === 'obsidianMagma') {
+      // Faceted Volcanic Obsidian Shard Armor over Blazing Molten Lava Core + Spinning Crystal + 9 RPM LEDs
+      const obsMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x0f0b14,
+          roughness: 0.18,
+          metalness: 0.72,
+        }),
+      );
+      const magmaMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xff5a1f,
+          emissive: 0xea380c,
+          emissiveIntensity: 2.3,
+          roughness: 0.14,
+        }),
+      );
+      const goldEmberMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xfde047,
+          emissive: 0xf59e0b,
+          emissiveIntensity: 2.0,
+          roughness: 0.12,
+        }),
+      );
+      wheelPulseMat = magmaMat;
+
+      // Glowing molten inner magma ring visible through every obsidian fissure
+      wheelGroup.add(
+        new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.135, 0.012, 10, 28)), magmaMat),
+      );
+
+      // 14 Jagged Faceted Obsidian Armor Shards encasing the molten rim
+      const shardGeo = trackWGeo(new THREE.DodecahedronGeometry(0.023, 0));
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2;
+        const shard = new THREE.Mesh(shardGeo, obsMat);
+        shard.position.set(Math.cos(a) * 0.137, Math.sin(a) * 0.137, (i % 2 === 0 ? 0.002 : -0.002));
+        shard.scale.set(1.18, 0.85, 0.92);
+        shard.rotation.set(i * 0.4, i * 0.6, a);
+        wheelGroup.add(shard);
+      }
+
+      // 3 Volcanic obsidian claw spokes with molten core fissures
+      for (const ang of [Math.PI * 0.1, Math.PI * 0.9, -Math.PI * 0.5]) {
+        const g = new THREE.Group();
+        g.rotation.z = ang;
+        const arm = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.115, 0.026, 0.016)),
+          obsMat,
+        );
+        arm.position.set(0.064, 0, -0.002);
+        g.add(arm);
+        const vein = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.108, 0.008, 0.02)),
+          magmaMat,
+        );
+        vein.position.set(0.064, 0, 0.001);
+        g.add(vein);
+        wheelGroup.add(g);
+      }
+
+      // Armored obsidian hub with 4 volcanic fangs & spinning erupting ember crystal
+      wheelGroup.add(new THREE.Mesh(hubGeo, obsMat));
+      const fangGeo = trackWGeo(new THREE.ConeGeometry(0.009, 0.026, 4));
+      for (let f = 0; f < 4; f++) {
+        const a = (f / 4) * Math.PI * 2 + Math.PI * 0.25;
+        const fang = new THREE.Mesh(fangGeo, obsMat);
+        fang.position.set(Math.cos(a) * 0.032, Math.sin(a) * 0.032, 0.014);
+        fang.rotation.z = a + Math.PI * 0.5;
+        wheelGroup.add(fang);
+      }
+      const spinCore = new THREE.Group();
+      spinCore.position.z = 0.019;
+      wheelGroup.add(spinCore);
+      wheelHoloSpinGroup = spinCore;
+      spinCore.add(new THREE.Mesh(trackWGeo(new THREE.OctahedronGeometry(0.02, 0)), goldEmberMat));
+      spinCore.add(new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.028, 0.0038, 6, 6)), magmaMat));
+
+      // 9 Molten RPM Shift LEDs along upper obsidian crown
+      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
+      for (let i = 0; i < 9; i++) {
+        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
+        shiftLedMats.push(lMat);
+        const a = Math.PI * 0.5 + (4 - i) * 0.11;
+        const led = new THREE.Mesh(ledGeo, lMat);
+        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.022);
+        led.rotation.z = a - Math.PI * 0.5;
+        wheelGroup.add(led);
+      }
+    } else if (style === 'pixelVoxel') {
+      // Pure 8-Bit / Voxel Block Steering Wheel — 100% Crisp Quantized Cubes, Zero Curves!
+      const darkVoxelMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x1e2028, roughness: 0.72, metalness: 0.18 }),
+      );
+      const stoneVoxelMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8, metalness: 0.15 }),
+      );
+      const grassVoxelMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.65, metalness: 0.08 }),
+      );
+      const diamondVoxelMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x22d3ee,
+          emissive: 0x06b6d4,
+          emissiveIntensity: 1.5,
+          roughness: 0.2,
+          metalness: 0.35,
+        }),
+      );
+      const goldVoxelMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.35, metalness: 0.7 }),
+      );
+
+      // Quantized pixel-circle rim (11x11 voxel grid coordinates)
+      const step = 0.0265;
+      const voxelGeo = trackWGeo(new THREE.BoxGeometry(step * 0.96, step * 0.96, step * 0.96));
+      const rimCoords: [number, number][] = [
+        [-2, 5], [-1, 5], [0, 5], [1, 5], [2, 5],
+        [3, 4], [4, 3],
+        [5, 2], [5, 1], [5, 0], [5, -1], [5, -2],
+        [4, -3], [3, -4],
+        [2, -5], [1, -5], [0, -5], [-1, -5], [-2, -5],
+        [-3, -4], [-4, -3],
+        [-5, -2], [-5, -1], [-5, 0], [-5, 1], [-5, 2],
+        [-4, 3], [-3, 4],
+      ];
+      rimCoords.forEach(([gx, gy], idx) => {
+        const isTopMarker = gx === 0 && gy === 5;
+        const isSideGrip = Math.abs(gx) === 5 && Math.abs(gy) <= 1;
+        const isCorner = Math.abs(gx) >= 3 && Math.abs(gy) >= 3;
+        const mat = isTopMarker
+          ? goldVoxelMat
+          : isSideGrip
+            ? grassVoxelMat
+            : isCorner
+              ? diamondVoxelMat
+              : idx % 2 === 0
+                ? darkVoxelMat
+                : stoneVoxelMat;
+        const cube = new THREE.Mesh(voxelGeo, mat);
+        cube.position.set(gx * step, gy * step, 0);
+        wheelGroup.add(cube);
+      });
+
+      // Stepped blocky pixel spokes (left, right, bottom)
+      const spokeCoords: [number, number][] = [
+        [-4, 0], [-3, 0], [-2, 0],
+        [4, 0], [3, 0], [2, 0],
+        [0, -4], [0, -3], [0, -2],
+      ];
+      for (const [gx, gy] of spokeCoords) {
+        const b = new THREE.Mesh(voxelGeo, stoneVoxelMat);
+        b.scale.set(0.92, 0.82, 0.58);
+        b.position.set(gx * step, gy * step, -0.003);
+        wheelGroup.add(b);
+      }
+
+      // Square 3x3 Pixel Hub with Glowing Cyan Voxel Diamond Emblem
+      const hubBlock = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(step * 2.8, step * 2.8, 0.022)),
+        darkVoxelMat,
+      );
+      wheelGroup.add(hubBlock);
+      const pxGeo = trackWGeo(new THREE.BoxGeometry(0.011, 0.011, 0.01));
+      const diaPixels: [number, number][] = [
+        [0, 2], [-1, 1], [0, 1], [1, 1], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
+        [-1, -1], [0, -1], [1, -1], [0, -2],
+      ];
+      for (const [px, py] of diaPixels) {
+        const cell = new THREE.Mesh(pxGeo, diamondVoxelMat);
+        cell.position.set(px * 0.011, py * 0.011, 0.014);
+        wheelGroup.add(cell);
+      }
+
+      // 7 Chunky Square Pixel RPM Shift LEDs along upper voxel bar
+      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.012, 0.012, 0.008));
+      for (let i = 0; i < 7; i++) {
+        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
+        shiftLedMats.push(lMat);
+        const led = new THREE.Mesh(ledGeo, lMat);
+        led.position.set((i - 3) * 0.016, 5 * step, 0.016);
+        wheelGroup.add(led);
+      }
+    } else if (style === 'hevLambda') {
+      // Half-Life HEV Suit Mark IV / V Armored Steering Wheel with Glowing Center Lambda (λ) Emblem!
+      const hevOrangeMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xf97316,
+          roughness: 0.28,
+          metalness: 0.52,
+        }),
+      );
+      const hevSteelMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x20232a,
+          roughness: 0.42,
+          metalness: 0.78,
+        }),
+      );
+      const hevGripMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x13151a,
+          roughness: 0.9,
+          metalness: 0.08,
+        }),
+      );
+      const hazardYellowMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xfacc15,
+          roughness: 0.35,
+          metalness: 0.25,
+        }),
+      );
+      const lambdaGlowMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xffa733,
+          emissive: 0xf97316,
+          emissiveIntensity: 2.3,
+          roughness: 0.14,
+          metalness: 0.25,
+        }),
+      );
+      wheelPulseMat = lambdaGlowMat;
+
+      // Armored dark charcoal core ring + iconic HEV Hazard Orange top & bottom armored shells
+      wheelGroup.add(
+        new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.136, 0.0165, 12, 32)), hevGripMat),
+      );
+      const topShell = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.137, 0.0185, 10, 22, Math.PI * 0.56)),
+        hevOrangeMat,
+      );
+      topShell.rotation.z = Math.PI * 0.22;
+      wheelGroup.add(topShell);
+      const botShell = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.137, 0.0185, 10, 22, Math.PI * 0.5)),
+        hevOrangeMat,
+      );
+      botShell.rotation.z = Math.PI * 1.25;
+      wheelGroup.add(botShell);
+
+      // Rugged HEV armored side hand-guards + yellow/black hazard grip stripes
+      for (const sx of [-1, 1]) {
+        const guard = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.022, 0.072, 0.036)),
+          hevSteelMat,
+        );
+        guard.position.set(sx * 0.138, 0, 0.002);
+        wheelGroup.add(guard);
+
+        // Hazard stripe accent blocks on lower sides
+        const haz = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.018, 0.018, 0.038)),
+          hazardYellowMat,
+        );
+        haz.position.set(sx * 0.112, -0.076, 0.002);
+        haz.rotation.z = sx * -0.58;
+        wheelGroup.add(haz);
+
+        // Industrial truss spokes with glowing amber conduit line
+        const sp = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.098, 0.028, 0.014)),
+          hevSteelMat,
+        );
+        sp.position.set(sx * 0.076, -0.004, -0.002);
+        wheelGroup.add(sp);
+        const conduit = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.082, 0.006, 0.018)),
+          lambdaGlowMat,
+        );
+        conduit.position.set(sx * 0.076, -0.004, 0.001);
+        wheelGroup.add(conduit);
+      }
+      const botSpoke = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.034, 0.095, 0.014)),
+        hevSteelMat,
+      );
+      botSpoke.position.set(0, -0.078, -0.002);
+      wheelGroup.add(botSpoke);
+
+      // Center Armored HEV Hub + Glowing Orange Bezel + Iconic 3D Lambda (λ) Emblem!
+      const hevHub = new THREE.Mesh(
+        trackWGeo(new THREE.CylinderGeometry(0.044, 0.047, 0.024, 24)),
+        hevSteelMat,
+      );
+      hevHub.rotation.x = Math.PI * 0.5;
+      wheelGroup.add(hevHub);
+
+      const bezel = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.039, 0.0048, 8, 28)),
+        hevOrangeMat,
+      );
+      bezel.position.z = 0.013;
+      wheelGroup.add(bezel);
+
+      const glowBezel = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.033, 0.0022, 8, 24)),
+        lambdaGlowMat,
+      );
+      glowBezel.position.z = 0.014;
+      wheelGroup.add(glowBezel);
+
+      // 3D Lambda (λ) Symbol right in the center of the hub
+      const lambdaGrp = new THREE.Group();
+      lambdaGrp.position.set(0, 0, 0.0165);
+      wheelGroup.add(lambdaGrp);
+
+      // Main diagonal spine from upper-left (-0.005, +0.021) to lower-right (+0.014, -0.019)
+      const mainLeg = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.0075, 0.046, 0.005)),
+        lambdaGlowMat,
+      );
+      mainLeg.position.set(0.0035, 0.001, 0);
+      mainLeg.rotation.z = 0.42;
+      lambdaGrp.add(mainLeg);
+
+      // Top horizontal serif cap on upper-left
+      const topSerif = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.015, 0.0068, 0.005)),
+        lambdaGlowMat,
+      );
+      topSerif.position.set(-0.009, 0.02, 0);
+      lambdaGrp.add(topSerif);
+
+      // Bottom-right serif foot on main diagonal leg
+      const footSerif = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.012, 0.0065, 0.005)),
+        lambdaGlowMat,
+      );
+      footSerif.position.set(0.0155, -0.019, 0);
+      footSerif.rotation.z = 0.25;
+      lambdaGrp.add(footSerif);
+
+      // Left supporting diagonal leg from mid-spine (-0.001, +0.002) down to (-0.016, -0.020)
+      const leftLeg = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.0072, 0.029, 0.005)),
+        lambdaGlowMat,
+      );
+      leftLeg.position.set(-0.0095, -0.009, 0);
+      leftLeg.rotation.z = -0.56;
+      lambdaGrp.add(leftLeg);
+
+      // 9 HEV Suit Power-Bar RPM Shift LEDs embedded in top armored orange shell
+      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
+      for (let i = 0; i < 9; i++) {
+        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
+        shiftLedMats.push(lMat);
+        const a = Math.PI * 0.5 + (4 - i) * 0.11;
+        const led = new THREE.Mesh(ledGeo, lMat);
+        led.position.set(Math.cos(a) * 0.137, Math.sin(a) * 0.137, 0.02);
+        led.rotation.z = a - Math.PI * 0.5;
+        wheelGroup.add(led);
+      }
+    } else if (style === 'headcrab') {
+      // Half-Life Headcrab Steering Wheel:
+      // Organic segmented chitin rim + sculpted 3D Headcrab clinging to the hub with 4 articulated claw legs!
+      const fleshMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xc99c72, roughness: 0.72, metalness: 0.06 }),
+      );
+      const mottleMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x9b5e42, roughness: 0.78, metalness: 0.08 }),
+      );
+      const mawMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x7f1d2d, roughness: 0.42, metalness: 0.12 }),
+      );
+      const clawMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x3b2316, roughness: 0.34, metalness: 0.24 }),
+      );
+      const fangMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xe7dcc6, roughness: 0.38, metalness: 0.05 }),
+      );
+
+      // Organic fleshy main rim + segmented ridge rings
+      wheelGroup.add(
+        new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.136, 0.0155, 10, 28)), fleshMat),
+      );
+      const ribGeo = trackWGeo(new THREE.TorusGeometry(0.0175, 0.0042, 6, 10));
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        const rib = new THREE.Mesh(ribGeo, i % 2 === 0 ? mottleMat : fleshMat);
+        rib.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0);
+        rib.rotation.set(Math.PI * 0.5, 0, a);
+        wheelGroup.add(rib);
+      }
+
+      // Inner structural dark tendon backplate behind the Headcrab
+      wheelGroup.add(new THREE.Mesh(hubGeo, mottleMat));
+
+      // Sculpted 3D Headcrab Carapace perched squarely on the steering hub
+      const crabBody = new THREE.Mesh(
+        trackWGeo(new THREE.SphereGeometry(0.045, 16, 12)),
+        fleshMat,
+      );
+      crabBody.scale.set(1.06, 0.94, 0.66);
+      crabBody.position.set(0, 0.005, 0.015);
+      wheelGroup.add(crabBody);
+
+      // Dorsal carapace ridges & fleshy brow folds
+      for (const [rx, ry, rz, sx, sy] of [
+        [0, 0.022, 0.032, 0.032, 0.014],
+        [-0.022, 0.01, 0.027, 0.016, 0.022],
+        [0.022, 0.01, 0.027, 0.016, 0.022],
+      ]) {
+        const ridge = new THREE.Mesh(
+          trackWGeo(new THREE.SphereGeometry(1, 10, 8)),
+          mottleMat,
+        );
+        ridge.scale.set(sx, sy, 0.012);
+        ridge.position.set(rx, ry, rz);
+        wheelGroup.add(ridge);
+      }
+
+      // Fleshy crimson under-maw slit & tiny bone-ivory fangs
+      const maw = new THREE.Mesh(
+        trackWGeo(new THREE.SphereGeometry(0.02, 12, 8)),
+        mawMat,
+      );
+      maw.scale.set(1.15, 0.65, 0.55);
+      maw.position.set(0, -0.021, 0.028);
+      wheelGroup.add(maw);
+
+      const toothGeo = trackWGeo(new THREE.ConeGeometry(0.0038, 0.011, 5));
+      for (const tx of [-0.01, -0.0035, 0.0035, 0.01]) {
+        const tooth = new THREE.Mesh(toothGeo, fangMat);
+        tooth.position.set(tx, -0.018, 0.038);
+        tooth.rotation.x = Math.PI;
+        wheelGroup.add(tooth);
+      }
+
+      // 4 Articulated Multi-Segment Headcrab Legs reaching out & gripping the rim as spokes!
+      const femurGeo = trackWGeo(new THREE.CylinderGeometry(0.009, 0.012, 0.068, 8));
+      const tibiaGeo = trackWGeo(new THREE.CylinderGeometry(0.0055, 0.009, 0.056, 7));
+      const talonGeo = trackWGeo(new THREE.ConeGeometry(0.007, 0.024, 6));
+
+      // 2 Front Pincer Legs (upper-left & upper-right) + 2 Rear Bracing Legs (lower-left & lower-right)
+      const legConfigs = [
+        { sx: -1, baseAng: 0.42, kneeX: -0.082, kneeY: 0.034, tipX: -0.128, tipY: 0.048, front: true },
+        { sx: 1, baseAng: -0.42, kneeX: 0.082, kneeY: 0.034, tipX: 0.128, tipY: 0.048, front: true },
+        { sx: -1, baseAng: -0.78, kneeX: -0.072, kneeY: -0.056, tipX: -0.098, tipY: -0.098, front: false },
+        { sx: 1, baseAng: 0.78, kneeX: 0.072, kneeY: -0.056, tipX: 0.098, tipY: -0.098, front: false },
+      ];
+      for (const leg of legConfigs) {
+        // Upper fleshy thigh from hub to knee joint
+        const fx = leg.kneeX * 0.56;
+        const fy = leg.kneeY * 0.56;
+        const femur = new THREE.Mesh(femurGeo, leg.front ? fleshMat : mottleMat);
+        femur.position.set(fx, fy, 0.008);
+        femur.rotation.z = Math.atan2(leg.kneeY, leg.kneeX) - Math.PI * 0.5;
+        wheelGroup.add(femur);
+
+        // Knobby joint sphere
+        const knee = new THREE.Mesh(
+          trackWGeo(new THREE.SphereGeometry(0.011, 8, 8)),
+          mottleMat,
+        );
+        knee.position.set(leg.kneeX, leg.kneeY, 0.012);
+        wheelGroup.add(knee);
+
+        // Lower dark chitin shin reaching onto the rim
+        const dx = leg.tipX - leg.kneeX;
+        const dy = leg.tipY - leg.kneeY;
+        const tibia = new THREE.Mesh(tibiaGeo, clawMat);
+        tibia.position.set((leg.kneeX + leg.tipX) * 0.5, (leg.kneeY + leg.tipY) * 0.5, 0.008);
+        tibia.rotation.z = Math.atan2(dy, dx) - Math.PI * 0.5;
+        wheelGroup.add(tibia);
+
+        // Curved chitin claw gripping over the rim edge
+        const talon = new THREE.Mesh(talonGeo, clawMat);
+        talon.position.set(leg.tipX * 1.07, leg.tipY * 1.07, 0.012);
+        talon.rotation.z = Math.atan2(leg.tipY, leg.tipX) - Math.PI * 0.5;
+        wheelGroup.add(talon);
+      }
+
+      // Bottom stabilizing tendon spoke
+      const botTendon = new THREE.Mesh(
+        trackWGeo(new THREE.CylinderGeometry(0.008, 0.011, 0.096, 8)),
+        mottleMat,
+      );
+      botTendon.position.set(0, -0.084, -0.003);
+      wheelGroup.add(botTendon);
+    } else if (style === 'craftingTable') {
+      // Minecraft Crafting Table Steering Wheel — 100% Crisp Quantized Oak Voxel Cubes + 3x3 Crafting Grid Hub!
+      const oakLightMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xc89e66, roughness: 0.85, metalness: 0.04 }),
+      );
+      const oakMidMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xb0824a, roughness: 0.86, metalness: 0.04 }),
+      );
+      const oakDarkMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9, metalness: 0.05 }),
+      );
+      const tableTopMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x8d552d, roughness: 0.84, metalness: 0.05 }),
+      );
+      const ironToolMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.34, metalness: 0.72 }),
+      );
+      const redstoneMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xef4444,
+          emissive: 0xdc2626,
+          emissiveIntensity: 1.5,
+          roughness: 0.28,
+        }),
+      );
+
+      // Quantized 11x11 Minecraft oak-plank voxel rim
+      const step = 0.0265;
+      const voxelGeo = trackWGeo(new THREE.BoxGeometry(step * 0.96, step * 0.96, step * 0.96));
+      const rimCoords: [number, number][] = [
+        [-2, 5], [-1, 5], [0, 5], [1, 5], [2, 5],
+        [3, 4], [4, 3],
+        [5, 2], [5, 1], [5, 0], [5, -1], [5, -2],
+        [4, -3], [3, -4],
+        [2, -5], [1, -5], [0, -5], [-1, -5], [-2, -5],
+        [-3, -4], [-4, -3],
+        [-5, -2], [-5, -1], [-5, 0], [-5, 1], [-5, 2],
+        [-4, 3], [-3, 4],
+      ];
+      rimCoords.forEach(([gx, gy], idx) => {
+        const isTopMarker = gx === 0 && gy === 5;
+        const isCorner = Math.abs(gx) >= 3 && Math.abs(gy) >= 3;
+        const mat = isTopMarker
+          ? redstoneMat
+          : isCorner
+            ? oakDarkMat
+            : idx % 3 === 0
+              ? tableTopMat
+              : idx % 2 === 0
+                ? oakLightMat
+                : oakMidMat;
+        const cube = new THREE.Mesh(voxelGeo, mat);
+        cube.position.set(gx * step, gy * step, 0);
+        wheelGroup.add(cube);
+      });
+
+      // Pixelated Iron Saw & Hammer tool details mounted on left & right wooden grip faces
+      const toolPxGeo = trackWGeo(new THREE.BoxGeometry(0.0085, 0.0085, 0.006));
+      for (const sx of [-1, 1]) {
+        const gx = sx * 5 * step;
+        // Tool blade/head pixels on front face of side oak blocks
+        for (const [ox, oy, isHandle] of [
+          [0, 0.018, false],
+          [sx * -0.007, 0.01, false],
+          [0, 0.002, false],
+          [0, -0.008, true],
+          [0, -0.017, true],
+        ] as [number, number, boolean][]) {
+          const px = new THREE.Mesh(toolPxGeo, isHandle ? oakDarkMat : ironToolMat);
+          px.position.set(gx + ox, oy, step * 0.52);
+          wheelGroup.add(px);
+        }
+      }
+
+      // Stepped oak plank voxel spokes (left, right, bottom)
+      const spokeCoords: [number, number][] = [
+        [-4, 0], [-3, 0], [-2, 0],
+        [4, 0], [3, 0], [2, 0],
+        [0, -4], [0, -3], [0, -2],
+      ];
+      for (const [gx, gy] of spokeCoords) {
+        const b = new THREE.Mesh(voxelGeo, (Math.abs(gx) + Math.abs(gy)) % 2 === 0 ? oakMidMat : oakLightMat);
+        b.scale.set(0.92, 0.84, 0.62);
+        b.position.set(gx * step, gy * step, -0.002);
+        wheelGroup.add(b);
+      }
+
+      // Iconic Square Minecraft Crafting Table Center Hub with Crisp 3x3 Grid!
+      const hubBase = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.088, 0.088, 0.024)),
+        oakDarkMat,
+      );
+      wheelGroup.add(hubBase);
+      const hubFrame = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.08, 0.08, 0.004)),
+        tableTopMat,
+      );
+      hubFrame.position.z = 0.0125;
+      wheelGroup.add(hubFrame);
+
+      // Crisp dark grid backing + 3x3 wooden crafting slots
+      const gridBack = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.068, 0.068, 0.003)),
+        oakDarkMat,
+      );
+      gridBack.position.z = 0.0145;
+      wheelGroup.add(gridBack);
+
+      const slotGeo = trackWGeo(new THREE.BoxGeometry(0.019, 0.019, 0.004));
+      for (let gx = -1; gx <= 1; gx++) {
+        for (let gy = -1; gy <= 1; gy++) {
+          const isCenter = gx === 0 && gy === 0;
+          const slot = new THREE.Mesh(
+            slotGeo,
+            isCenter ? oakLightMat : (gx + gy) % 2 === 0 ? oakLightMat : oakMidMat,
+          );
+          slot.position.set(gx * 0.022, gy * 0.022, 0.0165);
+          wheelGroup.add(slot);
+        }
+      }
+
+      // 7 Chunky Square Pixel RPM Shift LEDs along upper wooden bar
+      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.012, 0.012, 0.008));
+      for (let i = 0; i < 7; i++) {
+        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
+        shiftLedMats.push(lMat);
+        const led = new THREE.Mesh(ledGeo, lMat);
+        led.position.set((i - 3) * 0.016, 5 * step, 0.016);
+        wheelGroup.add(led);
+      }
+    } else if (style === 'aperturePortal') {
+      // Portal – Aperture Science Laboratories Steering Wheel:
+      // Sterile glossy white Aperture shells, dual Portal Blue & Orange plasma arcs + 8-Blade Camera Shutter Logo!
+      const apWhiteMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xf4f7fb, roughness: 0.16, metalness: 0.28 }),
+      );
+      const apDarkMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x1e2430, roughness: 0.44, metalness: 0.72 }),
+      );
+      const portalBlueMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x38bdf8,
+          emissive: 0x0284c7,
+          emissiveIntensity: 2.3,
+          roughness: 0.12,
+        }),
+      );
+      const portalOrangeMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xfb923c,
+          emissive: 0xea580c,
+          emissiveIntensity: 2.3,
+          roughness: 0.12,
+        }),
+      );
+      wheelPulseMat = portalBlueMat;
+
+      // Matte gunmetal Aperture chassis inner rim
+      wheelGroup.add(
+        new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.136, 0.0155, 14, 36)), apDarkMat),
+      );
+
+      // 4 Sterile Glossy White Aperture Shell Segments with precision lab panel seams
+      for (const [startAng, arcLen] of [
+        [Math.PI * 0.16, Math.PI * 0.68],
+        [Math.PI * 1.16, Math.PI * 0.68],
+      ]) {
+        const shell = new THREE.Mesh(
+          trackWGeo(new THREE.TorusGeometry(0.137, 0.0175, 12, 24, arcLen)),
+          apWhiteMat,
+        );
+        shell.rotation.z = startAng;
+        wheelGroup.add(shell);
+      }
+
+      // Dual Iconic Portal Plasma Rim Arcs — Left Portal Blue, Right Portal Orange!
+      const leftPortalArc = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.121, 0.0046, 8, 22, Math.PI * 0.76)),
+        portalBlueMat,
+      );
+      leftPortalArc.rotation.z = Math.PI * 0.62;
+      leftPortalArc.position.z = 0.007;
+      wheelGroup.add(leftPortalArc);
+
+      const rightPortalArc = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.121, 0.0046, 8, 22, Math.PI * 0.76)),
+        portalOrangeMat,
+      );
+      rightPortalArc.rotation.z = -Math.PI * 0.38;
+      rightPortalArc.position.z = 0.007;
+      wheelGroup.add(rightPortalArc);
+
+      // Left & Right White Aperture Spokes with matching Blue / Orange Energy Conduits
+      for (const sx of [-1, 1]) {
+        const sp = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.096, 0.026, 0.015)),
+          apWhiteMat,
+        );
+        sp.position.set(sx * 0.078, -0.004, -0.001);
+        wheelGroup.add(sp);
+        const conduit = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.082, 0.0065, 0.018)),
+          sx < 0 ? portalBlueMat : portalOrangeMat,
+        );
+        conduit.position.set(sx * 0.078, -0.004, 0.002);
+        wheelGroup.add(conduit);
+      }
+      // Twin-strut laboratory lower spoke
+      for (const ox of [-0.012, 0.012]) {
+        const strut = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.011, 0.094, 0.014)),
+          apWhiteMat,
+        );
+        strut.position.set(ox, -0.078, -0.001);
+        wheelGroup.add(strut);
+      }
+
+      // Center Hub — Iconic 8-Blade Aperture Science Camera Shutter Logo!
+      const apHub = new THREE.Mesh(
+        trackWGeo(new THREE.CylinderGeometry(0.046, 0.049, 0.023, 28)),
+        apWhiteMat,
+      );
+      apHub.rotation.x = Math.PI * 0.5;
+      wheelGroup.add(apHub);
+
+      const irisWell = new THREE.Mesh(
+        trackWGeo(new THREE.CylinderGeometry(0.037, 0.037, 0.004, 28)),
+        apDarkMat,
+      );
+      irisWell.rotation.x = Math.PI * 0.5;
+      irisWell.position.z = 0.012;
+      wheelGroup.add(irisWell);
+
+      // 8 Angled White Shutter Blades forming the iconic Aperture Science octagon aperture
+      const bladeGeo = trackWGeo(new THREE.BoxGeometry(0.022, 0.0095, 0.0045));
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        const blade = new THREE.Mesh(bladeGeo, apWhiteMat);
+        // Offset slightly off-radial to create the spiraling camera-shutter overlap
+        blade.position.set(
+          Math.cos(a) * 0.024 + Math.cos(a + Math.PI * 0.5) * 0.006,
+          Math.sin(a) * 0.024 + Math.sin(a + Math.PI * 0.5) * 0.006,
+          0.0155,
+        );
+        blade.rotation.z = a + 0.58;
+        wheelGroup.add(blade);
+      }
+
+      // Animated rotating dual-portal core inside the Aperture shutter opening
+      const spinPortal = new THREE.Group();
+      spinPortal.position.z = 0.016;
+      wheelGroup.add(spinPortal);
+      wheelHoloSpinGroup = spinPortal;
+      const miniBlue = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.0125, 0.0026, 8, 16, Math.PI * 0.85)),
+        portalBlueMat,
+      );
+      miniBlue.rotation.z = 0.1;
+      spinPortal.add(miniBlue);
+      const miniOrange = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.0125, 0.0026, 8, 16, Math.PI * 0.85)),
+        portalOrangeMat,
+      );
+      miniOrange.rotation.z = Math.PI + 0.1;
+      spinPortal.add(miniOrange);
+
+      // 9 Aperture Test-Chamber RPM Shift LEDs along upper white crown
+      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.0075, 0.008));
+      for (let i = 0; i < 9; i++) {
+        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
+        shiftLedMats.push(lMat);
+        const a = Math.PI * 0.5 + (4 - i) * 0.11;
+        const led = new THREE.Mesh(ledGeo, lMat);
+        led.position.set(Math.cos(a) * 0.137, Math.sin(a) * 0.137, 0.0195);
+        led.rotation.z = a - Math.PI * 0.5;
+        wheelGroup.add(led);
+      }
+    } else if (style === 'wheatleyCore') {
+      // Portal 2 Wheatley Personality Core Steering Wheel:
+      // Management-rail handle rim + full 3D Wheatley Core Sphere with expressive eyelids & glowing spinning cyan optic!
+      const whWhiteMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xe6ebf2, roughness: 0.28, metalness: 0.35 }),
+      );
+      const whGreyMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x526071, roughness: 0.42, metalness: 0.78 }),
+      );
+      const whDarkMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0x11151d, roughness: 0.55, metalness: 0.65 }),
+      );
+      const whBlueEyeMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0x38bdf8,
+          emissive: 0x0ea5e9,
+          emissiveIntensity: 2.5,
+          roughness: 0.1,
+        }),
+      );
+      const whGlintMat = trackWMat(
+        new THREE.MeshStandardMaterial({
+          color: 0xe0f2fe,
+          emissive: 0xbae6fd,
+          emissiveIntensity: 2.0,
+          roughness: 0.1,
+        }),
+      );
+      const whCautionMat = trackWMat(
+        new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.45, metalness: 0.2 }),
+      );
+      wheelPulseMat = whBlueEyeMat;
+
+      // Dark metallic core-rail inner rim + white weathered side shells
+      wheelGroup.add(
+        new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.136, 0.015, 12, 32)), whDarkMat),
+      );
+      for (const [startAng, arcLen] of [
+        [-Math.PI * 0.26, Math.PI * 0.52],
+        [Math.PI * 0.74, Math.PI * 0.52],
+      ]) {
+        const gripShell = new THREE.Mesh(
+          trackWGeo(new THREE.TorusGeometry(0.137, 0.0172, 10, 20, arcLen)),
+          whWhiteMat,
+        );
+        gripShell.rotation.z = startAng;
+        wheelGroup.add(gripShell);
+      }
+
+      // Iconic Wheatley Top & Bottom Personality-Core Grab Handles!
+      for (const sy of [1, -1]) {
+        const handleBar = new THREE.Mesh(
+          trackWGeo(new THREE.TorusGeometry(0.154, 0.0068, 8, 18, Math.PI * 0.38)),
+          whGreyMat,
+        );
+        handleBar.rotation.z = sy > 0 ? Math.PI * 0.31 : Math.PI * 1.31;
+        handleBar.position.z = 0.004;
+        wheelGroup.add(handleBar);
+        for (const sx of [-1, 1]) {
+          const post = new THREE.Mesh(
+            trackWGeo(new THREE.BoxGeometry(0.012, 0.022, 0.014)),
+            whGreyMat,
+          );
+          post.position.set(sx * 0.079, sy * 0.121, 0.003);
+          post.rotation.z = sx * sy * -0.58;
+          wheelGroup.add(post);
+        }
+      }
+
+      // Mechanical grey actuator spokes + subtle Aperture yellow caution decals
+      for (const sx of [-1, 1]) {
+        const sp = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.095, 0.024, 0.015)),
+          whGreyMat,
+        );
+        sp.position.set(sx * 0.078, 0, -0.002);
+        wheelGroup.add(sp);
+        const decal = new THREE.Mesh(
+          trackWGeo(new THREE.BoxGeometry(0.016, 0.012, 0.018)),
+          whCautionMat,
+        );
+        decal.position.set(sx * 0.114, 0, 0.001);
+        wheelGroup.add(decal);
+      }
+      const botActuator = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.028, 0.092, 0.015)),
+        whGreyMat,
+      );
+      botActuator.position.set(0, -0.08, -0.002);
+      wheelGroup.add(botActuator);
+
+      // Center Hub — 3D Wheatley Personality Core Sphere!
+      const coreSphere = new THREE.Mesh(
+        trackWGeo(new THREE.SphereGeometry(0.049, 20, 16)),
+        whWhiteMat,
+      );
+      coreSphere.scale.set(1, 1, 0.68);
+      coreSphere.position.z = 0.006;
+      wheelGroup.add(coreSphere);
+
+      // Chassis equator seam ring around Wheatley's sphere
+      const seamRing = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.048, 0.0032, 8, 28)),
+        whGreyMat,
+      );
+      seamRing.position.z = 0.006;
+      wheelGroup.add(seamRing);
+
+      // Recessed matte-black mechanical eye socket + outer steel bezel
+      const eyeSocketBezel = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.031, 0.0052, 10, 24)),
+        whGreyMat,
+      );
+      eyeSocketBezel.position.z = 0.033;
+      wheelGroup.add(eyeSocketBezel);
+
+      const eyeWell = new THREE.Mesh(
+        trackWGeo(new THREE.CylinderGeometry(0.029, 0.029, 0.005, 24)),
+        whDarkMat,
+      );
+      eyeWell.rotation.x = Math.PI * 0.5;
+      eyeWell.position.z = 0.032;
+      wheelGroup.add(eyeWell);
+
+      // Glowing Cyan-Blue Wheatley Optic Iris
+      const blueIris = new THREE.Mesh(
+        trackWGeo(new THREE.CylinderGeometry(0.022, 0.022, 0.004, 24)),
+        whBlueEyeMat,
+      );
+      blueIris.rotation.x = Math.PI * 0.5;
+      blueIris.position.z = 0.0345;
+      wheelGroup.add(blueIris);
+
+      // Animated rotating focus ring & bright pupil lens
+      const eyeSpin = new THREE.Group();
+      eyeSpin.position.z = 0.037;
+      wheelGroup.add(eyeSpin);
+      wheelHoloSpinGroup = eyeSpin;
+      const focusRing = new THREE.Mesh(
+        trackWGeo(new THREE.TorusGeometry(0.0155, 0.0022, 6, 18, Math.PI * 1.45)),
+        whGlintMat,
+      );
+      eyeSpin.add(focusRing);
+      const pupilDot = new THREE.Mesh(
+        trackWGeo(new THREE.CylinderGeometry(0.0075, 0.0075, 0.003, 16)),
+        whDarkMat,
+      );
+      pupilDot.rotation.x = Math.PI * 0.5;
+      eyeSpin.add(pupilDot);
+      const lensGlint = new THREE.Mesh(
+        trackWGeo(new THREE.SphereGeometry(0.0032, 8, 8)),
+        whGlintMat,
+      );
+      lensGlint.position.set(0.005, 0.005, 0.002);
+      eyeSpin.add(lensGlint);
+
+      // Expressive articulated upper & lower grey Wheatley eyelids
+      const upperLid = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.044, 0.0085, 0.006)),
+        whGreyMat,
+      );
+      upperLid.position.set(0, 0.021, 0.038);
+      upperLid.rotation.z = -0.09;
+      wheelGroup.add(upperLid);
+      const lowerLid = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.042, 0.0075, 0.006)),
+        whGreyMat,
+      );
+      lowerLid.position.set(0, -0.022, 0.038);
+      lowerLid.rotation.z = 0.05;
+      wheelGroup.add(lowerLid);
+
+      // 9 Aperture Cyan-Framed RPM Shift LEDs along upper track rim
+      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.0075, 0.008));
+      for (let i = 0; i < 9; i++) {
+        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
+        shiftLedMats.push(lMat);
+        const a = Math.PI * 0.5 + (4 - i) * 0.11;
+        const led = new THREE.Mesh(ledGeo, lMat);
+        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.0185);
+        led.rotation.z = a - Math.PI * 0.5;
         wheelGroup.add(led);
       }
     }

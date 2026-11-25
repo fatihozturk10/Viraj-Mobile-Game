@@ -996,7 +996,16 @@ export function isAnimatedLivery(livery: LiveryId): boolean {
     livery === 'animHeatwave' ||
     livery === 'animMatrixRain' ||
     livery === 'animInterstellar' ||
-    livery === 'animThunderVolt'
+    livery === 'animThunderVolt' ||
+    livery === 'animSynthwave' ||
+    livery === 'animAuroraFrost' ||
+    livery === 'animGoldenDragon' ||
+    livery === 'animComicSpeed' ||
+    livery === 'animCandyPop' ||
+    livery === 'animVenomSymbiote' ||
+    livery === 'animLiquidAquarium' ||
+    livery === 'animWindStream' ||
+    livery === 'omnitrixAlien'
   );
 }
 
@@ -1519,6 +1528,634 @@ function createAnimatedLiveryTextures(
     }
     ctx.globalAlpha = 1;
     ectx.globalAlpha = 1;
+  } else if (livery === 'animSynthwave') {
+    // 1984 Outrun Synthwave: Deep midnight violet chassis + scrolling glowing magenta laser grid & cyan/gold sunset bands
+    ctx.fillStyle = '#0e0420';
+    ctx.fillRect(0, 0, S, S);
+
+    // Seamless horizontal retro-sunset glow bands (2 full cycles per 512px)
+    for (const bandY of [128, 384]) {
+      const g = ctx.createLinearGradient(0, bandY - 90, 0, bandY + 90);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(0.32, 'rgba(236, 72, 153, 0.42)');
+      g.addColorStop(0.5, 'rgba(245, 158, 11, 0.52)');
+      g.addColorStop(0.68, 'rgba(34, 211, 238, 0.36)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, bandY - 90, S, 180);
+    }
+
+    // Seamless neon laser grid (exact 32px spacing = 16x16 tiles)
+    const step = 32;
+    for (let i = 0; i < S; i += step) {
+      const isMajor = i % 64 === 0;
+      const col = isMajor ? '#f472b6' : '#ec4899';
+      for (const target of [ctx, ectx]) {
+        target.strokeStyle = col;
+        target.lineWidth = isMajor ? 2.8 : 1.5;
+        target.globalAlpha = target === ectx ? (isMajor ? 0.95 : 0.65) : 0.85;
+        target.beginPath();
+        target.moveTo(i, 0);
+        target.lineTo(i, S);
+        target.moveTo(0, i);
+        target.lineTo(S, i);
+        target.stroke();
+      }
+    }
+
+    // Glowing cyan & gold horizon equalizer wave ribbons (seamless in X & Y)
+    for (const [baseY, color, amp, freq] of [
+      [128, '#22d3ee', 24, 2],
+      [256, '#facc15', 18, 3],
+      [384, '#f472b6', 24, 2],
+    ] as [number, string, number, number][]) {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.strokeStyle = color;
+        target.lineWidth = target === ectx ? 5.5 : 7;
+        target.globalAlpha = 0.92;
+        for (const oy of [-S, 0, S]) {
+          target.beginPath();
+          for (let x = 0; x <= S; x += 8) {
+            const t = (x / S) * Math.PI * 2;
+            const y = baseY + oy + Math.sin(t * freq) * amp;
+            if (x === 0) target.moveTo(x, y);
+            else target.lineTo(x, y);
+          }
+          target.stroke();
+        }
+        target.restore();
+      }
+    }
+
+    // Crisp neon node diamonds at major intersections
+    for (let x = 0; x < S; x += 64) {
+      for (let y = 0; y < S; y += 64) {
+        for (const target of [ctx, ectx]) {
+          target.fillStyle = '#e0f2fe';
+          target.globalAlpha = 0.95;
+          target.fillRect(x - 3, y - 3, 6, 6);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animAuroraFrost') {
+    // Arctic Aurora Borealis: Deep glacial night + drifting emerald, cyan & arctic-violet light curtains + frost sparkles
+    ctx.fillStyle = '#020b18';
+    ctx.fillRect(0, 0, S, S);
+
+    const drawCurtain = (
+      baseY: number,
+      cOuter: string,
+      cCore: string,
+      amp: number,
+      phase: number,
+    ) => {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.lineCap = 'round';
+        for (const oy of [-S, 0, S]) {
+          // Soft wide aurora glow veil
+          target.strokeStyle = cOuter;
+          target.lineWidth = target === ectx ? 42 : 52;
+          target.globalAlpha = target === ectx ? 0.42 : 0.48;
+          target.beginPath();
+          for (let x = 0; x <= S; x += 8) {
+            const t = (x / S) * Math.PI * 2;
+            const y =
+              baseY +
+              oy +
+              Math.sin(t * 2 + phase) * amp +
+              Math.cos(t * 3 - phase) * (amp * 0.35);
+            if (x === 0) target.moveTo(x, y);
+            else target.lineTo(x, y);
+          }
+          target.stroke();
+
+          // Bright luminous aurora spine
+          target.strokeStyle = cCore;
+          target.lineWidth = target === ectx ? 10 : 12;
+          target.globalAlpha = 0.92;
+          target.stroke();
+        }
+        target.restore();
+      }
+    };
+
+    drawCurtain(96, '#059669', '#34d399', 34, 0.3);
+    drawCurtain(224, '#0284c7', '#67e8f9', 38, 2.1);
+    drawCurtain(352, '#6366f1', '#c4b5fd', 30, 4.0);
+    drawCurtain(464, '#10b981', '#a7f3d0', 26, 5.2);
+
+    // Subtle frosty ice-crystal glints
+    let seed = 88213;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 140; i++) {
+      const fx = rand() * S;
+      const fy = rand() * S;
+      const fr = 0.9 + rand() * 1.8;
+      const col = i % 3 === 0 ? '#a7f3d0' : i % 3 === 1 ? '#bae6fd' : '#ffffff';
+      for (const target of [ctx, ectx]) {
+        target.fillStyle = col;
+        target.globalAlpha = 0.72;
+        target.beginPath();
+        target.arc(fx, fy, fr, 0, Math.PI * 2);
+        target.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animGoldenDragon') {
+    // Royal Obsidian Dragon Scales with Surging Waves of Molten 24K Gold & Phoenix Amber!
+    ctx.fillStyle = '#0c0a09';
+    ctx.fillRect(0, 0, S, S);
+
+    const colW = 32; // exact divisor of 512 (16 cols)
+    const rowH = 32; // exact divisor of 512 (16 rows)
+    const scaleR = 20;
+
+    for (let row = -1; row <= S / rowH + 1; row++) {
+      const cy = row * rowH;
+      const offsetX = (row & 1) !== 0 ? colW * 0.5 : 0;
+      // Seamless molten golden energy wave (2 full cycles per 512px)
+      const wave = 0.5 + 0.5 * Math.cos((cy / S) * Math.PI * 4);
+      const energy = Math.pow(wave, 2.0);
+
+      for (let col = -1; col <= S / colW + 1; col++) {
+        const cx = col * colW + offsetX;
+        // Overlapping curved dragon scale arc
+        ctx.beginPath();
+        ctx.arc(cx, cy, scaleR, 0, Math.PI, false);
+        ctx.closePath();
+        const sg = ctx.createRadialGradient(cx, cy - 4, 2, cx, cy + 4, scaleR);
+        sg.addColorStop(0, energy > 0.5 ? '#451a03' : '#1c1917');
+        sg.addColorStop(1, '#09090b');
+        ctx.fillStyle = sg;
+        ctx.fill();
+
+        // Crisp 24K gold rim around every dragon scale
+        ctx.strokeStyle = energy > 0.45 ? '#fde047' : '#b45309';
+        ctx.lineWidth = 1.6 + energy * 2.4;
+        ctx.globalAlpha = 0.42 + energy * 0.58;
+        ctx.stroke();
+
+        // Emissive blazing gold surge along scale rims during wave peak
+        if (energy > 0.14) {
+          ectx.beginPath();
+          ectx.arc(cx, cy, scaleR, 0.12 * Math.PI, 0.88 * Math.PI, false);
+          ectx.strokeStyle = energy > 0.65 ? '#fef08a' : '#f59e0b';
+          ectx.lineWidth = 2.0 + energy * 2.8;
+          ectx.globalAlpha = Math.min(1, energy * 1.15);
+          ectx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animComicSpeed') {
+    // Live Anime / Manga Drift Speed Lines: High-contrast ink speed streaks + electric cyan/crimson impact flashes!
+    ctx.fillStyle = '#09090d';
+    ctx.fillRect(0, 0, S, S);
+
+    // Subtle manga halftone screen columns
+    ctx.fillStyle = 'rgba(248, 250, 252, 0.12)';
+    for (let x = 8; x < S; x += 16) {
+      for (let y = 8; y < S; y += 16) {
+        ctx.beginPath();
+        ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    let seed = 55109;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    // High-speed vertical manga action streaks (seamless in Y)
+    for (let i = 0; i < 64; i++) {
+      const sx = rand() * S;
+      const sy = rand() * S;
+      const len = 80 + rand() * 190;
+      const w = 1.5 + rand() * 5.2;
+      const isCyan = i % 7 === 0;
+      const isCrimson = i % 9 === 0;
+      const col = isCyan ? '#22d3ee' : isCrimson ? '#f43f5e' : '#f8fafc';
+      for (const oy of [-S, 0, S]) {
+        ctx.fillStyle = col;
+        ctx.globalAlpha = isCyan || isCrimson ? 0.95 : 0.78;
+        ctx.fillRect(sx, sy + oy, w, len);
+
+        if (isCyan || isCrimson || w > 4.2) {
+          ectx.fillStyle = col;
+          ectx.globalAlpha = isCyan || isCrimson ? 0.95 : 0.6;
+          ectx.fillRect(sx, sy + oy, w, len);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animCandyPop') {
+    // Vibrant Swirling Pastel-Neon Candy Ribbon Wrap with Sparkling Sugar Stars!
+    ctx.fillStyle = '#2e1065';
+    ctx.fillRect(0, 0, S, S);
+
+    const ribbons: [number, string, string, number, number][] = [
+      [64, '#f472b6', '#fbcfe8', 32, 2],
+      [192, '#38bdf8', '#bae6fd', 36, 2],
+      [320, '#fde047', '#fef9c3', 30, 2],
+      [448, '#c084fc', '#f3e8ff', 34, 2],
+    ];
+    for (const [baseY, col, core, amp, freq] of ribbons) {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.lineCap = 'round';
+        for (const oy of [-S, 0, S]) {
+          target.strokeStyle = col;
+          target.lineWidth = target === ectx ? 32 : 46;
+          target.globalAlpha = target === ectx ? 0.58 : 0.88;
+          target.beginPath();
+          for (let x = 0; x <= S; x += 8) {
+            const t = (x / S) * Math.PI * 2;
+            const y = baseY + oy + Math.sin(t * freq + baseY * 0.01) * amp;
+            if (x === 0) target.moveTo(x, y);
+            else target.lineTo(x, y);
+          }
+          target.stroke();
+
+          target.strokeStyle = core;
+          target.lineWidth = 10;
+          target.globalAlpha = 0.95;
+          target.stroke();
+        }
+        target.restore();
+      }
+    }
+
+    // Glowing candy star sparkles
+    let seed = 19283;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 65; i++) {
+      const sx = rand() * S;
+      const sy = rand() * S;
+      const sr = 2.5 + rand() * 4.5;
+      for (const target of [ctx, ectx]) {
+        target.fillStyle = '#ffffff';
+        target.globalAlpha = 0.92;
+        target.fillRect(sx - sr, sy - 1.2, sr * 2, 2.4);
+        target.fillRect(sx - 1.2, sy - sr, 2.4, sr * 2);
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animVenomSymbiote') {
+    // Superhero Symbiote (Venom): Glossy pitch-black living organic tendrils, razor-sharp white hood eyes & spider veins!
+    ctx.fillStyle = '#050507';
+    ctx.fillRect(0, 0, S, S);
+
+    // Organic dark indigo-obsidian writhing muscular symbiote tendrils across entire body
+    let seed = 66613;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 46; i++) {
+      const x0 = rand() * S;
+      const y0 = rand() * S;
+      ctx.strokeStyle = i % 3 === 0 ? '#181824' : '#101018';
+      ctx.lineWidth = 4 + rand() * 10;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.bezierCurveTo(
+        x0 + (rand() - 0.5) * 140,
+        y0 + (rand() - 0.5) * 140,
+        x0 + (rand() - 0.5) * 160,
+        y0 + (rand() - 0.5) * 160,
+        x0 + (rand() - 0.5) * 180,
+        y0 + (rand() - 0.5) * 180,
+      );
+      ctx.stroke();
+    }
+
+    // Razor-sharp menacing White Symbiote Eyes curving aggressively across the hood!
+    for (const target of [ctx, ectx]) {
+      for (const isRight of [false, true]) {
+        target.save();
+        if (isRight) {
+          target.translate(S, 0);
+          target.scale(-1, 1);
+        }
+        // Iconic jagged curved Venom eye silhouette
+        target.fillStyle = '#f8fafc';
+        target.beginPath();
+        target.moveTo(132, 92);
+        target.quadraticCurveTo(188, 128, 240, 214);
+        target.quadraticCurveTo(192, 232, 146, 198);
+        target.quadraticCurveTo(116, 152, 132, 92);
+        target.closePath();
+        target.fill();
+
+        // Jagged white organic spider-leg tendrils creeping along the flanks & rear!
+        target.strokeStyle = '#f8fafc';
+        target.lineCap = 'round';
+        target.lineJoin = 'miter';
+        const veins: [number, number, number, number, number, number, number][] = [
+          [24, 60, 88, 132, 42, 216, 9],
+          [16, 165, 96, 236, 36, 332, 11],
+          [28, 286, 110, 352, 54, 468, 9],
+          [82, 230, 178, 304, 242, 344, 7],
+          [94, 348, 186, 390, 246, 444, 6],
+        ];
+        for (const [ax, ay, bx, by, cx, cy, lw] of veins) {
+          target.lineWidth = target === ectx ? lw * 0.72 : lw;
+          target.beginPath();
+          target.moveTo(ax, ay);
+          target.lineTo(bx, by);
+          target.lineTo(cx, cy);
+          target.stroke();
+        }
+        target.restore();
+      }
+
+      // Stylized jagged white Symbiote Spider Crest along the roof center
+      target.fillStyle = '#f8fafc';
+      target.beginPath();
+      target.moveTo(256, 278);
+      target.lineTo(278, 326);
+      target.lineTo(256, 396);
+      target.lineTo(234, 326);
+      target.closePath();
+      target.fill();
+    }
+  } else if (livery === 'animLiquidAquarium') {
+    // Translucent Glass Aquarium Shell Caustics & Shimmering Water Ripples (paired with real 3D sloshing water + goldfish inside!)
+    const g = ctx.createLinearGradient(0, 0, 0, S);
+    g.addColorStop(0, '#bae6fd');
+    g.addColorStop(0.5, '#7dd3fc');
+    g.addColorStop(1, '#bae6fd');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, S, S);
+
+    // Seamless swimming water-caustic light ribbons across the crystal glass bodywork
+    for (const [baseY, amp, freq, lw] of [
+      [85, 28, 2, 14],
+      [210, 34, 3, 12],
+      [340, 26, 2, 16],
+      [450, 30, 3, 12],
+    ]) {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.strokeStyle = target === ectx ? '#7dd3fc' : '#ffffff';
+        target.lineWidth = target === ectx ? lw * 0.65 : lw;
+        target.globalAlpha = target === ectx ? 0.42 : 0.55;
+        for (const oy of [-S, 0, S]) {
+          target.beginPath();
+          for (let x = 0; x <= S; x += 8) {
+            const t = (x / S) * Math.PI * 2;
+            const y = baseY + oy + Math.sin(t * freq) * amp;
+            if (x === 0) target.moveTo(x, y);
+            else target.lineTo(x, y);
+          }
+          target.stroke();
+        }
+        target.restore();
+      }
+    }
+
+    // Crisp subtle glass-tank water droplets & micro bubbles on the glass surface
+    let seed = 40829;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 48; i++) {
+      const bx = rand() * S;
+      const by = rand() * S;
+      const br = 3 + rand() * 7;
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ectx.strokeStyle = 'rgba(186,230,253,0.45)';
+      ectx.lineWidth = 1.5;
+      ectx.beginPath();
+      ectx.arc(bx, by, br, 0, Math.PI * 2);
+      ectx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animWindStream') {
+    // Aerodynamic Wind-Tunnel Airflow Wrap: Honors player's paint color + silky glowing streamlines & vortex curls!
+    const baseCss = `#${baseColor.getHexString()}`;
+    ctx.fillStyle = baseCss;
+    ctx.fillRect(0, 0, S, S);
+
+    // Subtle dark-tinted aerodynamic pressure-map shading along flanks
+    const windShade = ctx.createLinearGradient(0, 0, S, 0);
+    windShade.addColorStop(0, 'rgba(2, 6, 23, 0.35)');
+    windShade.addColorStop(0.5, 'rgba(255, 255, 255, 0.08)');
+    windShade.addColorStop(1, 'rgba(2, 6, 23, 0.35)');
+    ctx.fillStyle = windShade;
+    ctx.fillRect(0, 0, S, S);
+
+    // Seamless vertical wind-tunnel streamlines & swirling slipstream curls (exact 512px periodicity!)
+    let seed = 33771;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    for (let i = 0; i < 28; i++) {
+      const baseX = (i / 28) * S + 8;
+      const startY = rand() * S;
+      const len = 110 + rand() * 195;
+      const sway = 5 + rand() * 12;
+      const phase = rand() * Math.PI * 2;
+      const isStrong = i % 3 === 0;
+
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.lineCap = 'round';
+        for (const oy of [-S, 0, S]) {
+          // Soft translucent cyan slipstream aura
+          target.strokeStyle = isStrong ? '#38bdf8' : '#7dd3fc';
+          target.lineWidth = isStrong ? 9 : 5;
+          target.globalAlpha = target === ectx ? 0.38 : 0.44;
+          target.beginPath();
+          for (let dy = 0; dy <= len; dy += 12) {
+            const frac = dy / len;
+            const wx = baseX + Math.sin(frac * Math.PI * 2 + phase) * sway;
+            const wy = startY + oy + dy;
+            if (dy === 0) target.moveTo(wx, wy);
+            else target.lineTo(wx, wy);
+          }
+          target.stroke();
+
+          // Crisp bright white airflow core filament
+          target.strokeStyle = '#f0f9ff';
+          target.lineWidth = isStrong ? 3.2 : 1.8;
+          target.globalAlpha = target === ectx ? 0.88 : 0.92;
+          target.stroke();
+        }
+        target.restore();
+      }
+    }
+
+    // Iconic aerodynamic swirling wind-vortex spirals (seamless)
+    for (let v = 0; v < 8; v++) {
+      const vx = 48 + (v % 4) * 138;
+      const vy = v < 4 ? 128 : 384;
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.strokeStyle = '#e0f2fe';
+        target.lineWidth = 2.6;
+        target.globalAlpha = target === ectx ? 0.65 : 0.72;
+        target.beginPath();
+        for (let a = 0; a < Math.PI * 3.2; a += 0.25) {
+          const r = 3 + a * 2.8;
+          const px = vx + Math.cos(a) * r;
+          const py = vy + Math.sin(a) * r;
+          if (a === 0) target.moveTo(px, py);
+          else target.lineTo(px, py);
+        }
+        target.stroke();
+        target.restore();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'omnitrixAlien') {
+    // Ben 10 Omnitrix / Alien Watch Wrap: Sleek Black & White Futuristic Armor + Glowing Neon Green Hourglass Emblem!
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(0, 0, S, S);
+
+    // Stark glossy white futuristic alien-tech center chassis & flanking armor plates
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(148, 0, 216, 512);
+    // Angled black armor notches cutting into the white body
+    ctx.fillStyle = '#09090b';
+    ctx.beginPath();
+    ctx.moveTo(148, 0);
+    ctx.lineTo(205, 84);
+    ctx.lineTo(148, 152);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(364, 0);
+    ctx.lineTo(307, 84);
+    ctx.lineTo(364, 152);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(148, 358);
+    ctx.lineTo(205, 426);
+    ctx.lineTo(148, 512);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(364, 358);
+    ctx.lineTo(307, 426);
+    ctx.lineTo(364, 512);
+    ctx.closePath();
+    ctx.fill();
+
+    // Sharp glowing Neon-Green Futuristic Omnitrix Circuit Lines along flanks & seams
+    const drawOmniLines = (target: CanvasRenderingContext2D, isEm: boolean) => {
+      target.strokeStyle = isEm ? '#4ade80' : '#22c55e';
+      target.lineWidth = isEm ? 6 : 8;
+      target.lineCap = 'square';
+      // Side flank energy rails
+      for (const sx of [64, 144, 368, 448]) {
+        target.beginPath();
+        target.moveTo(sx, 0);
+        target.lineTo(sx, 512);
+        target.stroke();
+      }
+      // Diagonal sci-fi chevron conduits
+      for (const y of [96, 256, 416]) {
+        target.beginPath();
+        target.moveTo(0, y);
+        target.lineTo(64, y + 38);
+        target.lineTo(144, y + 38);
+        target.moveTo(512, y);
+        target.lineTo(448, y + 38);
+        target.lineTo(368, y + 38);
+        target.stroke();
+      }
+    };
+    drawOmniLines(ctx, false);
+    drawOmniLines(ectx, true);
+
+    // Iconic Glowing Omnitrix Dial + Razor-Sharp Neon-Green Hourglass Emblem right on the Hood/Roof!
+    const drawOmnitrixDial = (cx: number, cy: number, rad: number) => {
+      // Dark tactical steel bezel on diffuse
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.arc(0, 0, rad + 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 5;
+      ctx.stroke();
+
+      // 4 outer Omnitrix bezel locking pips
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2 + Math.PI * 0.25;
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * (rad + 6), Math.sin(a) * (rad + 6), 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Glowing Neon-Green Hourglass core on BOTH diffuse & emissive!
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.translate(cx, cy);
+        // Pitch black circular dial face
+        target.fillStyle = '#050507';
+        target.beginPath();
+        target.arc(0, 0, rad, 0, Math.PI * 2);
+        target.fill();
+        // Glowing outer ring
+        target.strokeStyle = '#4ade80';
+        target.lineWidth = 5;
+        target.stroke();
+
+        // Iconic Omnitrix Hourglass (two glowing green triangles meeting at dead-center!)
+        target.fillStyle = target === ectx ? '#86efac' : '#22c55e';
+        target.beginPath();
+        target.moveTo(-rad * 0.62, -rad * 0.72);
+        target.lineTo(rad * 0.62, -rad * 0.72);
+        target.lineTo(0, 0);
+        target.lineTo(rad * 0.62, rad * 0.72);
+        target.lineTo(-rad * 0.62, rad * 0.72);
+        target.lineTo(0, 0);
+        target.closePath();
+        target.fill();
+
+        // Crisp white-green core highlight outline
+        target.strokeStyle = '#dcfce7';
+        target.lineWidth = 3;
+        target.stroke();
+        target.restore();
+      }
+    };
+
+    drawOmnitrixDial(256, 178, 72);
+    drawOmnitrixDial(256, 366, 48);
   }
 
   const map = new THREE.CanvasTexture(mapCanvas);
@@ -2309,6 +2946,1324 @@ export function createLiveryTexture(
     ctx.fillStyle = '#22d3ee';
     ctx.fillRect(240, 0, 4, 512);
     ctx.fillRect(268, 0, 4, 512);
+  } else if (livery === 'gulfHeritage') {
+    // Classic Endurance Le Mans Center Orange Stripe with Crisp Dark Navy Pinstripes
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(194, 0, 124, 512);
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(204, 0, 104, 512);
+    // Subtle dark navy side accent stripes along lower flanks
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(18, 0, 18, 512);
+    ctx.fillRect(476, 0, 18, 512);
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(22, 0, 10, 512);
+    ctx.fillRect(480, 0, 10, 512);
+  } else if (livery === 'hazardStripes') {
+    // Industrial Yellow & Black Diagonal Warning Chevrons on Nose, Tail & Rocker Flanks
+    const drawHazardBand = (x: number, y: number, w: number, h: number) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.clip();
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#111827';
+      for (let d = -h - w; d < w + h; d += 28) {
+        ctx.beginPath();
+        ctx.moveTo(x + d, y);
+        ctx.lineTo(x + d + 14, y);
+        ctx.lineTo(x + d - h + 14, y + h);
+        ctx.lineTo(x + d - h, y + h);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    };
+    drawHazardBand(0, 0, 512, 58);
+    drawHazardBand(0, 454, 512, 58);
+    drawHazardBand(0, 58, 52, 396);
+    drawHazardBand(460, 58, 52, 396);
+    // Crisp dark border seams
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(52, 58, 5, 396);
+    ctx.fillRect(455, 58, 5, 396);
+  } else if (livery === 'sharkMouth') {
+    // WW2 Fighter-Jet / Drift-Missile Menacing Shark Mouth Teeth & Eyes on Both Flanks!
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(512, 0);
+        ctx.scale(-1, 1);
+      }
+      // Crimson shark jaw silhouette on flank
+      ctx.fillStyle = '#b91c1c';
+      ctx.beginPath();
+      ctx.moveTo(14, 72);
+      ctx.quadraticCurveTo(132, 130, 118, 336);
+      ctx.quadraticCurveTo(64, 376, 14, 344);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#09090b';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // Razor-sharp jagged white teeth rows
+      ctx.fillStyle = '#f8fafc';
+      for (let i = 0; i < 6; i++) {
+        const y0 = 104 + i * 38;
+        ctx.beginPath();
+        ctx.moveTo(24, y0);
+        ctx.lineTo(84, y0 + 18);
+        ctx.lineTo(24, y0 + 34);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#09090b';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+      // Fierce slanted shark eye on front fender
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.ellipse(152, 142, 22, 14, -0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#09090b';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.fillStyle = '#09090b';
+      ctx.beginPath();
+      ctx.arc(154, 142, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  } else if (livery === 'martiniRally') {
+    // Legendary Tri-Color Motorsport Rally Stripes (Sky Cyan, Cobalt Blue, Racing Crimson)
+    const drawTriStripe = (cx: number, scale: number) => {
+      const bars: [number, number, string][] = [
+        [-48, 22, '#38bdf8'],
+        [-26, 20, '#1d4ed8'],
+        [-6, 18, '#ef4444'],
+        [12, 20, '#1d4ed8'],
+        [32, 16, '#38bdf8'],
+      ];
+      for (const [ox, w, c] of bars) {
+        ctx.fillStyle = c;
+        ctx.fillRect(cx + ox * scale, 0, w * scale, 512);
+      }
+    };
+    drawTriStripe(256, 1.0);
+    // Flanking side sweep stripes
+    drawTriStripe(52, 0.55);
+    drawTriStripe(460, 0.55);
+  } else if (livery === 'rustWasteland') {
+    // Full-Wrap Mad Max Wasteland Corroded Scrap-Iron Plates, Rivets & Burnt Rust
+    ctx.fillStyle = '#3b3735';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Deterministic mottled rust & scorched steel patches
+    let seed = 64112;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 85; i++) {
+      const rx = rand() * 512;
+      const ry = rand() * 512;
+      const rr = 18 + rand() * 54;
+      const rg = ctx.createRadialGradient(rx, ry, 2, rx, ry, rr);
+      const isDark = i % 3 === 0;
+      rg.addColorStop(0, isDark ? 'rgba(69, 26, 3, 0.85)' : 'rgba(154, 52, 18, 0.72)');
+      rg.addColorStop(0.6, isDark ? 'rgba(124, 45, 18, 0.42)' : 'rgba(194, 65, 12, 0.35)');
+      rg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(rx - rr, ry - rr, rr * 2, rr * 2);
+    }
+
+    // Welded scrap armor panel seams & metal rivets
+    ctx.strokeStyle = '#1c1917';
+    ctx.lineWidth = 4;
+    for (const y of [118, 256, 392]) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(512, y);
+      ctx.stroke();
+      for (let x = 20; x < 512; x += 36) {
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath();
+        ctx.arc(x, y - 9, 3.2, 0, Math.PI * 2);
+        ctx.arc(x, y + 9, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.beginPath();
+    ctx.moveTo(168, 0);
+    ctx.lineTo(168, 512);
+    ctx.moveTo(344, 0);
+    ctx.lineTo(344, 512);
+    ctx.stroke();
+
+    // Faded yellow wasteland war-paint stripe down center
+    ctx.fillStyle = 'rgba(202, 138, 4, 0.72)';
+    ctx.fillRect(236, 0, 40, 512);
+    for (let s = 0; s < 35; s++) {
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(232 + rand() * 48, rand() * 512, 10 + rand() * 14, 6 + rand() * 12);
+    }
+  } else if (livery === 'apertureLab') {
+    // Full-Wrap Portal Aperture Science Sterile White Test-Chamber Panels + Blue & Orange Portal Stripes!
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Clean sterile Aperture test-chamber square tile grid
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 3;
+    for (let g = 0; g <= 512; g += 64) {
+      ctx.beginPath();
+      ctx.moveTo(g, 0);
+      ctx.lineTo(g, 512);
+      ctx.moveTo(0, g);
+      ctx.lineTo(512, g);
+      ctx.stroke();
+    }
+    // Subtle dark slate test-chamber recessed blocks
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, 512, 26);
+    ctx.fillRect(0, 486, 512, 26);
+
+    // Iconic Portal Blue left-flank stripe & Portal Orange right-flank stripe
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(58, 26, 36, 460);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(98, 26, 8, 460);
+
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(418, 26, 36, 460);
+    ctx.fillStyle = '#fb923c';
+    ctx.fillRect(406, 26, 8, 460);
+
+    // Crisp 8-blade Aperture Science shutter emblem on center hood!
+    ctx.save();
+    ctx.translate(256, 200);
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(0, 0, 68, 0, Math.PI * 2);
+    ctx.fill();
+    for (let i = 0; i < 8; i++) {
+      ctx.save();
+      ctx.rotate((i / 8) * Math.PI * 2);
+      ctx.fillStyle = i % 2 === 0 ? '#0284c7' : '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(14, -56);
+      ctx.lineTo(54, -22);
+      ctx.lineTo(24, -10);
+      ctx.lineTo(2, -34);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.arc(0, 0, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  } else if (livery === 'minecraftPixel') {
+    // Full-Wrap Crisp 16x16 Quantized Minecraft Voxel Mosaic: Stone, Grass Flanks & Glowing Diamond Ore!
+    const tile = 32; // 16x16 chunky pixels across 512px
+    let seed = 31415;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    const stonePalette = ['#475569', '#526072', '#64748b', '#334155', '#5b6778'];
+    const grassPalette = ['#16a34a', '#22c55e', '#15803d', '#4ade80'];
+
+    for (let gx = 0; gx < 16; gx++) {
+      for (let gy = 0; gy < 16; gy++) {
+        const isFlankGrass = gx <= 2 || gx >= 13;
+        const r = rand();
+        let col: string;
+        if (isFlankGrass) {
+          col = grassPalette[Math.floor(r * grassPalette.length)];
+        } else if (r > 0.84) {
+          // Sparkling Cyan Diamond Ore voxel!
+          col = r > 0.92 ? '#67e8f9' : '#22d3ee';
+        } else {
+          col = stonePalette[Math.floor(r * stonePalette.length)];
+        }
+        ctx.fillStyle = col;
+        ctx.fillRect(gx * tile, gy * tile, tile, tile);
+        // Subtle 2px inner pixel bevel for crisp blocky voxel feel
+        ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(gx * tile + 1, gy * tile + 1, tile - 2, tile - 2);
+      }
+    }
+  } else if (livery === 'istanbulTaxi') {
+    // Classic Istanbul / NYC Bright Taxi Yellow + Checkered Side Belt & Bold TAKSİ Hood Badge!
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Subtle lower black bumper/skirt trim
+    ctx.fillStyle = '#18181b';
+    ctx.fillRect(0, 0, 512, 24);
+    ctx.fillRect(0, 488, 512, 24);
+
+    // Classic 2-row black & white checkered taxi strip down both flanks
+    const sq = 16;
+    for (let y = 24; y < 488; y += sq) {
+      const row = Math.floor(y / sq);
+      for (let c = 0; c < 2; c++) {
+        const isBlack = (row + c) % 2 === 0;
+        ctx.fillStyle = isBlack ? '#09090b' : '#ffffff';
+        ctx.fillRect(36 + c * sq, y, sq, sq);
+        ctx.fillRect(444 + c * sq, y, sq, sq);
+      }
+    }
+    // Crisp dark pinstripe framing the checkered belt
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(32, 24, 4, 464);
+    ctx.fillRect(68, 24, 4, 464);
+    ctx.fillRect(440, 24, 4, 464);
+    ctx.fillRect(476, 24, 4, 464);
+
+    // Center hood & roof bold TAKSİ banner stripe
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(156, 152, 200, 66);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(160, 156, 192, 58);
+    ctx.fillStyle = '#facc15';
+    ctx.font = '900 44px "Oxanium", "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('TAKSİ', 256, 187);
+  } else if (livery === 'watermelonWrap') {
+    // Juicy Summer Watermelon Wrap: Green Striped Rind Flanks, Crisp White Pith & Seeded Ruby Flesh!
+    ctx.fillStyle = '#f43f5e';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Rich juicy inner ruby gradient down the hood & roof
+    const mg = ctx.createLinearGradient(110, 0, 402, 0);
+    mg.addColorStop(0, '#fb7185');
+    mg.addColorStop(0.5, '#e11d48');
+    mg.addColorStop(1, '#fb7185');
+    ctx.fillStyle = mg;
+    ctx.fillRect(110, 0, 292, 512);
+
+    // Crisp pale-white watermelon pith transition strips
+    ctx.fillStyle = '#ecfccb';
+    ctx.fillRect(92, 0, 20, 512);
+    ctx.fillRect(400, 0, 20, 512);
+
+    // Deep green watermelon rind flanks with wavy dark-green tiger stripes!
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(0, 0, 92, 512);
+    ctx.fillRect(420, 0, 92, 512);
+
+    ctx.strokeStyle = '#14532d';
+    ctx.lineWidth = 14;
+    for (const bx of [22, 62, 450, 490]) {
+      ctx.beginPath();
+      for (let y = 0; y <= 512; y += 16) {
+        const wx = bx + Math.sin(y * 0.055) * 9;
+        if (y === 0) ctx.moveTo(wx, y);
+        else ctx.lineTo(wx, y);
+      }
+      ctx.stroke();
+    }
+
+    // Glossy teardrop black watermelon seeds scattered across the juicy red flesh
+    let seed = 80421;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 42; i++) {
+      const sx = 132 + rand() * 248;
+      const sy = 24 + rand() * 464;
+      const ang = (rand() - 0.5) * 1.4;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(ang);
+      ctx.fillStyle = '#09090b';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 5.5, 9.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.beginPath();
+      ctx.arc(-1.8, -3, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  } else if (livery === 'pepperoniPizza') {
+    // Hot Melted Cheese & Pepperoni Pizza Wrap with Golden Baked Crust Borders!
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Rich melted mozzarella & bubbling tomato sauce patches
+    let seed = 44712;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 55; i++) {
+      const cx = 70 + rand() * 372;
+      const cy = rand() * 512;
+      const cr = 16 + rand() * 34;
+      ctx.fillStyle = i % 3 === 0 ? '#fde047' : i % 3 === 1 ? '#f59e0b' : '#fef08a';
+      ctx.globalAlpha = 0.65;
+      ctx.beginPath();
+      ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Crispy golden-brown baked pizza crust along outer flanks & nose/tail
+    const crustGradL = ctx.createLinearGradient(0, 0, 68, 0);
+    crustGradL.addColorStop(0, '#92400e');
+    crustGradL.addColorStop(0.65, '#d97706');
+    crustGradL.addColorStop(1, '#b91c1c');
+    ctx.fillStyle = crustGradL;
+    ctx.fillRect(0, 0, 68, 512);
+    const crustGradR = ctx.createLinearGradient(512, 0, 444, 0);
+    crustGradR.addColorStop(0, '#92400e');
+    crustGradR.addColorStop(0.65, '#d97706');
+    crustGradR.addColorStop(1, '#b91c1c');
+    ctx.fillStyle = crustGradR;
+    ctx.fillRect(444, 0, 68, 512);
+
+    // Big juicy crimson Pepperoni slices with crispy darker rims & fat speckles
+    for (let i = 0; i < 22; i++) {
+      const px = 98 + rand() * 316;
+      const py = 28 + rand() * 456;
+      const pr = 20 + rand() * 12;
+      ctx.fillStyle = '#991b1b';
+      ctx.beginPath();
+      ctx.arc(px, py, pr + 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, Math.PI * 2);
+      ctx.fill();
+      // Little white pepperoni marbling dots
+      ctx.fillStyle = '#fca5a5';
+      for (let d = 0; d < 4; d++) {
+        ctx.beginPath();
+        ctx.arc(px + (rand() - 0.5) * pr, py + (rand() - 0.5) * pr, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Sliced black olives & vibrant fresh green basil leaves
+    for (let i = 0; i < 16; i++) {
+      const ox = 92 + rand() * 328;
+      const oy = 24 + rand() * 464;
+      ctx.strokeStyle = '#18181b';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(ox, oy, 9, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 14; i++) {
+      const bx = 95 + rand() * 322;
+      const by = 24 + rand() * 464;
+      ctx.save();
+      ctx.translate(bx, by);
+      ctx.rotate(rand() * Math.PI * 2);
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 14, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  } else if (livery === 'toyCarBlocks') {
+    // Bright Glossy Primary-Color Plastic Toy / Building-Brick Car Wrap with 3D Brick Studs!
+    // Color-blocked zones: red hood, sunny yellow roof, cobalt blue rear & emerald green flanks
+    ctx.fillStyle = '#2563eb';
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(64, 0, 384, 192);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(64, 192, 384, 160);
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(0, 64, 64, 384);
+    ctx.fillRect(448, 64, 64, 384);
+
+    // Crisp plastic brick-seam grid lines
+    ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+    ctx.lineWidth = 3;
+    for (let g = 0; g <= 512; g += 64) {
+      ctx.beginPath();
+      ctx.moveTo(g, 0);
+      ctx.lineTo(g, 512);
+      ctx.moveTo(0, g);
+      ctx.lineTo(512, g);
+      ctx.stroke();
+    }
+
+    // Iconic 3D-shaded circular plastic toy brick studs across the entire body!
+    for (let x = 32; x < 512; x += 64) {
+      for (let y = 32; y < 512; y += 64) {
+        // Drop shadow under stud
+        ctx.fillStyle = 'rgba(0,0,0,0.26)';
+        ctx.beginPath();
+        ctx.arc(x + 3, y + 4, 17, 0, Math.PI * 2);
+        ctx.fill();
+        // Glossy rim highlight on top-left of stud
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(x, y, 15, Math.PI * 0.9, Math.PI * 1.85);
+        ctx.stroke();
+        // Dark bottom-right stud bevel
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x, y, 15, 0, Math.PI * 0.85);
+        ctx.stroke();
+      }
+    }
+
+    // Playful crisp white toy-racer star sticker on hood
+    ctx.save();
+    ctx.translate(256, 112);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? 44 : 20;
+      const a = (i * Math.PI) / 5 - Math.PI * 0.5;
+      if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  } else if (livery === 'policeInterceptor') {
+    // Classic Black & White Highway Patrol Police Interceptor Wrap with Gold Star Shield!
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Iconic crisp white patrol roof & mid-door section
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 156, 512, 198);
+
+    // Metallic highway-patrol blue & gold flank stripes
+    ctx.fillStyle = '#2563eb';
+    ctx.fillRect(0, 146, 512, 14);
+    ctx.fillRect(0, 350, 512, 14);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(0, 160, 512, 6);
+    ctx.fillRect(0, 344, 512, 6);
+
+    // Golden Police Patrol Star Shield emblem on hood
+    ctx.save();
+    ctx.translate(256, 86);
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    for (let i = 0; i < 12; i++) {
+      const r = i % 2 === 0 ? 42 : 22;
+      const a = (i * Math.PI) / 6 - Math.PI * 0.5;
+      if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#1e3a8a';
+    ctx.beginPath();
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Bold POLİS badge across white roof/midsection
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '900 54px "Oxanium", "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('POLİS', 256, 256);
+
+    // High-visibility rear safety chevrons
+    for (let x = 36; x < 480; x += 48) {
+      ctx.fillStyle = (x / 48) % 2 === 0 ? '#facc15' : '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(x, 492);
+      ctx.lineTo(x + 24, 456);
+      ctx.lineTo(x + 48, 492);
+      ctx.lineTo(x + 34, 492);
+      ctx.lineTo(x + 24, 474);
+      ctx.lineTo(x + 14, 492);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (livery === 'comicSketch') {
+    // Cel-Shaded Comic Book / Hand-Drawn Ink Sketch Wrap (Borderlands & Initial-D Aesthetic!)
+    ctx.fillStyle = '#fefce8';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Retro comic Ben-Day halftone shading dots along flanks
+    ctx.fillStyle = '#38bdf8';
+    for (let x = 12; x < 110; x += 14) {
+      for (let y = 12; y < 500; y += 14) {
+        const rad = Math.max(1.5, 4.8 - x * 0.035);
+        ctx.beginPath();
+        ctx.arc(x, y, rad, 0, Math.PI * 2);
+        ctx.arc(512 - x, y, rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Bold comic accent panels (pop-art crimson & electric yellow)
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(118, 0);
+    ctx.lineTo(174, 0);
+    ctx.lineTo(150, 512);
+    ctx.lineTo(106, 512);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.moveTo(394, 0);
+    ctx.lineTo(338, 0);
+    ctx.lineTo(362, 512);
+    ctx.lineTo(406, 512);
+    ctx.closePath();
+    ctx.fill();
+
+    // Thick hand-inked comic panel borders & crease lines
+    ctx.strokeStyle = '#09090b';
+    ctx.lineWidth = 7;
+    ctx.strokeRect(8, 8, 496, 496);
+    ctx.lineWidth = 5;
+    for (const [x0, y0, x1, y1] of [
+      [118, 0, 106, 512],
+      [174, 0, 150, 512],
+      [394, 0, 406, 512],
+      [338, 0, 362, 512],
+      [0, 178, 512, 178],
+      [0, 344, 512, 344],
+    ]) {
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    }
+
+    // Crisp diagonal ink cross-hatching strokes for authentic sketched shading
+    ctx.lineWidth = 2.6;
+    for (let i = 0; i < 24; i++) {
+      const y = 20 + i * 20;
+      ctx.beginPath();
+      ctx.moveTo(16, y);
+      ctx.lineTo(68, y + 18);
+      ctx.moveTo(496, y);
+      ctx.lineTo(444, y + 18);
+      ctx.stroke();
+    }
+
+    // Pop-art starburst "ZOOM!" comic burst on hood
+    ctx.save();
+    ctx.translate(256, 114);
+    ctx.fillStyle = '#facc15';
+    ctx.strokeStyle = '#09090b';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    for (let i = 0; i < 16; i++) {
+      const r = i % 2 === 0 ? 64 : 36;
+      const a = (i / 16) * Math.PI * 2;
+      if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '900 28px "Oxanium", "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('VROOOM!', 0, 2);
+    ctx.restore();
+  } else if (livery === 'streetGraffiti') {
+    // Urban Street-Art Spray Paint Bombing Wrap: Neon Drips, Wildstyle Strokes & Splatter!
+    ctx.fillStyle = '#14151a';
+    ctx.fillRect(0, 0, 512, 512);
+
+    const palette = ['#ec4899', '#22d3ee', '#a3e635', '#facc15', '#a855f7', '#fb923c'];
+    let seed = 91827;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    // Bold layered wildstyle spray ribbons
+    for (let i = 0; i < 18; i++) {
+      const col = palette[i % palette.length];
+      ctx.save();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 18 + rand() * 24;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      const x0 = rand() * 512;
+      const y0 = rand() * 512;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0 + (rand() - 0.5) * 260, y0 + (rand() - 0.5) * 220);
+      ctx.lineTo(x0 + (rand() - 0.5) * 260, y0 + (rand() - 0.5) * 220);
+      ctx.stroke();
+      // Crisp white street-art outline accent
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Spray-paint drips & splatter dots
+    for (let i = 0; i < 95; i++) {
+      const sx = rand() * 512;
+      const sy = rand() * 512;
+      const col = palette[i % palette.length];
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 2 + rand() * 6, 0, Math.PI * 2);
+      ctx.fill();
+      if (i % 4 === 0) {
+        ctx.fillRect(sx - 2, sy, 4, 18 + rand() * 34);
+      }
+    }
+  } else if (livery === 'lightning95') {
+    // Iconic Glossy Blazing Red Şimşek McQueen #95 Tribute Wrap!
+    const redBg = ctx.createLinearGradient(0, 0, 0, 512);
+    redBg.addColorStop(0, '#dc2626');
+    redBg.addColorStop(0.5, '#ef4444');
+    redBg.addColorStop(1, '#b91c1c');
+    ctx.fillStyle = redBg;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Blazing Yellow-Orange Jagged Lightning Bolts slicing along both flanks!
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(512, 0);
+        ctx.scale(-1, 1);
+      }
+      // Outer orange flame shadow bolt
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(12, 34);
+      ctx.lineTo(138, 178);
+      ctx.lineTo(86, 198);
+      ctx.lineTo(156, 336);
+      ctx.lineTo(94, 346);
+      ctx.lineTo(140, 488);
+      ctx.lineTo(52, 336);
+      ctx.lineTo(100, 326);
+      ctx.lineTo(28, 192);
+      ctx.lineTo(78, 174);
+      ctx.closePath();
+      ctx.fill();
+
+      // Inner bright electric yellow lightning core
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.moveTo(22, 54);
+      ctx.lineTo(118, 174);
+      ctx.lineTo(72, 192);
+      ctx.lineTo(134, 326);
+      ctx.lineTo(82, 336);
+      ctx.lineTo(118, 462);
+      ctx.lineTo(66, 334);
+      ctx.lineTo(106, 324);
+      ctx.lineTo(44, 192);
+      ctx.lineTo(88, 176);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Iconic Bold Yellow-Framed Racing "95" Emblem on Hood & Roof!
+    const draw95 = (cx: number, cy: number, size: number) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.font = `italic 900 ${size}px "Oxanium", "Arial Black", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = '#7f1d1d';
+      ctx.strokeText('95', 0, 0);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#f97316';
+      ctx.strokeText('95', 0, 0);
+      ctx.fillStyle = '#fde047';
+      ctx.fillText('95', 0, 0);
+      ctx.restore();
+    };
+    draw95(256, 156, 108);
+    draw95(256, 356, 78);
+
+    // Subtle checkered racing flag tail accent at rear
+    for (let c = 0; c < 12; c++) {
+      ctx.fillStyle = c % 2 === 0 ? '#fef08a' : '#18181b';
+      ctx.fillRect(148 + c * 18, 476, 18, 16);
+      ctx.fillStyle = c % 2 === 0 ? '#18181b' : '#fef08a';
+      ctx.fillRect(148 + c * 18, 492, 18, 16);
+    }
+  } else if (livery === 'pixelBlock8Bit') {
+    // Classic 8-Bit Arcade Block Wrap: NES Brick Masonry, Golden "?" Mystery Block & Retro Pixel Sky Stripe!
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Classic 8-bit red-orange pixel bricks along flanks & rear
+    const bw = 32;
+    const bh = 16;
+    for (let y = 0; y < 512; y += bh) {
+      const row = Math.floor(y / bh);
+      const off = (row % 2) * 16;
+      for (let x = -16; x < 528; x += bw) {
+        const isFlank = x < 128 || x >= 368 || y > 352;
+        if (!isFlank) continue;
+        ctx.fillStyle = '#c2410c';
+        ctx.fillRect(x + off, y, bw, bh);
+        // 8-bit top highlight & dark pixel mortar border
+        ctx.fillStyle = '#fb923c';
+        ctx.fillRect(x + off + 2, y + 2, bw - 4, 3);
+        ctx.fillStyle = '#18181b';
+        ctx.fillRect(x + off, y + bh - 2, bw, 2);
+        ctx.fillRect(x + off + bw - 2, y, 2, bh);
+      }
+    }
+
+    // Crisp 8-bit white & dark-blue pixel racing borders along sky-blue center lane
+    for (let y = 0; y < 352; y += 16) {
+      ctx.fillStyle = (y / 16) % 2 === 0 ? '#f8fafc' : '#1e3a8a';
+      ctx.fillRect(128, y, 16, 16);
+      ctx.fillRect(368, y, 16, 16);
+    }
+
+    // Iconic 8-Bit Golden "?" Mystery Block right on the hood!
+    const bx = 176;
+    const by = 96;
+    const bs = 160;
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(bx, by, bs, bs);
+    ctx.strokeStyle = '#18181b';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(bx, by, bs, bs);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(bx + 8, by + 8, bs - 16, 10);
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(bx + 8, by + bs - 18, bs - 16, 10);
+    // 4 corner pixel rivets
+    for (const [rx, ry] of [
+      [bx + 16, by + 16],
+      [bx + bs - 28, by + 16],
+      [bx + 16, by + bs - 28],
+      [bx + bs - 28, by + bs - 28],
+    ]) {
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(rx, ry, 12, 12);
+    }
+    // Crisp pixelated "?" icon inside the mystery block
+    const qPx = 16;
+    const qCells: [number, number][] = [
+      [1, 0], [2, 0], [3, 0],
+      [0, 1], [4, 1],
+      [4, 2],
+      [2, 3], [3, 3],
+      [2, 4],
+      [2, 6],
+    ];
+    for (const [qx, qy] of qCells) {
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(bx + 42 + qx * qPx, by + 28 + qy * qPx, qPx, qPx);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(bx + 38 + qx * qPx, by + 24 + qy * qPx, qPx, qPx);
+    }
+  } else if (livery === 'tetrominoBlocks') {
+    // Classic Interlocking Tetris Tetromino Blocks (I, O, T, L, J, S, Z) tiling cleanly with 3D pixel bevels!
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // 16x16 grid (32px per cell) packed with exact interlocking colorful tetrominoes!
+    // Color codes: C=Cyan(I), Y=Yellow(O), P=Purple(T), O=Orange(L), B=Blue(J), G=Green(S), R=Red(Z)
+    const palette: Record<string, [string, string, string]> = {
+      C: ['#06b6d4', '#67e8f9', '#0e7490'],
+      Y: ['#eab308', '#fef08a', '#a16207'],
+      P: ['#a855f7', '#e9d5ff', '#6b21a8'],
+      O: ['#f97316', '#fed7aa', '#c2410c'],
+      B: ['#2563eb', '#93c5fd', '#1e3a8a'],
+      G: ['#22c55e', '#bbf7d0', '#15803d'],
+      R: ['#ef4444', '#fecaca', '#991b1b'],
+    };
+    const grid = [
+      'CCCCYYPPPOOBBGGG',
+      'RRZZYY.POOOOBG.R',
+      'RRRZZZPPBBBOOGGR',
+      'OOOBZZCCCCYYPPPR',
+      'O.BBBGGRR.YYP.OO',
+      'BBBGGGRRZZPPPOOO',
+      'YYCCCPPPZZBBGGRR',
+      'YYCCCP.OOOBBGGRR',
+      'PPPRRZZOYYCCCCBB',
+      'P.RRRZZOYYGGRRBB',
+      'OOOBBGGGPPPRRZZY',
+      'O.BBBG.PCCCCZZYY',
+      'RRZZYYOOO.BBGGPP',
+      'RRZZYYOOBBBG.PPP',
+      'CCCCPPPRRZZYYOOO',
+      'GGRRPPPRRZZYYBBO',
+    ];
+    const cell = 32;
+    for (let gy = 0; gy < 16; gy++) {
+      for (let gx = 0; gx < 16; gx++) {
+        const ch = grid[gy][gx];
+        const cols = palette[ch];
+        if (!cols) continue;
+        const [main, hi, dark] = cols;
+        const x = gx * cell;
+        const y = gy * cell;
+        ctx.fillStyle = main;
+        ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+        // Classic 3D Tetris top-left bright bevel & bottom-right shadow bevel
+        ctx.fillStyle = hi;
+        ctx.fillRect(x + 2, y + 2, cell - 4, 4);
+        ctx.fillRect(x + 2, y + 2, 4, cell - 4);
+        ctx.fillStyle = dark;
+        ctx.fillRect(x + 2, y + cell - 6, cell - 4, 4);
+        ctx.fillRect(x + cell - 6, y + 2, 4, cell - 4);
+        // Crisp dark outline between blocks
+        ctx.strokeStyle = '#09090b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 1, y + 1, cell - 2, cell - 2);
+      }
+    }
+  } else if (livery === 'windowsBsod') {
+    // Classic Windows Blue Screen of Death (BSOD): Deep BSOD Blue, Giant :( Frown, Error Text & Pixel QR Code!
+    ctx.fillStyle = '#0078d7';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Subtle classic darker-blue vertical screen edge vignette
+    ctx.fillStyle = '#005a9e';
+    ctx.fillRect(0, 0, 26, 512);
+    ctx.fillRect(486, 0, 26, 512);
+
+    // Giant Iconic White ":(" Sad Face on Upper Hood!
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 132px "Segoe UI", "Arial", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(':(', 66, 36);
+
+    // Classic BSOD Error Copy
+    ctx.font = '600 22px "Segoe UI", "Arial", sans-serif';
+    ctx.fillText('Araciniz bir sorunla karsilasti', 66, 188);
+    ctx.fillText('ve yeniden baslatilmasi gerekiyor.', 66, 218);
+    ctx.font = '500 18px "Segoe UI", "Arial", sans-serif';
+    ctx.fillText('Bazi drift verileri toplaniyor...', 66, 258);
+    ctx.fillText('%100 tamamlandi', 66, 286);
+
+    // Authentic Crisp White-Framed Pixel QR Code Block!
+    const qx = 66;
+    const qy = 334;
+    const qrSize = 112;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(qx, qy, qrSize, qrSize);
+    const qStep = 8;
+    const drawFinder = (fx: number, fy: number) => {
+      ctx.fillStyle = '#0078d7';
+      ctx.fillRect(fx, fy, qStep * 3, qStep * 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(fx + 5, fy + 5, qStep * 3 - 10, qStep * 3 - 10);
+      ctx.fillStyle = '#0078d7';
+      ctx.fillRect(fx + 9, fy + 9, qStep * 3 - 18, qStep * 3 - 18);
+    };
+    drawFinder(qx + 8, qy + 8);
+    drawFinder(qx + qrSize - 8 - qStep * 3, qy + 8);
+    drawFinder(qx + 8, qy + qrSize - 8 - qStep * 3);
+    // Deterministic QR data pixels
+    let qrSeed = 40495;
+    for (let r = 1; r < 13; r++) {
+      for (let c = 1; c < 13; c++) {
+        if ((r < 4 && c < 4) || (r < 4 && c > 8) || (r > 8 && c < 4)) continue;
+        qrSeed = (qrSeed * 16807) % 2147483647;
+        if (qrSeed % 2 === 0) {
+          ctx.fillStyle = '#0078d7';
+          ctx.fillRect(qx + c * qStep, qy + r * qStep, qStep - 1, qStep - 1);
+        }
+      }
+    }
+
+    // Technical Stop-Code Footer beside the QR Code
+    ctx.fillStyle = '#e0f2fe';
+    ctx.font = '600 15px "Consolas", "Courier New", monospace';
+    ctx.fillText('Durdurma kodu:', 196, 354);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 16px "Consolas", "Courier New", monospace';
+    ctx.fillText('CRITICAL_DRIFT_OVERFLOW', 196, 380);
+    ctx.fillStyle = '#bae6fd';
+    ctx.font = '500 14px "Consolas", "Courier New", monospace';
+    ctx.fillText('0x00000095 (VIRAJ.SYS)', 196, 408);
+    ctx.fillText('NITRO_BOOST_EXCEPTION', 196, 430);
+  } else if (livery === 'knittedSweater') {
+    // Cozy Hand-Knitted Nordic / Fair Isle Wool Sweater Wrap with Interlocking V-Knit Stitches!
+    ctx.fillStyle = '#7f1d1d';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Fair Isle horizontal knit pattern grid (64 cols x 64 rows, 8px stitch size)
+    const st = 8;
+    const drawStitch = (gx: number, gy: number, yarn: string, shade: string) => {
+      const x = gx * st;
+      const y = gy * st;
+      // Left & right V-shaped wool yarn loops
+      ctx.strokeStyle = shade;
+      ctx.lineWidth = 3.2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x + 1.5, y + 1.5);
+      ctx.lineTo(x + st * 0.5, y + st - 1);
+      ctx.lineTo(x + st - 1.5, y + 1.5);
+      ctx.stroke();
+
+      ctx.strokeStyle = yarn;
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(x + 1.5, y + 1);
+      ctx.lineTo(x + st * 0.5, y + st - 1.8);
+      ctx.lineTo(x + st - 1.5, y + 1);
+      ctx.stroke();
+    };
+
+    for (let gy = 0; gy < 64; gy++) {
+      const band = gy % 16;
+      for (let gx = 0; gx < 64; gx++) {
+        const xm = gx % 8;
+        let yarn = '#b91c1c';
+        let shade = '#450a0a';
+
+        if (band === 0 || band === 15) {
+          // Cream-ivory border band
+          yarn = '#fef3c7';
+          shade = '#b45309';
+        } else if (band === 1 || band === 14) {
+          // Alternating forest green & cream ribbing
+          const isGreen = (gx + gy) % 2 === 0;
+          yarn = isGreen ? '#15803d' : '#fef3c7';
+          shade = isGreen ? '#052e16' : '#a16207';
+        } else if (band >= 2 && band <= 5) {
+          // Deep navy band with cream Nordic diamond chevron zigzag
+          const dy = Math.abs(band - 3.5);
+          const dx = Math.abs(xm - 3.5);
+          const isMotif = Math.abs(dx + dy - 3) < 0.85;
+          yarn = isMotif ? '#fef3c7' : '#1e3a8a';
+          shade = isMotif ? '#92400e' : '#0f172a';
+        } else if (band >= 6 && band <= 10) {
+          // Classic crimson wool band with cream 8-point snowflakes & pine accents
+          const sy = band - 8;
+          const sx = xm - 4;
+          const isFlake =
+            (sx === 0 && Math.abs(sy) <= 2) ||
+            (sy === 0 && Math.abs(sx) <= 2) ||
+            (Math.abs(sx) === 1 && Math.abs(sy) === 1);
+          const isGoldCenter = sx === 0 && sy === 0;
+          yarn = isGoldCenter ? '#facc15' : isFlake ? '#fef3c7' : '#b91c1c';
+          shade = isGoldCenter ? '#854d0e' : isFlake ? '#a16207' : '#450a0a';
+        } else if (band >= 11 && band <= 13) {
+          // Forest pine band with crimson-gold diamond dots
+          const isDot = band === 12 && (xm === 0 || xm === 4);
+          yarn = isDot ? '#facc15' : '#166534';
+          shade = isDot ? '#854d0e' : '#052e16';
+        }
+        drawStitch(gx, gy, yarn, shade);
+      }
+    }
+  } else if (livery === 'carvedWood') {
+    // Handcrafted Carved Walnut & Oak Wood Wrap with Organic Grain, Joinery Panels & Relief Scrollwork!
+    const woodBg = ctx.createLinearGradient(0, 0, 512, 0);
+    woodBg.addColorStop(0, '#5c2d12');
+    woodBg.addColorStop(0.25, '#854d1e');
+    woodBg.addColorStop(0.5, '#783c17');
+    woodBg.addColorStop(0.75, '#8f5222');
+    woodBg.addColorStop(1, '#54280f');
+    ctx.fillStyle = woodBg;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Flowing organic longitudinal wood grain fibers & dark knots
+    for (let x = 0; x < 512; x += 4) {
+      const darkGrain = x % 12 === 0;
+      ctx.strokeStyle = darkGrain ? 'rgba(41, 18, 6, 0.45)' : 'rgba(180, 108, 48, 0.24)';
+      ctx.lineWidth = darkGrain ? 2.2 : 1.3;
+      ctx.beginPath();
+      for (let y = 0; y <= 512; y += 16) {
+        const wave = Math.sin(y * 0.025 + x * 0.08) * 4.5 + Math.cos(y * 0.012 - x * 0.04) * 3;
+        if (y === 0) ctx.moveTo(x + wave, y);
+        else ctx.lineTo(x + wave, y);
+      }
+      ctx.stroke();
+    }
+
+    // Carved dark-stained wood knots
+    for (const [kx, ky, kr] of [
+      [110, 130, 16],
+      [402, 130, 16],
+      [96, 360, 18],
+      [416, 360, 18],
+    ]) {
+      for (let r = kr; r > 2; r -= 4) {
+        ctx.strokeStyle = 'rgba(38, 16, 5, 0.55)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(kx, ky, r * 0.65, r * 1.4, 0.1, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    // Beveled carpenter joinery panel borders (dark carved groove + warm highlight edge)
+    const drawCarvedRect = (x: number, y: number, w: number, h: number) => {
+      ctx.strokeStyle = '#291206';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(x, y, w, h);
+      ctx.strokeStyle = '#d99152';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(x + 4, y + 4, w - 8, h - 8);
+    };
+    drawCarvedRect(20, 20, 472, 472);
+    drawCarvedRect(138, 36, 236, 440);
+
+    // Ornate carved floral rosette medallion & symmetrical scrollwork down the center hood/roof!
+    const drawCarvedRosette = (cx: number, cy: number, rad: number) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      // Recessed dark carved circular background
+      ctx.fillStyle = '#331608';
+      ctx.beginPath();
+      ctx.arc(0, 0, rad + 6, 0, Math.PI * 2);
+      ctx.fill();
+      // 8 raised golden-oak carved petals
+      for (let i = 0; i < 8; i++) {
+        ctx.save();
+        ctx.rotate((i / 8) * Math.PI * 2);
+        ctx.fillStyle = '#b46a2c';
+        ctx.strokeStyle = '#291206';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(0, -rad * 0.52, rad * 0.22, rad * 0.44, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#d99152';
+      ctx.beginPath();
+      ctx.arc(0, 0, rad * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+    drawCarvedRosette(256, 152, 54);
+    drawCarvedRosette(256, 356, 44);
+
+    // Symmetrical carved baroque vine scrolls connecting the rosettes & flanking panels
+    for (const sx of [-1, 1]) {
+      ctx.save();
+      ctx.strokeStyle = '#291206';
+      ctx.lineWidth = 7;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(256 + sx * 70, 56);
+      ctx.bezierCurveTo(256 + sx * 105, 130, 256 + sx * 35, 220, 256 + sx * 92, 275);
+      ctx.bezierCurveTo(256 + sx * 42, 340, 256 + sx * 105, 405, 256 + sx * 68, 462);
+      ctx.stroke();
+      ctx.strokeStyle = '#c87e3e';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    }
+  } else if (livery === 'lushGrassTurf') {
+    // Fresh Living Mowed Lawn Grass Turf Wrap with Layered Blades & Tiny White Daisies!
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Subtle stadium-style mowed alternating grass stripe bands
+    for (let x = 0; x < 512; x += 64) {
+      ctx.fillStyle = (x / 64) % 2 === 0 ? '#16a34a' : '#15803d';
+      ctx.fillRect(x, 0, 64, 512);
+    }
+
+    // Thousands of rich layered grass blades for genuinely lush organic turf texture
+    let seed = 20265;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    const bladeCols = ['#14532d', '#166534', '#16a34a', '#22c55e', '#4ade80', '#84cc16'];
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 2400; i++) {
+      const gx = rand() * 512;
+      const gy = rand() * 512;
+      const len = 6 + rand() * 14;
+      const tilt = (rand() - 0.5) * 10;
+      ctx.strokeStyle = bladeCols[Math.floor(rand() * bladeCols.length)];
+      ctx.lineWidth = 1.2 + rand() * 1.4;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy);
+      ctx.lineTo(gx + tilt, gy - len);
+      ctx.stroke();
+    }
+
+    // Cute scattered tiny white lawn daisies & golden pollen centers
+    for (let i = 0; i < 26; i++) {
+      const fx = 28 + rand() * 456;
+      const fy = 28 + rand() * 456;
+      const fr = 4.5 + rand() * 3.5;
+      ctx.fillStyle = '#ffffff';
+      for (let p = 0; p < 5; p++) {
+        const a = (p / 5) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(fx + Math.cos(a) * fr, fy + Math.sin(a) * fr, fr * 0.58, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(fx, fy, fr * 0.52, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (livery === 'mysteryMachine') {
+    // Scooby-Doo Mystery Machine Tribute: Bright Turquoise Body, Wavy Lime-Green Flank Stripes & Orange Groovy Flowers!
+    ctx.fillStyle = '#06b6d4';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Bright turquoise center roof highlight gradient
+    const tq = ctx.createLinearGradient(0, 0, 512, 0);
+    tq.addColorStop(0, '#0891b2');
+    tq.addColorStop(0.5, '#22d3ee');
+    tq.addColorStop(1, '#0891b2');
+    ctx.fillStyle = tq;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Iconic Wavy Neon Lime-Green Psychedelic Ribbons flowing along both flanks!
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(512, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.fillStyle = '#84cc16';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      for (let y = 0; y <= 512; y += 16) {
+        const wx = 112 + Math.sin(y * 0.038) * 32;
+        ctx.lineTo(wx, y);
+      }
+      ctx.lineTo(0, 512);
+      ctx.closePath();
+      ctx.fill();
+
+      // Secondary deep-turquoise psychedelic wave inset
+      ctx.strokeStyle = '#0e7490';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      for (let y = 0; y <= 512; y += 16) {
+        const wx = 112 + Math.sin(y * 0.038) * 32;
+        if (y === 0) ctx.moveTo(wx, y);
+        else ctx.lineTo(wx, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Groovy Retro Orange & Yellow Psychedelic Flowers blooming along flanks & hood!
+    const drawFlower = (cx: number, cy: number, rad: number) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = '#f97316';
+      ctx.strokeStyle = '#9a3412';
+      ctx.lineWidth = 2.5;
+      for (let p = 0; p < 5; p++) {
+        const a = (p / 5) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * rad * 0.56, Math.sin(a) * rad * 0.56, rad * 0.44, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(0, 0, rad * 0.38, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+    for (const [fx, fy, fr] of [
+      [56, 86, 32],
+      [456, 86, 32],
+      [62, 256, 36],
+      [450, 256, 36],
+      [58, 424, 32],
+      [454, 424, 32],
+      [256, 392, 42],
+    ]) {
+      drawFlower(fx, fy, fr);
+    }
+
+    // Groovy Retro Orange Hood Badge "GİZEM" with 60s Drop-Shadow!
+    ctx.save();
+    ctx.translate(256, 178);
+    ctx.fillStyle = '#84cc16';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 108, 48, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 7;
+    ctx.stroke();
+    ctx.font = '900 42px "Oxanium", "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#9a3412';
+    ctx.fillText('GİZEM', 3, 5);
+    ctx.fillStyle = '#fb923c';
+    ctx.fillText('GİZEM', 0, 2);
+    ctx.restore();
+  } else if (livery === 'jojaMartCorp') {
+    // Stardew Valley Humorous JojaMart Corporate Fleet Wrap: Clean Joja Blue, White Stripes & "JOJA" Crest!
+    ctx.fillStyle = '#1d4ed8';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Crisp white corporate delivery-fleet side bands & sky-blue wave accent
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, 88, 512);
+    ctx.fillRect(424, 0, 88, 512);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(88, 0, 16, 512);
+    ctx.fillRect(408, 0, 16, 512);
+
+    // Clean corporate white hood/roof banner
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(104, 118, 304, 150);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(104, 112, 304, 8);
+    ctx.fillRect(104, 266, 304, 8);
+
+    // Iconic Joja Blue "JOJA" Corporate Logo + Cheerful Corporate Smile Arc!
+    ctx.fillStyle = '#1d4ed8';
+    ctx.font = '900 72px "Oxanium", "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('JOJA', 256, 174);
+
+    // Corporate blue smile swoosh underneath JOJA
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 9;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(256, 186, 62, 0.2 * Math.PI, 0.8 * Math.PI);
+    ctx.stroke();
+
+    // Humorous corporate slogan strip on hood & rear
+    ctx.fillStyle = '#1e3a8a';
+    ctx.font = '700 18px "Segoe UI", "Arial", sans-serif';
+    ctx.fillText('JOJAMART • HAYATI IYILESTIRIN', 256, 250);
+
+    // Corporate "THRIVE" badge on rear trunk
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 30px "Oxanium", "Arial Black", sans-serif';
+    ctx.fillText('JOIN US. THRIVE.', 256, 396);
+    ctx.fillStyle = '#93c5fd';
+    ctx.font = '600 14px "Consolas", monospace';
+    ctx.fillText('FLEET UNIT #042 • PELICAN TOWN', 256, 434);
   }
 
   const tex = new THREE.CanvasTexture(canvas);

@@ -1280,7 +1280,39 @@ export type LiveryId =
   | 'tigerClaw'
   | 'tokyoDrifter'
   | 'cyberHexArmor'
-  | 'animThunderVolt';
+  | 'animThunderVolt'
+  | 'gulfHeritage'
+  | 'hazardStripes'
+  | 'sharkMouth'
+  | 'martiniRally'
+  | 'rustWasteland'
+  | 'apertureLab'
+  | 'minecraftPixel'
+  | 'animSynthwave'
+  | 'animAuroraFrost'
+  | 'animGoldenDragon'
+  | 'istanbulTaxi'
+  | 'toyCarBlocks'
+  | 'watermelonWrap'
+  | 'pepperoniPizza'
+  | 'policeInterceptor'
+  | 'comicSketch'
+  | 'streetGraffiti'
+  | 'lightning95'
+  | 'animComicSpeed'
+  | 'animCandyPop'
+  | 'pixelBlock8Bit'
+  | 'tetrominoBlocks'
+  | 'windowsBsod'
+  | 'animVenomSymbiote'
+  | 'animLiquidAquarium'
+  | 'knittedSweater'
+  | 'carvedWood'
+  | 'lushGrassTurf'
+  | 'jojaMartCorp'
+  | 'mysteryMachine'
+  | 'animWindStream'
+  | 'omnitrixAlien';
 
 export interface BodyKitSpec {
   id: BodyKitId;
@@ -1488,7 +1520,25 @@ export type RoofHatId =
   | 'beanie'
   | 'astronaut'
   | 'devilHorns'
-  | 'cyberVisorCrown';
+  | 'cyberVisorCrown'
+  | 'trafficCone'
+  | 'taxiSign'
+  | 'sharkFinHat'
+  | 'pumpkinLantern'
+  | 'headcrabHat'
+  | 'pharaohNemes'
+  | 'companionCube'
+  | 'diamondHelmet'
+  | 'rubberDuck'
+  | 'hardHat'
+  | 'sushiRoll'
+  | 'graduationCap'
+  | 'knightHelmet'
+  | 'catEars'
+  | 'ramenBowl'
+  | 'creeperHead'
+  | 'miniHeliRotor'
+  | 'blackHoleOrb';
 
 export type SteeringWheelId =
   | 'stock'
@@ -1514,7 +1564,15 @@ export type SteeringWheelId =
   | 'titaniumSport'
   | 'driftSuedeBlue'
   | 'emeraldCarbon'
-  | 'plasmaYoke';
+  | 'plasmaYoke'
+  | 'scrapMadMax'
+  | 'obsidianMagma'
+  | 'pixelVoxel'
+  | 'hevLambda'
+  | 'headcrab'
+  | 'aperturePortal'
+  | 'wheatleyCore'
+  | 'craftingTable';
 
 export type MirrorCharmId =
   | 'none'
@@ -2295,6 +2353,330 @@ export const LIVERIES: LiverySpec[] = [
     subtitle: 'Gövdede sürekli akan yüksek voltajlı mavi-beyaz şimşek damarları',
     priceGold: 2280,
     accentSwatch: 'linear-gradient(120deg, #020617 0%, #2563eb 42%, #38bdf8 70%, #ffffff 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'gulfHeritage',
+    rarity: 'common',
+    name: 'Le Mans Körfez',
+    subtitle: 'Klasik dayanıklılık yarışı orta turuncu şeridi ve lacivert ince çerçeve',
+    priceGold: 290,
+    accentSwatch: 'linear-gradient(90deg, #38bdf8 0%, #38bdf8 34%, #0f172a 36%, #f97316 38%, #f97316 62%, #0f172a 64%, #38bdf8 66%)',
+    category: 'decal',
+  },
+  {
+    id: 'hazardStripes',
+    rarity: 'common',
+    name: 'Tehlike Şeridi',
+    subtitle: 'Ön burun, arka tampon ve yan eteklerde endüstriyel sarı-siyah şeritler',
+    priceGold: 320,
+    accentSwatch: 'repeating-linear-gradient(135deg, #facc15 0px, #facc15 10px, #111827 10px, #111827 20px)',
+    category: 'decal',
+  },
+  {
+    id: 'sharkMouth',
+    rarity: 'rare',
+    name: 'Köpekbalığı Ağzı',
+    subtitle: 'Savaş uçağı tarzı yan keskin köpekbalığı dişleri ve kızıl çene grafiği',
+    priceGold: 460,
+    accentSwatch: 'linear-gradient(135deg, #334155 0%, #ef4444 45%, #ffffff 62%, #18181b 100%)',
+    category: 'decal',
+  },
+  {
+    id: 'martiniRally',
+    rarity: 'rare',
+    name: 'Üçlü Ralli Şeridi',
+    subtitle: 'Efsanevi camgöbeği, kobalt mavi ve kırmızı ralli şerit tasarımı',
+    priceGold: 520,
+    accentSwatch: 'linear-gradient(90deg, #f8fafc 0%, #38bdf8 28%, #1d4ed8 46%, #ef4444 64%, #f8fafc 100%)',
+    category: 'decal',
+  },
+  {
+    id: 'rustWasteland',
+    rarity: 'epic',
+    name: 'Mad Max Paslı Hurda',
+    subtitle: 'Çorak arazi paslı sac plakaları, kaynak dikişleri ve aşınmış ikaz boyası',
+    priceGold: 880,
+    accentSwatch: 'linear-gradient(135deg, #3f2212 0%, #9a3412 42%, #52525b 72%, #ca8a04 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'apertureLab',
+    rarity: 'epic',
+    name: 'Aperture Laboratuvarı',
+    subtitle: 'Steril beyaz test odası panelleri, mavi-turuncu portal şeritleri ve lab logosu',
+    priceGold: 960,
+    accentSwatch: 'linear-gradient(125deg, #0284c7 0%, #f8fafc 46%, #f8fafc 58%, #f97316 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'minecraftPixel',
+    rarity: 'epic',
+    name: 'Piksel Voxel Blok',
+    subtitle: 'Küp mozaik çim, taş bloklar ve parlayan elmas cevheri pikselleri',
+    priceGold: 1040,
+    accentSwatch: 'linear-gradient(135deg, #22c55e 0%, #64748b 52%, #22d3ee 85%, #1e293b 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'animSynthwave',
+    rarity: 'legendary',
+    name: 'Synthwave 1984',
+    subtitle: '80’ler retro-fütüristik akan neon pembe lazer ızgarası ve gün batımı dalgası',
+    priceGold: 2100,
+    accentSwatch: 'linear-gradient(135deg, #1e0538 0%, #ec4899 45%, #22d3ee 78%, #f59e0b 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animAuroraFrost',
+    rarity: 'legendary',
+    name: 'Kuzey Işıkları',
+    subtitle: 'Arktik gece gökyüzünde canlı süzülen zümrüt-buz mavisi aurora perdeleri',
+    priceGold: 2350,
+    accentSwatch: 'linear-gradient(130deg, #020b18 0%, #10b981 38%, #38bdf8 68%, #818cf8 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animGoldenDragon',
+    rarity: 'legendary',
+    name: 'Altın Ejderha Pulu',
+    subtitle: 'Obsidyen ejderha pulları üzerinde akan erimiş 24K altın enerji dalgaları',
+    priceGold: 2550,
+    accentSwatch: 'linear-gradient(135deg, #0c0a09 0%, #b45309 42%, #facc15 72%, #fef08a 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'istanbulTaxi',
+    rarity: 'common',
+    name: 'Taksi / Dolmuş',
+    subtitle: 'Klasik parlak sarı taksi gövdesi, siyah-beyaz damalı yan kuşak ve taksi şeridi',
+    priceGold: 260,
+    accentSwatch: 'linear-gradient(135deg, #facc15 0%, #facc15 58%, #111827 58%, #111827 78%, #ffffff 78%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'watermelonWrap',
+    rarity: 'rare',
+    name: 'Yaz Karpuzu',
+    subtitle: 'Yeşil çizgili kabuk yanları, sulu kırmızı karpuz gövde ve siyah çekirdekler',
+    priceGold: 440,
+    accentSwatch: 'linear-gradient(135deg, #15803d 0%, #4ade80 28%, #f8fafc 36%, #f43f5e 46%, #e11d48 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'pepperoniPizza',
+    rarity: 'rare',
+    name: 'Sıcak Pizza',
+    subtitle: 'Çıtır kenarlı erimiş peynir gövde, dilim pepperoni, zeytin ve taze fesleğen',
+    priceGold: 450,
+    accentSwatch: 'linear-gradient(135deg, #b45309 0%, #facc15 48%, #dc2626 75%, #16a34a 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'toyCarBlocks',
+    rarity: 'rare',
+    name: 'Oyuncak Araba',
+    subtitle: 'Parlak plastik blok renkleri, kabartmalı oyuncak çivileri ve eğlenceli yıldızlar',
+    priceGold: 480,
+    accentSwatch: 'linear-gradient(135deg, #ef4444 0%, #facc15 45%, #2563eb 78%, #22c55e 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'policeInterceptor',
+    rarity: 'epic',
+    name: 'Polis Müdahale',
+    subtitle: 'Siyah-beyaz otoyol devriye kaplaması, altın polis yıldızı ve mavi şerit',
+    priceGold: 760,
+    accentSwatch: 'linear-gradient(135deg, #09090b 0%, #09090b 40%, #f8fafc 40%, #f8fafc 74%, #2563eb 74%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'comicSketch',
+    rarity: 'epic',
+    name: 'Çizgi Roman Eskiz',
+    subtitle: 'Siyah mürekkep konturları, el çizimi tarama gölgeleri ve retro halftone noktaları',
+    priceGold: 890,
+    accentSwatch: 'linear-gradient(135deg, #fefce8 0%, #fefce8 52%, #18181b 52%, #ef4444 74%, #38bdf8 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'streetGraffiti',
+    rarity: 'epic',
+    name: 'Sokak Grafiti',
+    subtitle: 'Asfalt siyahi üzerine sprey boya akıntıları, neon sokak sanatı ve yıldız şablonları',
+    priceGold: 920,
+    accentSwatch: 'linear-gradient(135deg, #18181b 0%, #ec4899 35%, #22d3ee 66%, #a3e635 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'lightning95',
+    rarity: 'legendary',
+    name: 'Şimşek #95',
+    subtitle: 'Parlak yarış kırmızısı, alevli sarı şimşek grafiği ve efsanevi 95 yarış numarası',
+    priceGold: 1480,
+    accentSwatch: 'linear-gradient(125deg, #dc2626 0%, #ef4444 45%, #facc15 68%, #f97316 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'animComicSpeed',
+    rarity: 'legendary',
+    name: 'Manga Hız Çizgileri',
+    subtitle: 'Anime drift sahnesi gibi gövdede hızla akan siyah-beyaz ve neon hız çizgileri',
+    priceGold: 2180,
+    accentSwatch: 'linear-gradient(180deg, #09090b 0%, #f8fafc 42%, #22d3ee 72%, #f43f5e 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animCandyPop',
+    rarity: 'legendary',
+    name: 'Şekerleme Girdabı',
+    subtitle: 'Canlı akan pembe-turkuaz-limon şekerleme şeritleri ve parlayan yıldız pırıltıları',
+    priceGold: 2240,
+    accentSwatch: 'linear-gradient(135deg, #f472b6 0%, #38bdf8 48%, #fde047 82%, #c084fc 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'pixelBlock8Bit',
+    rarity: 'epic',
+    name: '8-Bit Blok',
+    subtitle: 'Retro atari tuğla blokları, altın soru kutusu ve piksel-art şerit tasarımı',
+    priceGold: 940,
+    accentSwatch: 'linear-gradient(135deg, #b91c1c 0%, #ea580c 42%, #facc15 68%, #38bdf8 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'tetrominoBlocks',
+    rarity: 'epic',
+    name: 'Tetromino Blokları',
+    subtitle: 'Birbirine kenetlenmiş klasik mavi, sarı, mor ve kırmızı Tetris piksel blokları',
+    priceGold: 980,
+    accentSwatch: 'linear-gradient(135deg, #06b6d4 0%, #facc15 34%, #a855f7 66%, #ef4444 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'windowsBsod',
+    rarity: 'epic',
+    name: 'Mavi Ekran (BSOD)',
+    subtitle: 'Koyu Windows hata mavisi, :( yüz ifadesi, sistem hata kodları ve piksel QR kod',
+    priceGold: 1020,
+    accentSwatch: 'linear-gradient(135deg, #005a9e 0%, #0078d7 68%, #ffffff 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'animVenomSymbiote',
+    rarity: 'legendary',
+    name: 'Simbiyot (Venom)',
+    subtitle: 'Parlak canlı siyah organik doku, kaputta keskin beyaz gözler ve örümcek damarları',
+    priceGold: 2480,
+    accentSwatch: 'linear-gradient(135deg, #050507 0%, #18181b 56%, #f8fafc 78%, #09090b 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animLiquidAquarium',
+    rarity: 'legendary',
+    name: 'Sıvı Akvaryum',
+    subtitle: 'Şeffaf cam kaporta içinde driftle çalkalanan mavi su ve yüzen 3D turuncu Japon balıkları',
+    priceGold: 2850,
+    accentSwatch: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 52%, #f97316 78%, #e0f2fe 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'lushGrassTurf',
+    rarity: 'rare',
+    name: 'Çim Kaplama',
+    subtitle: 'Biçilmiş taze çimen şeritleri, katmanlı çim dokusu ve minik papatya çiçekleri',
+    priceGold: 420,
+    accentSwatch: 'linear-gradient(135deg, #15803d 0%, #22c55e 48%, #84cc16 82%, #fef08a 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'knittedSweater',
+    rarity: 'rare',
+    name: 'Örgü Kazak',
+    subtitle: 'El örgüsü yün ilmek dokusu, bordo-krem İskandinav kar tanesi ve baklava desenleri',
+    priceGold: 470,
+    accentSwatch: 'linear-gradient(135deg, #991b1b 0%, #fef3c7 38%, #14532d 68%, #b91c1c 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'carvedWood',
+    rarity: 'epic',
+    name: 'Ahşap Oyma',
+    subtitle: 'El işçiliği ceviz ağacı damarları, oymalı kabartma motifler ve saten ahşap cila',
+    priceGold: 780,
+    accentSwatch: 'linear-gradient(135deg, #451a03 0%, #92400e 48%, #b45309 78%, #291509 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'jojaMartCorp',
+    rarity: 'rare',
+    name: 'JojaMart Kurumsal',
+    subtitle: 'Joja mavisi kurumsal filo şeritleri, JOJA logosu ve "Hayatı İyileştirin" mizahi kaplama',
+    priceGold: 460,
+    accentSwatch: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 52%, #f8fafc 74%, #38bdf8 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'mysteryMachine',
+    rarity: 'epic',
+    name: 'Gizem Makinesi',
+    subtitle: 'Parlak turkuaz gövde, yanlarda neon yeşili dalgalı şeritler ve turuncu çiçek detayları',
+    priceGold: 940,
+    accentSwatch: 'linear-gradient(135deg, #06b6d4 0%, #84cc16 48%, #f97316 80%, #facc15 100%)',
+    category: 'fullWrap',
+    overridesBaseColor: true,
+  },
+  {
+    id: 'animWindStream',
+    rarity: 'legendary',
+    name: 'Rüzgar Akışı',
+    subtitle: 'Araç hızlandıkça gövde boyunca daha hızlı akan aerodinamik rüzgar tüneli çizgileri',
+    priceGold: 2120,
+    accentSwatch: 'linear-gradient(180deg, #0f172a 0%, #38bdf8 48%, #e0f2fe 78%, #0284c7 100%)',
+    category: 'animated',
+    animated: true,
+  },
+  {
+    id: 'omnitrixAlien',
+    rarity: 'legendary',
+    name: 'Omnitrix',
+    subtitle: 'Siyah-beyaz keskin fütüristik zırh çizgileri ve kaputta parlayan neon yeşil kum saati',
+    priceGold: 2320,
+    accentSwatch: 'linear-gradient(135deg, #09090b 0%, #f8fafc 38%, #22c55e 70%, #86efac 100%)',
     category: 'animated',
     overridesBaseColor: true,
     animated: true,
@@ -3901,6 +4283,161 @@ export const ROOF_HATS: RoofHatSpec[] = [
     swatch: 'linear-gradient(135deg, #22d3ee 0%, #a855f7 55%, #ec4899 100%)',
     animated: true,
   },
+  {
+    id: 'trafficCone',
+    rarity: 'common',
+    name: 'Trafik Konisi',
+    subtitle: 'Tavanda hafif eğik duran parlak turuncu reflektörlü yol dubası',
+    priceGold: 180,
+    swatch: 'linear-gradient(135deg, #f97316 0%, #ffffff 50%, #ea580c 100%)',
+  },
+  {
+    id: 'taxiSign',
+    rarity: 'common',
+    name: 'Sarı Taksi Tabelası',
+    subtitle: 'Damalı şeritli ve ışıklı klasik sarı tavan taksi tabelası',
+    priceGold: 220,
+    swatch: 'linear-gradient(135deg, #facc15 0%, #18181b 55%, #fef08a 100%)',
+    animated: true,
+  },
+  {
+    id: 'sharkFinHat',
+    rarity: 'rare',
+    name: 'Köpekbalığı Yüzgeci',
+    subtitle: 'Tavanı yaran devasa büyük beyaz köpekbalığı sırt yüzgeci',
+    priceGold: 340,
+    swatch: 'linear-gradient(135deg, #334155 0%, #64748b 58%, #e2e8f0 100%)',
+  },
+  {
+    id: 'pumpkinLantern',
+    rarity: 'rare',
+    name: 'Balkabağı Fener',
+    subtitle: 'İçinden sıcak alev parıltısı yayan oymalı Cadılar Bayramı balkabağı',
+    priceGold: 390,
+    swatch: 'linear-gradient(135deg, #ea580c 0%, #f59e0b 55%, #16a34a 100%)',
+    animated: true,
+  },
+  {
+    id: 'headcrabHat',
+    rarity: 'epic',
+    name: 'Headcrab',
+    subtitle: 'Arabanın tavanına pençeleriyle sımsıkı yapışmış 3D Half-Life Headcrab',
+    priceGold: 680,
+    swatch: 'linear-gradient(135deg, #5c3322 0%, #c99c72 52%, #7f1d2d 100%)',
+  },
+  {
+    id: 'pharaohNemes',
+    rarity: 'epic',
+    name: 'Firavun Tacı',
+    subtitle: 'Altın-lacivert çizgili Mısır Nemes başlığı ve parlayan kobra mücevheri',
+    priceGold: 720,
+    swatch: 'linear-gradient(135deg, #1d4ed8 0%, #facc15 55%, #06b6d4 100%)',
+    animated: true,
+  },
+  {
+    id: 'companionCube',
+    rarity: 'legendary',
+    name: 'Companion Cube',
+    subtitle: 'Tavan üstünde süzülen Portal Companion Cube ve parlayan pembe kalp amblemleri',
+    priceGold: 1080,
+    swatch: 'linear-gradient(135deg, #64748b 0%, #e2e8f0 48%, #f472b6 100%)',
+    animated: true,
+  },
+  {
+    id: 'diamondHelmet',
+    rarity: 'legendary',
+    name: 'Elmas Kask',
+    subtitle: 'Minecraft büyü parıltılı voxel elmas kask ve etrafında dönen büyü küpleri',
+    priceGold: 1140,
+    swatch: 'linear-gradient(135deg, #06b6d4 0%, #22d3ee 52%, #a855f7 100%)',
+    animated: true,
+  },
+  {
+    id: 'rubberDuck',
+    rarity: 'common',
+    name: 'Sarı Ördek',
+    subtitle: 'Tavan üstünde rüzgarı yaran parlak sarı plastik banyo ördeği',
+    priceGold: 200,
+    swatch: 'linear-gradient(135deg, #facc15 0%, #fde047 58%, #f97316 100%)',
+  },
+  {
+    id: 'hardHat',
+    rarity: 'common',
+    name: 'Şantiye Bareti',
+    subtitle: 'Klasik sarı güvenlik bareti, üst güçlendirme şeridi ve alın feneri',
+    priceGold: 210,
+    swatch: 'linear-gradient(135deg, #eab308 0%, #facc15 62%, #3f3f46 100%)',
+  },
+  {
+    id: 'sushiRoll',
+    rarity: 'rare',
+    name: 'Somon Sushi',
+    subtitle: 'Yosun kuşaklı dev somon nigiri sushi ve taze wasabi dokunuşu',
+    priceGold: 330,
+    swatch: 'linear-gradient(135deg, #f97316 0%, #f8fafc 52%, #14532d 100%)',
+  },
+  {
+    id: 'graduationCap',
+    rarity: 'rare',
+    name: 'Mezuniyet Kepi',
+    subtitle: 'Mat siyah akademik kep ve hızla rüzgarda savrulan altın püskül',
+    priceGold: 360,
+    swatch: 'linear-gradient(135deg, #09090b 0%, #27272a 65%, #facc15 100%)',
+    animated: true,
+  },
+  {
+    id: 'knightHelmet',
+    rarity: 'rare',
+    name: 'Şövalye Miğferi',
+    subtitle: 'Pirinç haç korumalı parlatılmış çelik miğfer ve kızıl sorguç',
+    priceGold: 420,
+    swatch: 'linear-gradient(135deg, #94a3b8 0%, #facc15 55%, #dc2626 100%)',
+  },
+  {
+    id: 'catEars',
+    rarity: 'epic',
+    name: 'Neon Kedi Kulakları',
+    subtitle: 'Karbon tavan bandı üzerinde parlayan pembe neon oyuncu kedi kulakları',
+    priceGold: 580,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #ec4899 58%, #f472b6 100%)',
+    animated: true,
+  },
+  {
+    id: 'ramenBowl',
+    rarity: 'epic',
+    name: 'Sıcak Ramen Kasesi',
+    subtitle: 'Çubuklu, yumurtalı, narutomakili ve tütmeye devam eden Japon ramen kasesi',
+    priceGold: 640,
+    swatch: 'linear-gradient(135deg, #991b1b 0%, #f59e0b 55%, #f8fafc 100%)',
+    animated: true,
+  },
+  {
+    id: 'creeperHead',
+    rarity: 'epic',
+    name: 'Creeper Kafası',
+    subtitle: 'Klasik yeşil pikselli Minecraft Creeper kafası ve nabız atan patlama parıltısı',
+    priceGold: 740,
+    swatch: 'linear-gradient(135deg, #15803d 0%, #4ade80 55%, #09090b 100%)',
+    animated: true,
+  },
+  {
+    id: 'miniHeliRotor',
+    rarity: 'legendary',
+    name: 'Helikopter Pervanesi',
+    subtitle: 'Hızlandıkça delice dönen çift karbon helikopter rotoru ve tepe ikaz ışığı',
+    priceGold: 940,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #64748b 55%, #ef4444 100%)',
+    animated: true,
+  },
+  {
+    id: 'blackHoleOrb',
+    rarity: 'legendary',
+    name: 'Kara Delik',
+    subtitle: 'Tavan üstünde süzülen olay ufku, yanan akresyon diski ve dönen yıldız parçaları',
+    priceGold: 1280,
+    swatch: 'linear-gradient(135deg, #020617 0%, #f97316 52%, #a855f7 100%)',
+    animated: true,
+  },
 ];
 
 export const STEERING_WHEELS: SteeringWheelSpec[] = [
@@ -4118,6 +4655,80 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: 'Atan mor-camgöbeği plazma kelebek kumanda ve 9 RPM LED',
     priceGold: 1280,
     swatch: 'linear-gradient(135deg, #1e1b4b 0%, #a855f7 52%, #22d3ee 100%)',
+    hasShiftLeds: true,
+    animated: true,
+  },
+  {
+    id: 'scrapMadMax',
+    rarity: 'epic',
+    name: 'Hurda Mad Max',
+    subtitle: 'Paslı kaynaklı demir simit, dikenli çember, sargılı tutamak ve dişli göbek',
+    priceGold: 640,
+    swatch: 'linear-gradient(135deg, #451a03 0%, #9a3412 52%, #52525b 100%)',
+  },
+  {
+    id: 'pixelVoxel',
+    rarity: 'epic',
+    name: 'Piksel Voxel Blok',
+    subtitle: '8-bit küp bloklardan oluşan retro voxel simit ve elmas piksel göbek',
+    priceGold: 760,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #22c55e 48%, #22d3ee 100%)',
+    hasShiftLeds: true,
+  },
+  {
+    id: 'obsidianMagma',
+    rarity: 'legendary',
+    name: 'Magma & Obsidyen',
+    subtitle: 'Kırık obsidyen kaya zırhı, erimiş lav çatlakları ve dönen volkan çekirdeği',
+    priceGold: 1150,
+    swatch: 'linear-gradient(135deg, #0c0a0f 0%, #dc2626 48%, #facc15 100%)',
+    hasShiftLeds: true,
+    animated: true,
+  },
+  {
+    id: 'hevLambda',
+    rarity: 'legendary',
+    name: 'HEV Mark V (λ)',
+    subtitle: 'Zırhlı tehlike turuncusu HEV Mark IV/V direksiyonu, ortada ışıklı λ amblemi',
+    priceGold: 1320,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #f97316 55%, #facc15 100%)',
+    hasShiftLeds: true,
+    animated: true,
+  },
+  {
+    id: 'headcrab',
+    rarity: 'epic',
+    name: 'Headcrab',
+    subtitle: 'Göbeğe sarılmış 3D Headcrab, eklemli pençe bacak kolları ve organik simit',
+    priceGold: 820,
+    swatch: 'linear-gradient(135deg, #5c3322 0%, #c99c72 52%, #7f1d2d 100%)',
+  },
+  {
+    id: 'craftingTable',
+    rarity: 'epic',
+    name: 'Crafting Table',
+    subtitle: 'Minecraft meşe blok voxel simit, yan demir alet pikselleri ve 3×3 üretim ızgarası',
+    priceGold: 790,
+    swatch: 'linear-gradient(135deg, #5c3a1e 0%, #c89e66 52%, #94a3b8 100%)',
+    hasShiftLeds: true,
+  },
+  {
+    id: 'aperturePortal',
+    rarity: 'legendary',
+    name: 'Aperture Science',
+    subtitle: 'Mavi-turuncu portal halkalı beyaz laboratuvar simidi ve 8 kanatlı Aperture logosu',
+    priceGold: 1240,
+    swatch: 'linear-gradient(135deg, #0284c7 0%, #f8fafc 50%, #f97316 100%)',
+    hasShiftLeds: true,
+    animated: true,
+  },
+  {
+    id: 'wheatleyCore',
+    rarity: 'legendary',
+    name: 'Wheatley Çekirdek',
+    subtitle: 'Portal 2 Wheatley kişilik çekirdeği, dönen mavi optik göz ve ray tutamakları',
+    priceGold: 1290,
+    swatch: 'linear-gradient(135deg, #1e293b 0%, #e2e8f0 48%, #38bdf8 100%)',
     hasShiftLeds: true,
     animated: true,
   },
