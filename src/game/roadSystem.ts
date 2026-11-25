@@ -195,7 +195,7 @@ export class RoadSystem {
   private sectionCount = 0;
 
   // Shared materials
-  private asphaltMat: THREE.MeshStandardMaterial;
+  private asphaltMat: THREE.MeshPhysicalMaterial;
   private shoulderMat: THREE.MeshStandardMaterial;
   private terrainMat: THREE.MeshStandardMaterial;
   private guardrailMat: THREE.MeshStandardMaterial;
@@ -253,11 +253,14 @@ export class RoadSystem {
   constructor(textures: ProceduralTextureSet, isMobile = false) {
     this.isMobile = isMobile;
     this.chunkCount = 10;
-    this.asphaltMat = new THREE.MeshStandardMaterial({
+    this.asphaltMat = new THREE.MeshPhysicalMaterial({
       map: textures.asphaltMap,
       roughnessMap: textures.asphaltRoughnessMap,
       roughness: 0.84,
       metalness: 0.08,
+      clearcoat: 0,
+      clearcoatRoughness: 0.35,
+      reflectivity: 0.92,
       envMapIntensity: 0.85,
     });
 
@@ -542,22 +545,25 @@ export class RoadSystem {
     this.roadsideProps.setLampIntensity(f);
   }
 
-  public setWetness(wet: boolean): void {
-    if (wet) {
-      this.asphaltMat.roughness = 0.24;
-      this.asphaltMat.metalness = 0.28;
-      this.asphaltMat.envMapIntensity = 1.75;
-      this.asphaltMat.color.setHex(0x8894a4);
-      this.shoulderMat.roughness = 0.42;
-      this.shoulderMat.color.setHex(0x94a3b8);
-    } else {
-      this.asphaltMat.roughness = 0.84;
-      this.asphaltMat.metalness = 0.08;
-      this.asphaltMat.envMapIntensity = 0.85;
-      this.asphaltMat.color.setHex(0xffffff);
-      this.shoulderMat.roughness = 0.92;
-      this.shoulderMat.color.setHex(0xffffff);
-    }
+  public setWetness(wet: number | boolean): void {
+    const w =
+      typeof wet === 'boolean' ? (wet ? 1 : 0) : THREE.MathUtils.clamp(wet, 0, 1);
+    this.asphaltMat.roughness = THREE.MathUtils.lerp(0.84, 0.14, w);
+    this.asphaltMat.metalness = THREE.MathUtils.lerp(0.08, 0.34, w);
+    this.asphaltMat.clearcoat = w * 0.92;
+    this.asphaltMat.clearcoatRoughness = THREE.MathUtils.lerp(0.35, 0.06, w);
+    this.asphaltMat.envMapIntensity = THREE.MathUtils.lerp(0.85, 2.45, w);
+    this.asphaltMat.color.setRGB(
+      THREE.MathUtils.lerp(1, 0.42, w),
+      THREE.MathUtils.lerp(1, 0.47, w),
+      THREE.MathUtils.lerp(1, 0.56, w),
+    );
+    this.shoulderMat.roughness = THREE.MathUtils.lerp(0.92, 0.34, w);
+    this.shoulderMat.color.setRGB(
+      THREE.MathUtils.lerp(1, 0.54, w),
+      THREE.MathUtils.lerp(1, 0.6, w),
+      THREE.MathUtils.lerp(1, 0.68, w),
+    );
   }
 
   private disposeChunk(chunk: RoadChunk): void {

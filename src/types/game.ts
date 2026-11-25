@@ -87,6 +87,15 @@ export type CarModelId =
 
 export type CameraMode = 'chase' | 'cine' | 'cockpit' | 'hood';
 
+export type SteeringControlMode = 'drag' | 'tilt';
+
+export interface SteeringSettings {
+  mode: SteeringControlMode;
+  tiltSensitivity: number; // 0.6 - 1.8 (default 1.0)
+}
+
+export type WeatherKind = 'clear' | 'fog' | 'rain' | 'snow' | 'sandstorm';
+
 export const CAMERA_MODES: { id: CameraMode; label: string }[] = [
   { id: 'chase', label: 'Takip' },
   { id: 'cine', label: 'Cine-Cam' },
@@ -3896,6 +3905,11 @@ export interface HudStats {
   bombMinSpeedKmh: number;
   bombArmed: boolean;
   bombFuseRatio: number; // 0 - 1 (1 = safe)
+  weatherKind: WeatherKind;
+  rainIntensity: number; // 0 - 1 (0 in tunnels)
+  fogIntensity: number; // 0 - 1
+  roadWetness: number; // 0 - 1
+  resumeCountdown: number; // 0 = active play, 3/2/1 = countdown
   career: ActiveCareerHudState | null;
 }
 

@@ -106,12 +106,33 @@ import {
   PowerUpUpgradeTrack,
   SPOILERS,
   SpoilerId,
+  SteeringSettings,
   VisualCategory,
   VisualUnlocks,
   WHEEL_STYLES,
   WheelColorId,
   WheelStyleId,
 } from './types/game';
+
+const STEERING_STORAGE_KEY = 'viraj_steering_settings_v1';
+
+function loadSteeringSettings(): SteeringSettings {
+  try {
+    const raw = localStorage.getItem(STEERING_STORAGE_KEY);
+    if (!raw) return { mode: 'drag', tiltSensitivity: 1.0 };
+    const parsed = JSON.parse(raw) as Partial<SteeringSettings>;
+    return {
+      mode: parsed.mode === 'tilt' ? 'tilt' : 'drag',
+      tiltSensitivity:
+        typeof parsed.tiltSensitivity === 'number' &&
+        Number.isFinite(parsed.tiltSensitivity)
+          ? Math.max(0.6, Math.min(1.8, parsed.tiltSensitivity))
+          : 1.0,
+    };
+  } catch {
+    return { mode: 'drag', tiltSensitivity: 1.0 };
+  }
+}
 
 const INITIAL_LEVEL_INFO = computePlayerLevel(0);
 
@@ -173,6 +194,11 @@ const INITIAL_STATS: HudStats = {
   bombMinSpeedKmh: 130,
   bombArmed: false,
   bombFuseRatio: 1,
+  weatherKind: 'clear',
+  rainIntensity: 0,
+  fogIntensity: 0,
+  roadWetness: 0,
+  resumeCountdown: 0,
   career: null,
 };
 
@@ -291,6 +317,7 @@ export default function App() {
   const [licensePlate, setLicensePlate] = useState('VİRAJ 34');
   const [cameraMode, setCameraMode] = useState<CameraMode>('chase');
   const [garageMenuCollapsed, setGarageMenuCollapsed] = useState(false);
+  const [garageBrightMode, setGarageBrightMode] = useState(false);
   const [showSteerHint, setShowSteerHint] = useState(true);
   const [callout, setCallout] = useState<FloatingCallout | null>(null);
   const [musicState, setMusicState] = useState<MusicPlayerState>({
@@ -389,6 +416,16 @@ export default function App() {
   mutedRef.current = muted;
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
+
+  const [steeringSettings, setSteeringSettings] = useState<SteeringSettings>(
+    () => loadSteeringSettings(),
+  );
+  const steeringSettingsRef = useRef(steeringSettings);
+  steeringSettingsRef.current = steeringSettings;
+  const tiltZeroDegRef = useRef(0);
+  const lastRawTiltDegRef = useRef(0);
+  const smoothedTiltRef = useRef(0);
+  const hasTiltSensorDataRef = useRef(false);
 
   const pendingInterstitialActionRef = useRef<(() => void) | null>(null);
   const pendingExtraSpinCbRef = useRef<(() => void) | null>(null);
@@ -942,6 +979,97 @@ export default function App() {
     activeLevelUp,
   ]);
 
+  const handleChangeSteeringSettings = useCallback((next: SteeringSettings) => {
+    setSteeringSettings(next);
+    try {
+      localStorage.setItem(STEERING_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // ignore storage quota errors
+    }
+    if (next.mode !== 'tilt') {
+      smoothedTiltRef.current = 0;
+      hasTiltSensorDataRef.current = false;
+      engineRef.current?.setTiltSteerInput(0);
+    }
+  }, []);
+
+  const handleCalibrateTilt = useCallback(() => {
+    tiltZeroDegRef.current = lastRawTiltDegRef.current;
+    smoothedTiltRef.current = 0;
+  }, []);
+
+  // Device orientation (Tilt / Gyroscope) steering listener
+  useEffect(() => {
+    if (steeringSettings.mode !== 'tilt') {
+      engineRef.current?.setTiltSteerInput(0);
+      return;
+    }
+
+    const onOrientation = (ev: DeviceOrientationEvent) => {
+      if (ev.gamma == null && ev.beta == null) return;
+      const screenAngle =
+        typeof window.screen?.orientation?.angle === 'number'
+          ? window.screen.orientation.angle
+          : typeof (window as unknown as { orientation?: number }).orientation ===
+              'number'
+            ? ((window as unknown as { orientation: number }).orientation ?? 0)
+            : 0;
+
+      // Read lateral tilt angle accurately in both portrait and landscape orientations
+      let rawDeg = 0;
+      if (screenAngle === 90) {
+        rawDeg = ev.beta ?? 0;
+      } else if (screenAngle === -90 || screenAngle === 270) {
+        rawDeg = -(ev.beta ?? 0);
+      } else if (screenAngle === 180) {
+        rawDeg = -(ev.gamma ?? 0);
+      } else {
+        rawDeg = ev.gamma ?? 0;
+      }
+
+      if (!hasTiltSensorDataRef.current) {
+        hasTiltSensorDataRef.current = true;
+        tiltZeroDegRef.current = rawDeg;
+      }
+      lastRawTiltDegRef.current = rawDeg;
+
+      if (phaseRef.current !== 'playing') {
+        smoothedTiltRef.current = 0;
+        engineRef.current?.setTiltSteerInput(0);
+        return;
+      }
+
+      const deltaDeg = rawDeg - tiltZeroDegRef.current;
+      const deadzone = 2.8;
+      let normalized = 0;
+      if (Math.abs(deltaDeg) > deadzone) {
+        const effectiveDeg =
+          Math.sign(deltaDeg) * (Math.abs(deltaDeg) - deadzone);
+        const sens = steeringSettingsRef.current.tiltSensitivity;
+        normalized = Math.max(-1, Math.min(1, (effectiveDeg / 22) * sens));
+        // Gentle non-linear curve for fine center control + crisp sharp turns
+        normalized =
+          Math.sign(normalized) * Math.pow(Math.abs(normalized), 1.18);
+      }
+
+      smoothedTiltRef.current =
+        smoothedTiltRef.current * 0.7 + normalized * 0.3;
+      engineRef.current?.setTiltSteerInput(smoothedTiltRef.current);
+
+      if (Math.abs(normalized) > 0.14 && showSteerHintRef.current) {
+        showSteerHintRef.current = false;
+        setShowSteerHint(false);
+      }
+    };
+
+    window.addEventListener('deviceorientation', onOrientation);
+    return () => {
+      window.removeEventListener('deviceorientation', onOrientation);
+      smoothedTiltRef.current = 0;
+      engineRef.current?.setTiltSteerInput(0);
+    };
+  }, [steeringSettings.mode]);
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (phase === 'garage') {
@@ -1024,7 +1152,10 @@ export default function App() {
 
       const dx = e.clientX - lastPointerXRef.current;
       lastPointerXRef.current = e.clientX;
-      if (Math.abs(dx) > 0.5) {
+      const tiltTakingOver =
+        steeringSettingsRef.current.mode === 'tilt' &&
+        hasTiltSensorDataRef.current;
+      if (!tiltTakingOver && Math.abs(dx) > 0.5) {
         if (showSteerHintRef.current) {
           showSteerHintRef.current = false;
           setShowSteerHint(false);
@@ -1179,6 +1310,14 @@ export default function App() {
     setGarageMenuCollapsed((prev) => {
       const next = !prev;
       engineRef.current?.setGarageMenuCollapsed(next);
+      return next;
+    });
+  }, []);
+
+  const handleToggleGarageLight = useCallback(() => {
+    setGarageBrightMode((prev) => {
+      const next = !prev;
+      engineRef.current?.setGarageBrightMode(next);
       return next;
     });
   }, []);
@@ -2182,7 +2321,7 @@ export default function App() {
 
   return (
     <main
-      className="relative h-screen w-screen overflow-hidden bg-zinc-950 touch-none"
+      className={`relative h-screen w-screen overflow-hidden bg-zinc-950 ${phase === 'playing' ? 'touch-none' : ''}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
@@ -2190,7 +2329,7 @@ export default function App() {
     >
       <div
         ref={canvasMountRef}
-        className="absolute inset-0 h-full w-full"
+        className="absolute inset-0 h-full w-full touch-none"
         aria-label="3D Araba Sürüş Sahnesi"
       />
 
@@ -2266,12 +2405,14 @@ export default function App() {
         licensePlate={licensePlate}
         cameraMode={cameraMode}
         garageMenuCollapsed={garageMenuCollapsed}
+        garageBrightMode={garageBrightMode}
         showSteerHint={showSteerHint}
         callout={callout}
         onSelectGameMode={handleSelectGameMode}
         onStart={handleStart}
         onOpenGarage={handleOpenGarage}
         onToggleGarageMenu={handleToggleGarageMenu}
+        onToggleGarageLight={handleToggleGarageLight}
         onTogglePause={handleTogglePause}
         onReturnMenu={handleReturnMenu}
         onToggleMute={handleToggleMute}
@@ -2323,6 +2464,7 @@ export default function App() {
         onStartCareerLevel={handleStartCareerLevel}
         claimedLevelRewards={claimedLevelRewards}
         unlockedCarColors={unlockedCarColors}
+        steeringMode={steeringSettings.mode}
         onOpenLevelRoad={handleOpenLevelRoad}
       />
 
@@ -2435,12 +2577,15 @@ export default function App() {
         open={settingsOpen}
         audioSettings={audioSettings}
         hapticsEnabled={hapticsEnabled}
+        steeringSettings={steeringSettings}
         notificationSettings={notificationSettings}
         onChangeSfxVolume={handleChangeSfxVolume}
         onPreviewSfxVolume={handlePreviewSfxVolume}
         onChangeMusicVolume={handleChangeMusicVolume}
         onToggleMute={handleToggleMute}
         onToggleHaptics={handleToggleHaptics}
+        onChangeSteeringSettings={handleChangeSteeringSettings}
+        onCalibrateTilt={handleCalibrateTilt}
         onChangeNotificationSettings={setNotificationSettings}
         onClose={handleCloseSettings}
       />

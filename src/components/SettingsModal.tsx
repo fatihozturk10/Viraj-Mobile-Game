@@ -3,7 +3,9 @@ import {
   Bell,
   BellOff,
   CheckCircle2,
+  MoveHorizontal,
   Music,
+  RotateCcw,
   Send,
   Settings,
   Smartphone,
@@ -13,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { AudioSettings } from '../game/audioEngine';
+import { SteeringSettings } from '../types/game';
 import {
   checkNotificationPermission,
   NotificationPermissionState,
@@ -26,12 +29,15 @@ interface SettingsModalProps {
   open: boolean;
   audioSettings: AudioSettings;
   hapticsEnabled: boolean;
+  steeringSettings: SteeringSettings;
   notificationSettings: NotificationSettings;
   onChangeSfxVolume: (volume: number) => void;
   onPreviewSfxVolume: () => void;
   onChangeMusicVolume: (volume: number) => void;
   onToggleMute: () => void;
   onToggleHaptics: (enabled: boolean) => void;
+  onChangeSteeringSettings: (next: SteeringSettings) => void;
+  onCalibrateTilt: () => void;
   onChangeNotificationSettings: (next: NotificationSettings) => void;
   onClose: () => void;
 }
@@ -71,12 +77,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   open,
   audioSettings,
   hapticsEnabled,
+  steeringSettings,
   notificationSettings,
   onChangeSfxVolume,
   onPreviewSfxVolume,
   onChangeMusicVolume,
   onToggleMute,
   onToggleHaptics,
+  onChangeSteeringSettings,
+  onCalibrateTilt,
   onChangeNotificationSettings,
   onClose,
 }) => {
@@ -86,15 +95,67 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     ok: boolean;
     text: string;
   } | null>(null);
+  const [tiltFeedback, setTiltFeedback] = useState<{
+    ok: boolean;
+    text: string;
+  } | null>(null);
   const [busyNotif, setBusyNotif] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setNotifFeedback(null);
+    setTiltFeedback(null);
     void checkNotificationPermission().then((state) => setPermState(state));
   }, [open]);
 
   if (!open) return null;
+
+  const handleSelectSteeringMode = async (mode: 'drag' | 'tilt') => {
+    setTiltFeedback(null);
+    if (mode === 'drag') {
+      onChangeSteeringSettings({ ...steeringSettings, mode: 'drag' });
+      return;
+    }
+
+    if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
+      setTiltFeedback({
+        ok: false,
+        text: 'Bu cihazda jiroskop sensörü bulunamadı.',
+      });
+      return;
+    }
+
+    const orientationCtor = window.DeviceOrientationEvent as unknown as {
+      requestPermission?: () => Promise<'granted' | 'denied'>;
+    };
+    if (typeof orientationCtor?.requestPermission === 'function') {
+      try {
+        const res = await orientationCtor.requestPermission();
+        if (res !== 'granted') {
+          setTiltFeedback({
+            ok: false,
+            text: 'Hareket sensörü izni verilmedi.',
+          });
+          return;
+        }
+      } catch {
+        setTiltFeedback({
+          ok: false,
+          text: 'Hareket sensörü izni alınamadı.',
+        });
+        return;
+      }
+    }
+
+    onChangeSteeringSettings({ ...steeringSettings, mode: 'tilt' });
+    onCalibrateTilt();
+    setTiltFeedback({
+      ok: true,
+      text: 'Telefonu sola/sağa eğerek aracı yönlendirebilirsin.',
+    });
+  };
+
+  const tiltSensPct = Math.round(steeringSettings.tiltSensitivity * 100);
 
   const musicPct = Math.round(audioSettings.musicVolume * 100);
   const sfxPct = Math.round(audioSettings.sfxVolume * 100);
@@ -228,6 +289,103 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Scrollable Content */}
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+          {/* Driving Controls Section (Drag vs Tilt/Gyro) */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
+                Sürüş Kontrolleri
+              </h3>
+              <span className="text-[11px] font-semibold text-amber-300">
+                {steeringSettings.mode === 'tilt' ? 'Eğme (Jiroskop)' : 'Dokunmatik'}
+              </span>
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-white/10 bg-zinc-900/70 p-3.5">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleSelectSteeringMode('drag')}
+                  className={`flex min-h-[48px] items-center justify-center gap-2 rounded-xl border px-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                    steeringSettings.mode === 'drag'
+                      ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
+                      : 'border-white/10 bg-zinc-950/75 text-zinc-300 hover:bg-zinc-800'
+                  }`}
+                >
+                  <MoveHorizontal className="h-4 w-4 shrink-0" />
+                  <span>Kaydırarak</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSelectSteeringMode('tilt')}
+                  className={`flex min-h-[48px] items-center justify-center gap-2 rounded-xl border px-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                    steeringSettings.mode === 'tilt'
+                      ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
+                      : 'border-white/10 bg-zinc-950/75 text-zinc-300 hover:bg-zinc-800'
+                  }`}
+                >
+                  <Smartphone className="h-4 w-4 shrink-0" />
+                  <span>Telefonu Eğ</span>
+                </button>
+              </div>
+
+              {steeringSettings.mode === 'tilt' && (
+                <div className="space-y-3 border-t border-white/8 pt-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-semibold text-zinc-200">
+                      <span>Eğme Hassasiyeti</span>
+                      <span className="font-mono-num font-bold text-amber-300">
+                        %{tiltSensPct}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={60}
+                      max={180}
+                      step={5}
+                      value={tiltSensPct}
+                      onChange={(e) =>
+                        onChangeSteeringSettings({
+                          ...steeringSettings,
+                          tiltSensitivity: Number(e.target.value) / 100,
+                        })
+                      }
+                      aria-label="Eğme Hassasiyeti"
+                      className="h-2.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-amber-400"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onCalibrateTilt();
+                      setTiltFeedback({
+                        ok: true,
+                        text: 'Mevcut tutuş açısı merkez olarak kaydedildi.',
+                      });
+                    }}
+                    className="flex min-h-[42px] w-full items-center justify-center gap-2 rounded-xl border border-white/12 bg-zinc-950/90 px-3 text-xs font-semibold text-zinc-200 transition-colors hover:border-amber-400/40 hover:bg-zinc-800 hover:text-amber-300 cursor-pointer"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 text-amber-400" />
+                    <span>Merkez Açıyı Kalibre Et</span>
+                  </button>
+                </div>
+              )}
+
+              {tiltFeedback && (
+                <div
+                  className={`flex items-center gap-1.5 text-xs font-medium ${
+                    tiltFeedback.ok ? 'text-emerald-300' : 'text-rose-300'
+                  }`}
+                >
+                  {tiltFeedback.ok && (
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  )}
+                  <span>{tiltFeedback.text}</span>
+                </div>
+              )}
+            </div>
+          </section>
+
           {/* Audio & Music Section */}
           <section className="space-y-3.5">
             <div className="flex items-center justify-between">

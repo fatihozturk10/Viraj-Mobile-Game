@@ -694,13 +694,13 @@ export class HighwayEngine {
   private currentBiomeId: BiomeId = 'alpine';
   private dynamicWeather: 'clear' | 'fog' | 'rain' | 'snow' | 'sandstorm' =
     'clear';
-  private weatherTimerSec = 24;
+  private weatherTimerSec = 15;
   private weatherLastBiomeId: BiomeId = 'alpine';
   private weatherRainLevel = 0;
   private weatherFogLevel = 0;
   private weatherSnowLevel = 0;
   private weatherSandLevel = 0;
-  private lastRoadWetState = false;
+  private lastRoadWetLevel = -1;
   private lastRainAudioState = false;
   private carColorId: CarColorId = 'pearl';
   private carModelId: CarModelId = 'dogan';
@@ -763,6 +763,9 @@ export class HighwayEngine {
   private garageDist = 6.0;
   private garageFocus: GarageCameraFocus = 'overview';
   private garageFocusTransitioning = false;
+  private garageKeyLight: THREE.PointLight | null = null;
+  private garageRimLight: THREE.PointLight | null = null;
+  private garageBrightMode = false;
 
   // 3D Record Checkpoint Arch & Waving Flags
   private recordMarkerGroup: THREE.Group;
@@ -784,6 +787,9 @@ export class HighwayEngine {
   private upcomingEvent: UpcomingRoadEvent | null = null;
   private speedMs = 26;
   private throttleInput = 0;
+  private tiltSteerInput = 0;
+  private resumeCountdownTimer = 0;
+  private lastResumeCountdownStep = 0;
   private keyLeft = false;
   private keyRight = false;
   private keyUp = false;
@@ -3113,6 +3119,7 @@ export class HighwayEngine {
     this.cockpit.root.visible = this.cameraMode === 'cockpit';
     this.playerCar.root.visible =
       this.cameraMode === 'chase' || this.cameraMode === 'cine';
+    this.startResumeCountdown(1.95);
     this.syncPlayerAndCamera(0.016, true);
     this.emitCallout('DEVAM EDİYORUZ!', 'Kısa Koruma Kalkanı', 'emerald');
     this.callbacks.onPhaseChange('playing');
@@ -3431,10 +3438,15 @@ export class HighwayEngine {
       dt,
     );
 
-    const wetNow = this.weatherRainLevel > 0.34;
-    if (wetNow !== this.lastRoadWetState) {
-      this.lastRoadWetState = wetNow;
-      this.road.setWetness(wetNow);
+    const wetVal =
+      this.currentRoadZone === 'tunnel'
+        ? 0
+        : this.atmosphereId === 'rainy'
+          ? 1
+          : this.weatherRainLevel;
+    if (Math.abs(wetVal - this.lastRoadWetLevel) > 0.015) {
+      this.lastRoadWetLevel = wetVal;
+      this.road.setWetness(wetVal);
     }
 
     const rainAudioNow = this.isRainAudioActiveNow();
@@ -3444,15 +3456,33 @@ export class HighwayEngine {
     }
   }
 
+  private getEffectiveRoadWetness(): number {
+    if (this.currentRoadZone === 'tunnel') return 0;
+    if (this.atmosphereId === 'rainy') return 1;
+    if (this.atmosphereId === 'cycle') return this.weatherRainLevel;
+    return 0;
+  }
+
+  private startResumeCountdown(durationSec = 1.95): void {
+    this.resumeCountdownTimer = durationSec;
+    this.lastResumeCountdownStep = 3;
+    this.audio.playCountdownBeep(3);
+    this.callbacks.onImpact?.(0.18);
+  }
+
   private applyAtmosphere(id: AtmosphereId): void {
-    const isRain =
-      id === 'rainy' || (id === 'cycle' && this.weatherRainLevel > 0.34);
-    this.lastRoadWetState = isRain;
-    this.road.setWetness(isRain);
+    const wetVal =
+      id === 'rainy'
+        ? 1
+        : id === 'cycle'
+          ? this.weatherRainLevel
+          : 0;
+    this.lastRoadWetLevel = wetVal;
+    this.road.setWetness(wetVal);
     const audioRain = this.isRainAudioActiveNow();
     this.lastRainAudioState = audioRain;
     this.audio.setRainActive(audioRain);
-    if (!isRain) {
+    if (wetVal <= 0.05) {
       this.rainSplashMesh.count = 0;
     }
 
@@ -3864,22 +3894,13 @@ export class HighwayEngine {
     this.garageLookX = 0;
     this.garageLookY = 0.42;
     this.garageLookZ = 0;
-    const isSideDock = width >= 768;
-    this.garageDist = isSideDock
-      ? width >= 1024
-        ? 5.95
-        : 6.35
-      : aspect < 0.8
+    this.garageDist =
+      aspect < 0.8
         ? Math.max(7.6, 4.1 / Math.max(0.46, aspect))
-        : 6.45;
-    if (isSideDock) {
-      const sidebarPx = width >= 1024 ? 352 : 326;
-      this.garageViewOffsetX = sidebarPx * 0.5;
-      this.garageViewOffsetY = -12;
-    } else {
-      this.garageViewOffsetX = 0;
-      this.garageViewOffsetY = Math.min(height * 0.16, 118);
-    }
+        : 6.2;
+    this.garageViewOffsetX = 0;
+    this.garageViewOffsetY = Math.min(height * 0.2, 150);
+    this.applyGarageLighting();
     this.camera.setViewOffset(
       width,
       height,
@@ -3906,6 +3927,24 @@ export class HighwayEngine {
 
   public setGarageMenuCollapsed(collapsed: boolean): void {
     this.garageMenuCollapsed = collapsed;
+  }
+
+  private applyGarageLighting(): void {
+    if (this.garageKeyLight) {
+      this.garageKeyLight.intensity = this.garageBrightMode ? 52 : 24;
+    }
+    if (this.garageRimLight) {
+      this.garageRimLight.intensity = this.garageBrightMode ? 34 : 18;
+    }
+    if (this.phase === 'garage') {
+      this.sunLight.intensity = this.garageBrightMode ? 2.85 : 1.55;
+      this.hemiLight.intensity = this.garageBrightMode ? 1.65 : 0.85;
+    }
+  }
+
+  public setGarageBrightMode(bright: boolean): void {
+    this.garageBrightMode = bright;
+    this.applyGarageLighting();
   }
 
   public orbitGarageByDelta(dx: number, dy: number): void {
@@ -4059,6 +4098,9 @@ export class HighwayEngine {
   public togglePause(): void {
     if (this.phase === 'playing') {
       this.phase = 'paused';
+      this.resumeCountdownTimer = 0;
+      this.lastResumeCountdownStep = 0;
+      this.tiltSteerInput = 0;
       if (this.missionDistAccum >= 1) {
         this.missions.recordDelta('distance', Math.floor(this.missionDistAccum));
         this.missionDistAccum = 0;
@@ -4070,14 +4112,17 @@ export class HighwayEngine {
       this.audio.setRainActive(false);
       this.callbacks.onPhaseChange('paused');
       this.callbacks.onMusicChange?.(this.audio.getMusicState());
+      this.pushHud(true);
     } else if (this.phase === 'paused') {
       this.audio.init();
       this.audio.startMusicIfEnabled();
       this.audio.setRainActive(this.isRainAudioActiveNow());
       this.phase = 'playing';
       this.lastTime = performance.now();
+      this.startResumeCountdown(1.95);
       this.callbacks.onPhaseChange('playing');
       this.callbacks.onMusicChange?.(this.audio.getMusicState());
+      this.pushHud(true);
     }
   }
 
@@ -4177,6 +4222,10 @@ export class HighwayEngine {
     this.throttleInput = THREE.MathUtils.clamp(value, -1, 1);
   }
 
+  public setTiltSteerInput(normalized: number): void {
+    this.tiltSteerInput = THREE.MathUtils.clamp(normalized, -1, 1);
+  }
+
   public setKeyboardState(
     left: boolean,
     right: boolean,
@@ -4202,6 +4251,10 @@ export class HighwayEngine {
     this.upcomingEvent = null;
     this.speedMs = 26;
     this.throttleInput = 0;
+    this.tiltSteerInput = 0;
+    this.resumeCountdownTimer = 0;
+    this.lastResumeCountdownStep = 0;
+    this.weatherTimerSec = 14 + Math.random() * 8;
     this.carRelYaw = 0;
     this.driftSlip = 0;
     this.chassisRoll = 0;
@@ -5403,7 +5456,30 @@ export class HighwayEngine {
     }
 
     if (this.phase === 'playing') {
-      this.stepSimulation(dt);
+      if (this.resumeCountdownTimer > 0) {
+        this.resumeCountdownTimer = Math.max(0, this.resumeCountdownTimer - dt);
+        this.audio.updateEngine(0.24, 0.24, false);
+        this.audio.updatePoliceSiren(0, 0, false);
+        this.stepRain(dt * 0.25);
+        if (this.resumeCountdownTimer > 0) {
+          const step = Math.min(
+            3,
+            Math.max(1, Math.ceil(this.resumeCountdownTimer / 0.65)),
+          ) as 3 | 2 | 1;
+          if (step !== this.lastResumeCountdownStep) {
+            this.lastResumeCountdownStep = step;
+            this.audio.playCountdownBeep(step);
+            this.callbacks.onImpact?.(0.18);
+            this.pushHud(true);
+          }
+        } else {
+          this.lastResumeCountdownStep = 0;
+          this.reviveInvulnTimer = Math.max(this.reviveInvulnTimer, 0.85);
+          this.pushHud(true);
+        }
+      } else {
+        this.stepSimulation(dt);
+      }
     } else if (this.phase === 'garage') {
       this.stepGaragePreview(dt);
     } else if (this.phase === 'menu') {
@@ -5672,10 +5748,12 @@ export class HighwayEngine {
     // Studio key & rim lights
     const keyLight = new THREE.PointLight(0xffffff, 24, 22, 1.5);
     keyLight.position.set(3.2, 4.8, 3.6);
+    this.garageKeyLight = keyLight;
     group.add(keyLight);
 
     const rimLight = new THREE.PointLight(0xfbbf24, 18, 20, 1.5);
     rimLight.position.set(-4.2, 3.2, -4.0);
+    this.garageRimLight = rimLight;
     group.add(rimLight);
 
     // Freeze static garage showroom geometry matrices (zero visual change, eliminates per-frame matrix updates)
@@ -6471,7 +6549,6 @@ export class HighwayEngine {
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
     const aspect = width / Math.max(1, height);
-    const isSideDock = width >= 768;
     const preset = this.getGarageFocusPreset(
       this.garageFocus,
       aspect,
@@ -6514,14 +6591,8 @@ export class HighwayEngine {
     let targetOffsetX = 0;
     let targetOffsetY = 0;
     if (!this.garageMenuCollapsed) {
-      if (isSideDock) {
-        const sidebarPx = width >= 1024 ? 352 : 326;
-        targetOffsetX = sidebarPx * 0.5;
-        targetOffsetY = -12;
-      } else {
-        targetOffsetX = 0;
-        targetOffsetY = Math.min(height * 0.16, 118);
-      }
+      targetOffsetX = 0;
+      targetOffsetY = Math.min(height * 0.2, 150);
     }
 
     this.garageDist = THREE.MathUtils.damp(this.garageDist, preset.dist, 7.5, dt);
@@ -6862,6 +6933,9 @@ export class HighwayEngine {
 
     if (this.keyLeft) this.targetLateral -= 11.2 * dt;
     if (this.keyRight) this.targetLateral += 11.2 * dt;
+    if (Math.abs(this.tiltSteerInput) > 0.001) {
+      this.targetLateral += this.tiltSteerInput * 13.8 * dt;
+    }
     this.targetLateral = THREE.MathUtils.clamp(
       this.targetLateral,
       -MAX_PLAYER_LATERAL,
@@ -7040,9 +7114,12 @@ export class HighwayEngine {
       }
     }
 
-    // Centrifugal curve drift weighted by car grip + Tires + Wheel + Kit + Spoiler (reduced on Slick!)
-    const slickGripFactor = this.slickTimer > 0 ? 0.58 : 1.0;
-    const slickSteerFactor = this.slickTimer > 0 ? 0.68 : 1.0;
+    // Centrifugal curve drift weighted by car grip + Tires + Wheel + Kit + Spoiler (reduced on Slick & Wet Asphalt!)
+    const roadWet = this.getEffectiveRoadWetness();
+    const slickGripFactor =
+      (this.slickTimer > 0 ? 0.58 : 1.0) * (1 - roadWet * 0.28);
+    const slickSteerFactor =
+      (this.slickTimer > 0 ? 0.68 : 1.0) * (1 - roadWet * 0.22);
     const effectiveGrip =
       (this.carSpec.cornerGrip +
         upgrades.tires * 0.06 +
@@ -7076,9 +7153,13 @@ export class HighwayEngine {
     // Cornering Drift State, Live Drift Score & Tire Smoke (only when tires on ground)
     const lateralG = Math.abs(_roadSample.curvature * this.speedMs * this.speedMs);
     const steerNorm = THREE.MathUtils.clamp(this.lateralVel / 10.5, -1, 1);
+    const wetLateralThreshold = 14.5 - roadWet * 3.4;
+    const wetSteerThreshold = 0.55 - roadWet * 0.13;
     const isCorneringHard =
       this.playerHeight < 0.15 &&
-      (lateralG > 14.5 || Math.abs(steerNorm) > 0.55 || this.slickTimer > 0) &&
+      (lateralG > wetLateralThreshold ||
+        Math.abs(steerNorm) > wetSteerThreshold ||
+        this.slickTimer > 0) &&
       this.speedMs > 28;
     this.drifting = isCorneringHard;
 
@@ -7101,7 +7182,9 @@ export class HighwayEngine {
         0.75,
         2.0,
       );
-      this.driftScore += 145 * driftIntensity * driftSpeedFactor * dt;
+      const wetDriftBonus = 1 + roadWet * 0.22;
+      this.driftScore +=
+        145 * driftIntensity * driftSpeedFactor * wetDriftBonus * dt;
 
       const { mult: nextDriftMult } = this.getDriftMultiplierState();
       if (nextDriftMult > this.driftMultiplier) {
@@ -7634,16 +7717,17 @@ export class HighwayEngine {
 
     const steerNorm = THREE.MathUtils.clamp(this.lateralVel / 10.5, -1, 1);
 
-    // Realistic drift slip angle: on sharp curves + steering, car nose angles cleanly into the turn
+    // Realistic drift slip angle: on sharp curves + steering (amplified on wet asphalt!)
+    const wetSlipBoost = 1 + this.getEffectiveRoadWetness() * 0.38;
     const curveSlip = THREE.MathUtils.clamp(
-      -_roadSample.curvature * this.speedMs * 0.22,
-      -0.16,
-      0.16,
+      -_roadSample.curvature * this.speedMs * 0.22 * wetSlipBoost,
+      -0.22,
+      0.22,
     );
     const targetSlip = THREE.MathUtils.clamp(
-      -steerNorm * 0.16 + curveSlip,
-      -0.24,
-      0.24,
+      -steerNorm * 0.16 * wetSlipBoost + curveSlip,
+      -0.31,
+      0.31,
     );
     const targetChassisRoll =
       steerNorm * 0.055 - _roadSample.curvature * this.speedMs * 0.065;
@@ -7668,7 +7752,8 @@ export class HighwayEngine {
       this.chassisRoll = targetChassisRoll;
       this.chassisPitch = targetPitch;
     } else {
-      this.carRelYaw = THREE.MathUtils.damp(this.carRelYaw, targetSlip, 12, dt);
+      const yawDamp = Math.max(7.2, 12 - this.getEffectiveRoadWetness() * 3.2);
+      this.carRelYaw = THREE.MathUtils.damp(this.carRelYaw, targetSlip, yawDamp, dt);
       this.driftSlip = this.carRelYaw;
       this.chassisRoll = THREE.MathUtils.damp(
         this.chassisRoll,
@@ -9600,6 +9685,16 @@ export class HighwayEngine {
       bombMinSpeedKmh: this.bombMinSpeedKmh,
       bombArmed: this.bombArmed,
       bombFuseRatio: THREE.MathUtils.clamp(this.bombFuseTimer / 5.0, 0, 1),
+      weatherKind:
+        this.atmosphereId === 'rainy' ? 'rain' : this.dynamicWeather,
+      rainIntensity: this.getEffectiveRoadWetness(),
+      fogIntensity:
+        this.atmosphereId === 'cycle' ? this.weatherFogLevel : 0,
+      roadWetness: this.getEffectiveRoadWetness(),
+      resumeCountdown:
+        this.resumeCountdownTimer > 0
+          ? Math.min(3, Math.max(1, Math.ceil(this.resumeCountdownTimer / 0.65)))
+          : 0,
       career: this.buildCareerHudState(),
     });
   }

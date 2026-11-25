@@ -9,9 +9,11 @@ import {
   Eye,
   EyeOff,
   LayoutGrid,
+  Lock,
   RotateCw,
   SkipForward,
   Sparkles,
+  Unlock,
   Wrench,
   X,
   Zap,
@@ -28,13 +30,12 @@ import {
 import { triggerNativeHaptic } from '../services/androidBridge';
 import {
   playCrateBurstSfx,
-  playCrateChargeSfx,
   playCrateDropSfx,
   playCrateTapChargeSfx,
   playLootCardTickSfx,
 } from '../services/crateAudio';
 import { CrateFxCanvas } from './CrateFxCanvas';
-import { ArmoredVaultVisual } from './ArmoredVaultVisual';
+import { CrateVault3D } from './CrateVault3D';
 import {
   CrateCarShowcase3D,
   ShowcaseBaseCarConfig,
@@ -228,18 +229,21 @@ function buildRarityProgression(finalRarity: LootRarity): [
   LootRarity,
   LootRarity,
   LootRarity,
+  LootRarity,
 ] {
   if (finalRarity === 'legendary') {
-    return ['rare', 'epic', 'legendary', 'legendary'];
+    return ['common', 'rare', 'epic', 'legendary', 'legendary'];
   }
   if (finalRarity === 'epic') {
-    return ['rare', 'rare', 'epic', 'epic'];
+    return ['common', 'rare', 'rare', 'epic', 'epic'];
   }
   if (finalRarity === 'rare') {
-    return ['common', 'rare', 'rare', 'rare'];
+    return ['common', 'common', 'rare', 'rare', 'rare'];
   }
-  return ['common', 'common', 'common', 'common'];
+  return ['common', 'common', 'common', 'common', 'common'];
 }
+
+const LOCK_LABELS = ['Sol Ön', 'Sağ Ön', 'Sağ Yan', 'Sol Yan'] as const;
 
 function renderLootIcon(item: RolledLootItem, large = false) {
   const cls = large ? 'h-7 w-7' : 'h-5 w-5';
@@ -279,8 +283,10 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
   const [phase, setPhase] = useState<CeremonyPhase>(
     shouldAnimate ? 'drop' : 'revealed',
   );
-  const [beatStage, setBeatStage] = useState(0);
-  const [chargeProgress, setChargeProgress] = useState(0);
+  const [unlockedMask, setUnlockedMask] = useState<
+    [boolean, boolean, boolean, boolean]
+  >([false, false, false, false]);
+  const [lastUnlockedLock, setLastUnlockedLock] = useState<number | null>(null);
   const [pulseSeq, setPulseSeq] = useState(0);
   const [burstSeq, setBurstSeq] = useState(0);
   const [tapRecoilKey, setTapRecoilKey] = useState(0);
@@ -289,8 +295,12 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
   const [showcaseHudHidden, setShowcaseHudHidden] = useState(false);
 
   const burstTriggeredRef = useRef(false);
-  const beatStageRef = useRef(0);
-  const chargeFloorRef = useRef(0);
+  const unlockedMaskRef = useRef<[boolean, boolean, boolean, boolean]>([
+    false,
+    false,
+    false,
+    false,
+  ]);
   const chipStripRef = useRef<HTMLDivElement | null>(null);
   const chipButtonsRef = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -372,14 +382,20 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
     visualDrops[Math.min(activeShowcaseIdx, Math.max(0, visualDrops.length - 1))] ||
     null;
 
+  const unlockedCount =
+    (unlockedMask[0] ? 1 : 0) +
+    (unlockedMask[1] ? 1 : 0) +
+    (unlockedMask[2] ? 1 : 0) +
+    (unlockedMask[3] ? 1 : 0);
+
   const activeDisplayRarity: LootRarity = useMemo(() => {
     if (phase === 'showcase' && activeShowcaseItem) {
       return activeShowcaseItem.rarity;
     }
     if (phase === 'burst' || phase === 'revealed') return highestRarity;
-    const idx = Math.max(0, Math.min(3, beatStage));
+    const idx = Math.max(0, Math.min(4, unlockedCount));
     return rarityProgression[idx];
-  }, [phase, activeShowcaseItem, highestRarity, beatStage, rarityProgression]);
+  }, [phase, activeShowcaseItem, highestRarity, unlockedCount, rarityProgression]);
 
   const activePalette = RARITY_THEMES[activeDisplayRarity];
   const finalPalette = RARITY_THEMES[highestRarity];
@@ -393,9 +409,9 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
   const triggerBurstNow = useCallback(() => {
     if (burstTriggeredRef.current) return;
     burstTriggeredRef.current = true;
-    beatStageRef.current = 3;
-    setBeatStage(3);
-    setChargeProgress(100);
+    const allOpen: [boolean, boolean, boolean, boolean] = [true, true, true, true];
+    unlockedMaskRef.current = allOpen;
+    setUnlockedMask(allOpen);
     setUpgradeBannerText(null);
     setPhase('burst');
     setBurstSeq((s) => s + 1);
@@ -403,50 +419,73 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
     playCrateBurstSfx(highestRarity);
   }, [highestRarity]);
 
-  const advanceBeat = useCallback(
-    (targetBeat: number) => {
+  const handleUnlockLock = useCallback(
+    (requestedIndex?: number) => {
       if (burstTriggeredRef.current) return;
-      if (targetBeat <= beatStageRef.current) return;
 
-      const prevRarity = rarityProgression[Math.min(3, beatStageRef.current)];
-      const nextRarity = rarityProgression[Math.min(3, targetBeat)];
-      const upgraded = RARITY_RANK[nextRarity] > RARITY_RANK[prevRarity];
+      // If user clicks during drop-in, settle immediately into charging and unlock first latch
+      if (phase === 'drop') {
+        setPhase('charging');
+      } else if (phase !== 'charging') {
+        return;
+      }
 
-      beatStageRef.current = targetBeat;
-      setBeatStage(targetBeat);
-      setTapRecoilKey((k) => k + 1);
-      setPulseSeq((p) => p + 1);
+      const prevMask = unlockedMaskRef.current;
+      let targetIdx = -1;
+      if (
+        typeof requestedIndex === 'number' &&
+        requestedIndex >= 0 &&
+        requestedIndex < 4 &&
+        !prevMask[requestedIndex]
+      ) {
+        targetIdx = requestedIndex;
+      } else {
+        targetIdx = prevMask.findIndex((isOpen) => !isOpen);
+      }
 
-      if (targetBeat >= 3) {
+      if (targetIdx < 0) {
         triggerBurstNow();
         return;
       }
 
-      const floorPct = targetBeat === 1 ? 36 : 72;
-      chargeFloorRef.current = Math.max(chargeFloorRef.current, floorPct);
-      setChargeProgress((prev) => Math.max(prev, floorPct));
+      const prevCount = prevMask.filter(Boolean).length;
+      const nextMask: [boolean, boolean, boolean, boolean] = [...prevMask] as [
+        boolean,
+        boolean,
+        boolean,
+        boolean,
+      ];
+      nextMask[targetIdx] = true;
+      const nextCount = prevCount + 1;
+
+      const prevRarity = rarityProgression[Math.min(4, prevCount)];
+      const nextRarity = rarityProgression[Math.min(4, nextCount)];
+      const upgraded = RARITY_RANK[nextRarity] > RARITY_RANK[prevRarity];
+
+      unlockedMaskRef.current = nextMask;
+      setUnlockedMask(nextMask);
+      setLastUnlockedLock(targetIdx);
+      setTapRecoilKey((k) => k + 1);
+      setPulseSeq((p) => p + 1);
+
+      if (nextCount >= 4) {
+        // Play final mechanical latch snap + immediately blow the 3D armored lid open!
+        playCrateTapChargeSfx(4, highestRarity, false);
+        triggerBurstNow();
+        return;
+      }
 
       triggerNativeHaptic(upgraded ? 'medium' : 'light');
-      playCrateTapChargeSfx(targetBeat, nextRarity, upgraded);
+      playCrateTapChargeSfx(nextCount, nextRarity, upgraded);
 
       if (upgraded) {
-        setUpgradeBannerText(`${RARITY_THEMES[nextRarity].label.toUpperCase()} YÜKSELTME!`);
+        setUpgradeBannerText(
+          `${RARITY_THEMES[nextRarity].label.toUpperCase()} YÜKSELTME!`,
+        );
       }
     },
-    [rarityProgression, triggerBurstNow],
+    [phase, rarityProgression, highestRarity, triggerBurstNow],
   );
-
-  const handleVaultInteract = useCallback(() => {
-    if (burstTriggeredRef.current) return;
-    if (phase === 'drop') {
-      setPhase('charging');
-      advanceBeat(1);
-      return;
-    }
-    if (phase === 'charging') {
-      advanceBeat(beatStageRef.current + 1);
-    }
-  }, [phase, advanceBeat]);
 
   const handleSkip = useCallback(() => {
     burstTriggeredRef.current = true;
@@ -458,7 +497,8 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
     }
   }, [visualDrops.length, prefersReducedMotion]);
 
-  // Main timeline orchestration: drop -> charging -> burst -> Rocket League 3D showcase -> revealed
+  // Main timeline orchestration:
+  // drop -> charging (STRICTLY MANUAL — waits for player taps on all 4 edge locks!) -> burst -> 3D showcase -> revealed
   useEffect(() => {
     if (!shouldAnimate) return;
     const timers: number[] = [];
@@ -471,45 +511,8 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
           if (!burstTriggeredRef.current) {
             setPhase('charging');
           }
-        }, 380),
+        }, 430),
       );
-    } else if (phase === 'charging') {
-      playCrateChargeSfx(1.38);
-
-      const startMs = performance.now();
-      const autoDurationMs = 1420;
-      let rafId = 0;
-      const step = (now: number) => {
-        if (burstTriggeredRef.current) return;
-        const autoPct = Math.min(100, ((now - startMs) / autoDurationMs) * 100);
-        const pct = Math.max(chargeFloorRef.current, autoPct);
-        setChargeProgress(pct);
-
-        if (pct >= 30 && beatStageRef.current < 1) {
-          advanceBeat(1);
-        } else if (pct >= 66 && beatStageRef.current < 2) {
-          advanceBeat(2);
-        } else if (pct >= 99 && beatStageRef.current < 3) {
-          triggerBurstNow();
-          return;
-        }
-
-        if (pct < 100 && !burstTriggeredRef.current) {
-          rafId = window.requestAnimationFrame(step);
-        }
-      };
-      rafId = window.requestAnimationFrame(step);
-
-      timers.push(
-        window.setTimeout(() => {
-          triggerBurstNow();
-        }, autoDurationMs + 140),
-      );
-
-      return () => {
-        window.cancelAnimationFrame(rafId);
-        timers.forEach((id) => window.clearTimeout(id));
-      };
     } else if (phase === 'burst') {
       timers.push(
         window.setTimeout(() => {
@@ -519,7 +522,7 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
           } else {
             setPhase('revealed');
           }
-        }, 780),
+        }, 1050),
       );
     } else if (phase === 'showcase' && activeShowcaseItem) {
       playLootCardTickSfx(activeShowcaseItem.rarity, 0);
@@ -542,8 +545,6 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
   }, [
     phase,
     shouldAnimate,
-    advanceBeat,
-    triggerBurstNow,
     sortedLootItems,
     visualDrops.length,
     activeShowcaseItem,
@@ -553,11 +554,13 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
     phase === 'drop'
       ? 'KASA İNDİRİLİYOR'
       : phase === 'charging'
-        ? beatStage === 0
-          ? 'KİLİT ÇÖZÜLÜYOR'
-          : beatStage === 1
-            ? 'BASINÇ ARTIYOR'
-            : 'PATLAMAYA HAZIR!'
+        ? unlockedCount === 0
+          ? '4 KİLİT MÜHÜRLÜ'
+          : unlockedCount === 1
+            ? '1/4 KİLİT AÇILDI'
+            : unlockedCount === 2
+              ? '2/4 KİLİT AÇILDI'
+              : 'SON KİLİT KALDI!'
         : finalPalette.burstCallout;
 
   const isPreReveal =
@@ -579,24 +582,24 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 transition-all duration-300"
           style={{
-            background: `linear-gradient(180deg, ${activePalette.glowHex} 0%, transparent 40%)`,
+            background: `radial-gradient(circle at 50% 44%, ${activePalette.glowHex} 0%, transparent 56%)`,
             opacity:
               phase === 'burst'
-                ? 0.55
+                ? 0.65
                 : phase === 'charging'
-                  ? 0.16 + chargeProgress * 0.0024
+                  ? 0.14 + unlockedCount * 0.08
                   : phase === 'revealed'
                     ? 0.2
-                    : 0.14,
+                    : 0.12,
           }}
         />
       )}
 
-      {/* Full-Screen 60 FPS Canvas2D FX Engine (active during vault ritual & revealed list; hidden during 3D WebGL showcase for max FPS) */}
-      {phase !== 'showcase' && (
+      {/* Celebratory Canvas2D FX during revealed summary only (3D WebGL stages render native 3D sparks & beams for max FPS) */}
+      {phase === 'revealed' && (
         <CrateFxCanvas
           phase={phase}
-          chargeRatio={chargeProgress / 100}
+          chargeRatio={1}
           accentHex={activePalette.accentHex}
           secondaryHex={activePalette.secondaryHex}
           rarity={activeDisplayRarity}
@@ -606,7 +609,7 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
         />
       )}
 
-      {/* Skip Button during animated vault stages */}
+      {/* Skip Button during animated 3D vault stages */}
       {isPreReveal && (
         <button
           type="button"
@@ -619,17 +622,34 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
         </button>
       )}
 
-      {/* ============ STAGE 1, 2 & 3: DROP -> 3-BEAT INTERACTIVE CHARGE -> EXPLOSIVE BURST ============ */}
+      {/* ============ STAGE 1, 2 & 3: FULL-STAGE 3D VAULT -> 4 MANUAL EDGE LOCKS -> EXPLOSIVE 3D LID OPEN ============ */}
       {isPreReveal ? (
         <div
-          className={`relative z-20 flex w-full max-w-md flex-col items-center justify-center text-center select-none ${
+          className={`fixed inset-0 z-20 overflow-hidden select-none ${
             phase === 'burst' ? 'animate-crate-screen-shake' : ''
           }`}
         >
-          {/* Top Crate Tier Badge & Upgrade Surge Callout */}
-          <div className="mb-5 flex min-h-[54px] flex-col items-center justify-end gap-1.5">
+          {/* Full-Viewport Interactive 3D Armored Motorsport Crate */}
+          <div className="absolute inset-0 z-10">
+            <CrateVault3D
+              phase={phase}
+              unlockedMask={unlockedMask}
+              lastUnlockedLock={lastUnlockedLock}
+              tier={effectiveTier}
+              accentHex={activePalette.accentHex}
+              secondaryHex={activePalette.secondaryHex}
+              tapRecoilKey={tapRecoilKey}
+              onUnlockLock={handleUnlockLock}
+            />
+          </div>
+
+          {/* Top Floating Crate Badge & Rarity Upgrade Surge Callout */}
+          <div
+            className="pointer-events-none absolute inset-x-4 top-5 z-20 flex flex-col items-center gap-2 text-center"
+            style={{ marginTop: 'env(safe-area-inset-top)' }}
+          >
             <span
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider transition-colors duration-300 ${activePalette.badgeBgClass}`}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-wider transition-colors duration-300 ${activePalette.badgeBgClass}`}
             >
               {activeDisplayRarity === 'legendary' ? (
                 <Crown className="h-3.5 w-3.5 text-amber-300" />
@@ -641,9 +661,9 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
 
             {phase === 'burst' ? (
               <div
-                className="animate-crate-callout-slam font-display text-3xl font-black uppercase tracking-wider text-white"
+                className="animate-crate-callout-slam font-display text-3xl font-black uppercase tracking-wider text-white sm:text-4xl"
                 style={{
-                  textShadow: `0 0 24px ${finalPalette.accentHex}, 0 4px 18px rgba(0,0,0,0.85)`,
+                  textShadow: `0 0 28px ${finalPalette.accentHex}, 0 4px 18px rgba(0,0,0,0.9)`,
                 }}
               >
                 {finalPalette.burstCallout}
@@ -651,9 +671,10 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
             ) : upgradeBannerText ? (
               <div
                 key={upgradeBannerText}
-                className="animate-crate-callout-slam text-xs font-black uppercase tracking-widest"
+                className="animate-crate-callout-slam rounded-lg border border-white/15 bg-zinc-950/88 px-3 py-1 text-xs font-black uppercase tracking-widest"
                 style={{
                   color: activePalette.secondaryHex,
+                  borderColor: activePalette.accentHex,
                   textShadow: `0 0 14px ${activePalette.accentHex}`,
                 }}
               >
@@ -662,75 +683,93 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
             ) : null}
           </div>
 
-          {/* Interactive 3D Armored Motorsport Vault */}
-          <button
-            type="button"
-            onClick={handleVaultInteract}
-            aria-label="Kasayı hızlandır veya aç"
-            className="relative flex items-center justify-center focus:outline-none cursor-pointer"
+          {/* Bottom Interactive 4-Lock Telemetry Bar (Zero backdrop-blur over WebGL) */}
+          <div
+            className="pointer-events-none absolute inset-x-3 bottom-4 z-20 flex justify-center sm:inset-x-4 sm:bottom-6"
+            style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
           >
-            <ArmoredVaultVisual
-              phase={phase}
-              chargeRatio={chargeProgress / 100}
-              beatStage={beatStage}
-              accentHex={activePalette.accentHex}
-              secondaryHex={activePalette.secondaryHex}
-              glowHex={activePalette.glowHex}
-              tier={effectiveTier}
-              tapRecoilKey={tapRecoilKey}
-            />
-          </button>
+            <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-3 rounded-2xl border border-white/12 bg-zinc-950/90 px-4 py-3.5 shadow-2xl">
+              {/* 4 Individual Edge Lock Buttons (tap directly on 3D crate latches OR these buttons!) */}
+              <div className="grid w-full grid-cols-4 gap-2">
+                {LOCK_LABELS.map((lockLabel, idx) => {
+                  const isOpen = unlockedMask[idx] || phase === 'burst';
+                  const isNext =
+                    !isOpen &&
+                    unlockedMask.findIndex((opened) => !opened) === idx &&
+                    phase === 'charging';
+                  return (
+                    <button
+                      key={lockLabel}
+                      type="button"
+                      disabled={isOpen}
+                      onClick={() => handleUnlockLock(idx)}
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 transition-all duration-200 ${
+                        isOpen
+                          ? 'border-emerald-400/55 bg-emerald-500/18 text-emerald-200 cursor-default'
+                          : isNext
+                            ? 'bg-zinc-900 text-white cursor-pointer hover:bg-zinc-800'
+                            : 'border-white/12 bg-zinc-900/90 text-zinc-400 cursor-pointer hover:border-white/25 hover:text-zinc-200'
+                      }`}
+                      style={
+                        isNext
+                          ? {
+                              borderColor: activePalette.accentHex,
+                              boxShadow: `0 0 16px ${activePalette.glowHex}`,
+                            }
+                          : undefined
+                      }
+                    >
+                      {isOpen ? (
+                        <Unlock className="h-4 w-4 text-emerald-300" />
+                      ) : (
+                        <Lock
+                          className="h-4 w-4"
+                          style={{
+                            color: isNext ? activePalette.secondaryHex : '#71717a',
+                          }}
+                        />
+                      )}
+                      <span className="text-[10px] font-extrabold uppercase tracking-wide whitespace-nowrap">
+                        {lockLabel}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-          {/* Bottom Telemetry Status, 3 Hydraulic Bolt Pips & Charge Gauge */}
-          <div className="mt-5 flex w-72 flex-col items-center gap-3">
-            <div className="flex items-center gap-2.5">
-              {[1, 2, 3].map((stepNum) => {
-                const active = beatStage >= stepNum || phase === 'burst';
-                return (
-                  <div
-                    key={stepNum}
-                    className="h-2.5 w-14 rounded-full border transition-all duration-200"
-                    style={{
-                      borderColor: active
-                        ? activePalette.secondaryHex
-                        : 'rgba(255,255,255,0.14)',
-                      backgroundColor: active
-                        ? activePalette.accentHex
-                        : 'rgba(24,24,27,0.85)',
-                      boxShadow: active
-                        ? `0 0 14px ${activePalette.accentHex}`
-                        : 'none',
-                      transform: active ? 'scaleY(1.15)' : 'scaleY(1)',
-                    }}
-                  />
-                );
-              })}
+              {/* Progress Bar */}
+              <div className="h-1.5 w-full overflow-hidden rounded-full border border-white/10 bg-zinc-900">
+                <div
+                  className={`h-full rounded-full transition-[width] duration-200 ${activePalette.barClass}`}
+                  style={{
+                    width: `${phase === 'burst' ? 100 : (unlockedCount / 4) * 100}%`,
+                    boxShadow: `0 0 12px ${activePalette.accentHex}`,
+                  }}
+                />
+              </div>
+
+              <div className="flex w-full items-center justify-between gap-2">
+                <div
+                  className={`font-display text-sm font-black tracking-wide sm:text-base ${activePalette.textClass}`}
+                  style={{
+                    textShadow: `0 0 14px ${activePalette.glowHex}`,
+                  }}
+                >
+                  {statusHeadline}
+                </div>
+                <span className="font-mono-num text-xs font-extrabold text-zinc-300">
+                  {phase === 'burst' ? '4/4' : `${unlockedCount}/4`}
+                </span>
+              </div>
+
+              <p className="text-center text-[11px] font-semibold text-zinc-400">
+                {phase === 'burst'
+                  ? 'Ödülün aracının üzerinde hazırlanıyor...'
+                  : unlockedCount === 3
+                    ? 'Son kilidi kırıp kasayı patlatmak için tıkla!'
+                    : 'Kenardaki kilitlere veya kasaya tıklayarak adım adım aç · Döndürmek için sürükle'}
+              </p>
             </div>
-
-            <div
-              className={`font-display text-lg font-black tracking-wide transition-colors duration-200 ${activePalette.textClass}`}
-              style={{
-                textShadow: `0 0 16px ${activePalette.glowHex}`,
-              }}
-            >
-              {statusHeadline}
-            </div>
-
-            <div className="h-2 w-full overflow-hidden rounded-full border border-white/12 bg-zinc-900/95">
-              <div
-                className={`h-full rounded-full transition-[width] duration-75 ${activePalette.barClass}`}
-                style={{
-                  width: `${phase === 'burst' ? 100 : Math.max(6, chargeProgress)}%`,
-                  boxShadow: `0 0 12px ${activePalette.accentHex}`,
-                }}
-              />
-            </div>
-
-            <p className="text-xs font-semibold text-zinc-400">
-              {phase === 'burst'
-                ? 'Ödülün aracının üzerinde hazırlanıyor...'
-                : 'Kilitleri hızla kırmak için kasaya dokun'}
-            </p>
           </div>
         </div>
       ) : phase === 'showcase' && activeShowcaseItem ? (

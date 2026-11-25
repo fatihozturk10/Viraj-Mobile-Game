@@ -127,7 +127,7 @@ export function playCrateDropSfx(): void {
   }
 }
 
-/** Tactile hydraulic bolt release + rising energy charge hit on each tap / stage */
+/** Tactile mechanical latch snap + hydraulic bolt release + rising energy charge hit on each lock unlock */
 export function playCrateTapChargeSfx(
   stage: number,
   rarity: LootRarity,
@@ -139,11 +139,11 @@ export function playCrateTapChargeSfx(
   const now = ctx.currentTime;
 
   try {
-    const stageIdx = Math.max(0, Math.min(3, stage));
-    const baseFreqs = [330, 440, 587.33, 783.99];
+    const stageIdx = Math.max(0, Math.min(4, stage));
+    const baseFreqs = [330, 392.0, 493.88, 659.25, 880.0];
     const rarityBoost =
       rarity === 'legendary'
-        ? 1.25
+        ? 1.22
         : rarity === 'epic'
           ? 1.12
           : rarity === 'rare'
@@ -151,41 +151,58 @@ export function playCrateTapChargeSfx(
             : 1.0;
     const freq = baseFreqs[stageIdx] * rarityBoost;
 
-    // Punchy metallic hit
+    // 1. Sharp metallic steel latch clack (two short inharmonic partials)
+    const latchPartials = [1640 + stageIdx * 140, 2480 + stageIdx * 210];
+    latchPartials.forEach((pFreq, i) => {
+      const clack = ctx.createOscillator();
+      const clackGain = ctx.createGain();
+      clack.type = i === 0 ? 'square' : 'triangle';
+      clack.frequency.setValueAtTime(pFreq, now);
+      clack.frequency.exponentialRampToValueAtTime(pFreq * 0.48, now + 0.045);
+      clackGain.gain.setValueAtTime(0.001, now);
+      clackGain.gain.linearRampToValueAtTime(gainScale * (i === 0 ? 0.34 : 0.24), now + 0.003);
+      clackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+      clack.connect(clackGain);
+      clackGain.connect(ctx.destination);
+      clack.start(now);
+      clack.stop(now + 0.06);
+    });
+
+    // 2. Heavy hydraulic bolt recoil thump
     const thump = ctx.createOscillator();
     const thumpGain = ctx.createGain();
     thump.type = 'triangle';
-    thump.frequency.setValueAtTime(195 + stageIdx * 35, now);
-    thump.frequency.exponentialRampToValueAtTime(52, now + 0.13);
-    thumpGain.gain.setValueAtTime(0.001, now);
-    thumpGain.gain.linearRampToValueAtTime(gainScale * 0.85, now + 0.008);
-    thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    thump.frequency.setValueAtTime(205 + stageIdx * 32, now + 0.006);
+    thump.frequency.exponentialRampToValueAtTime(48, now + 0.14);
+    thumpGain.gain.setValueAtTime(0.001, now + 0.006);
+    thumpGain.gain.linearRampToValueAtTime(gainScale * 0.9, now + 0.014);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
     thump.connect(thumpGain);
     thumpGain.connect(ctx.destination);
-    thump.start(now);
-    thump.stop(now + 0.16);
+    thump.start(now + 0.006);
+    thump.stop(now + 0.17);
 
-    // Rising harmonic energy ping
+    // 3. Rising harmonic energy ping
     const ping = ctx.createOscillator();
     const pingGain = ctx.createGain();
     ping.type = 'sine';
-    ping.frequency.setValueAtTime(freq, now + 0.01);
-    ping.frequency.exponentialRampToValueAtTime(freq * 1.18, now + 0.18);
-    pingGain.gain.setValueAtTime(0.001, now + 0.01);
-    pingGain.gain.linearRampToValueAtTime(gainScale * 0.44, now + 0.025);
-    pingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+    ping.frequency.setValueAtTime(freq, now + 0.015);
+    ping.frequency.exponentialRampToValueAtTime(freq * 1.18, now + 0.2);
+    pingGain.gain.setValueAtTime(0.001, now + 0.015);
+    pingGain.gain.linearRampToValueAtTime(gainScale * 0.44, now + 0.03);
+    pingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
     ping.connect(pingGain);
     pingGain.connect(ctx.destination);
-    ping.start(now + 0.01);
-    ping.stop(now + 0.26);
+    ping.start(now + 0.015);
+    ping.stop(now + 0.28);
 
-    // Extra shimmering fifth chime when rarity upgrades mid-charge!
+    // 4. Extra shimmering fifth chime when rarity upgrades mid-unlock!
     if (upgraded) {
       const shimmerFreqs = [freq * 1.5, freq * 2.0];
       shimmerFreqs.forEach((f, i) => {
         const osc = ctx.createOscillator();
         const g = ctx.createGain();
-        const start = now + 0.03 + i * 0.045;
+        const start = now + 0.035 + i * 0.048;
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(f, start);
         g.gain.setValueAtTime(0.001, start);
@@ -198,16 +215,16 @@ export function playCrateTapChargeSfx(
       });
     }
 
-    // Crisp pneumatic clamp unlatch hiss
+    // 5. Crisp pneumatic clamp unlatch hiss
     const noise = ctx.createBufferSource();
-    noise.buffer = createNoiseBuffer(ctx, 0.09, 1.9);
+    noise.buffer = createNoiseBuffer(ctx, 0.11, 1.8);
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
-    bp.frequency.setValueAtTime(2800 + stageIdx * 550, now);
-    bp.Q.value = 1.6;
+    bp.frequency.setValueAtTime(2900 + stageIdx * 520, now);
+    bp.Q.value = 1.5;
     const nGain = ctx.createGain();
-    nGain.gain.setValueAtTime(gainScale * 0.32, now);
-    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+    nGain.gain.setValueAtTime(gainScale * 0.38, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
     noise.connect(bp);
     bp.connect(nGain);
     nGain.connect(ctx.destination);
