@@ -768,7 +768,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                 type="button"
                 onClick={() => onOpenStore('gold')}
                 onPointerDown={(e) => e.stopPropagation()}
-                title="Altın ve Sandık Marketini Aç"
+                title="Altın ve Kasa Marketini Aç"
                 className="group flex h-11 items-center gap-1.5 rounded-xl border border-amber-400/40 bg-zinc-950/90 pl-2.5 pr-1.5 sm:pl-3 sm:pr-2 text-xs sm:text-sm font-bold text-amber-300 font-mono-num transition-colors hover:border-amber-400/70 hover:bg-zinc-900 cursor-pointer shadow-lg"
               >
                 <Coins className="h-4 w-4 text-amber-400 shrink-0" />

@@ -1513,7 +1513,7 @@ export default function App() {
       const applyLootList = (rolled: RolledLootItem[]) => {
         for (const entry of rolled) {
           if (entry.kind === 'gold' && entry.amount) {
-            engine.grantRewardGold(entry.amount, 'Sandık Altını');
+            engine.grantRewardGold(entry.amount, 'Kasa Altını');
             creditedGoldTotal += entry.amount;
             lootItems.push(entry);
           } else if (entry.kind === 'xp' && entry.amount) {
@@ -1747,7 +1747,7 @@ export default function App() {
         summaryParts.push(unlockedCarNames.join(', '));
       }
       if (openedCrates > 0) {
-        summaryParts.push(`${openedCrates}× Sandık`);
+        summaryParts.push(`${openedCrates}× Kasa`);
       }
       if (adFreeActivated) {
         summaryParts.push('Reklamsız VIP');
@@ -2222,13 +2222,13 @@ export default function App() {
       setLevelRoadCrateSession({
         title:
           crateTiers.length > 1
-            ? `${crateTiers.length} Seviye Sandığı Açıldı`
+            ? `${crateTiers.length} Seviye Kasası Açıldı`
             : topCrateSpec.title,
         subtitle: sourceSubtitle,
         rewardSummary:
           summaryParts.length > 0
             ? summaryParts.join(' · ')
-            : 'Seviye Yolu Sandık Ödülleri',
+            : 'Seviye Yolu Kasa Ödülleri',
         crateTierId: topTier,
         crateImageUrl: topCrateSpec.imageUrl,
         crateTitle: topCrateSpec.title,
@@ -2245,7 +2245,7 @@ export default function App() {
       if (!res?.ok) return;
       triggerNativeHaptic('reward');
       if (res.crateTierId) {
-        openLevelRoadCrates([res.crateTierId], `Seviye ${level} Sandık Ödülü`);
+        openLevelRoadCrates([res.crateTierId], `Seviye ${level} Kasa Ödülü`);
       }
     },
     [openLevelRoadCrates],
@@ -2258,7 +2258,7 @@ export default function App() {
     if (res.pendingCrates.length > 0) {
       openLevelRoadCrates(
         res.pendingCrates,
-        `Seviye Yolu · ${res.pendingCrates.length} Sandık`,
+        `Seviye Yolu · ${res.pendingCrates.length} Kasa`,
       );
     }
   }, [openLevelRoadCrates]);

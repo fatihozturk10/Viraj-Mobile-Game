@@ -191,19 +191,19 @@ function makeCrateReward(level: number, tierId: CrateTierId): LevelRoadReward {
     { title: string; subtitle: string; rarity: ItemRarity; swatch: string }
   > = {
     street: {
-      title: 'Sokak Sandığı',
+      title: 'Sokak Kasası',
       subtitle: 'Hemen açılır · Jant, boya veya araç şansı',
       rarity: 'rare',
       swatch: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
     },
     pro: {
-      title: 'Pro Pist Sandığı',
+      title: 'Pro Pist Kasası',
       subtitle: 'Hemen açılır · Destansı parça ve yüksek altın',
       rarity: 'epic',
       swatch: 'linear-gradient(135deg, #7e22ce 0%, #c084fc 100%)',
     },
     legendary: {
-      title: 'Efsanevi Sandık',
+      title: 'Efsanevi Kasa',
       subtitle: 'Hemen açılır · Efsanevi süper araç & özel parça',
       rarity: 'legendary',
       swatch: 'linear-gradient(135deg, #e11d48 0%, #facc15 100%)',
@@ -216,7 +216,7 @@ function makeCrateReward(level: number, tierId: CrateTierId): LevelRoadReward {
     rarity: m.rarity,
     title: m.title,
     subtitle: m.subtitle,
-    badgeLabel: 'ÜCRETSİZ SANDIK',
+    badgeLabel: 'ÜCRETSİZ KASA',
     exclusive: false,
     swatch: m.swatch,
     crateTierId: tierId,

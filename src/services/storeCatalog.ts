@@ -12,9 +12,9 @@ import {
   WheelStyleId,
 } from '../types/game';
 
-import streetCrateArt from '../assets/images/store_crate_street_1795078812518.jpg';
-import proCrateArt from '../assets/images/store_crate_pro_1795078814149.jpg';
-import legendaryCrateArt from '../assets/images/store_crate_legendary_1795078823167.jpg';
+import streetCrateArt from '../assets/images/store_crate_street_vault.jpg';
+import proCrateArt from '../assets/images/store_crate_pro_vault.jpg';
+import legendaryCrateArt from '../assets/images/store_crate_legendary_vault.jpg';
 import goldVaultArt from '../assets/images/store_gold_vault_1795078816982.jpg';
 
 export type StoreCategory = 'bundle' | 'crate' | 'gold';
@@ -150,7 +150,7 @@ export const BUNDLE_PRODUCTS: BundleProductSpec[] = [
     sku: 'viraj_starter_pack',
     title: 'Başlangıç Paketi',
     subtitle: 'Tek Seferlik · %65 İndirimli',
-    tagline: 'Hızlı yükseliş için araç, altın ve ilk sandık bir arada.',
+    tagline: 'Hızlı yükseliş için araç, altın ve ilk kasa bir arada.',
     priceTry: 4.99,
     compareAtTry: 14.99,
     oneTimeOnly: true,
@@ -164,7 +164,7 @@ export const BUNDLE_PRODUCTS: BundleProductSpec[] = [
     highlights: [
       '1.500 Altın anında hesaba eklenir',
       'Golf GTI Turbo (varsa +400 Altın telafi)',
-      '1× Sokak Sandığı + Yarış Şeritleri kaplaması',
+      '1× Sokak Kasası + Yarış Şeritleri kaplaması',
     ],
   },
   {
@@ -204,14 +204,14 @@ export const BUNDLE_PRODUCTS: BundleProductSpec[] = [
     highlights: [
       'BMW M3 GTR E46 + Skyline GT-R R34',
       '4.000 Altın + GT Karbon Kanat',
-      '2× Pist Sandığı açılış hakkı',
+      '2× Pist Kasası açılış hakkı',
     ],
   },
   {
     sku: 'viraj_hyper_bundle',
     title: 'Hiper Şampiyon Paketi',
     subtitle: 'Tek Seferlik · Amiral Gemisi',
-    tagline: 'Koenigsegg Jesko, 12.000 Altın ve 3 Efsanevi Hiper Sandık.',
+    tagline: 'Koenigsegg Jesko, 12.000 Altın ve 3 Efsanevi Hiper Kasa.',
     priceTry: 39.99,
     compareAtTry: 99.99,
     oneTimeOnly: true,
@@ -226,7 +226,7 @@ export const BUNDLE_PRODUCTS: BundleProductSpec[] = [
     highlights: [
       'Koenigsegg Jesko (varsa +10.680 Altın telafi)',
       '12.000 Altın + Dövme Y-Mesh Tekerlek + Geniş Gövde Pro',
-      '3× Efsanevi Hiper Sandık anında açılır',
+      '3× Efsanevi Hiper Kasa anında açılır',
     ],
   },
 ];
@@ -236,7 +236,7 @@ export const CRATE_PRODUCTS: CrateProductSpec[] = [
     tierId: 'street',
     skuSingle: 'viraj_crate_street_1',
     skuTriple: 'viraj_crate_street_3',
-    title: 'Sokak Sandığı',
+    title: 'Sokak Kasası',
     subtitle: 'Cadde modifiyesi, altın ve spor araç şansı',
     priceSingleTry: 2.99,
     priceTripleTry: 6.99,
@@ -260,7 +260,7 @@ export const CRATE_PRODUCTS: CrateProductSpec[] = [
     tierId: 'pro',
     skuSingle: 'viraj_crate_pro_1',
     skuTriple: 'viraj_crate_pro_3',
-    title: 'Pist Sandığı',
+    title: 'Pist Kasası',
     subtitle: 'Yüksek altın, karbon aero ve süper spor araçlar',
     priceSingleTry: 6.99,
     priceTripleTry: 16.99,
@@ -284,7 +284,7 @@ export const CRATE_PRODUCTS: CrateProductSpec[] = [
     tierId: 'legendary',
     skuSingle: 'viraj_crate_legendary_1',
     skuTriple: 'viraj_crate_legendary_3',
-    title: 'Efsanevi Hiper Sandık',
+    title: 'Efsanevi Hiper Kasa',
     subtitle: 'Garanti hiper otomobil, dev altın kasası ve elit aero',
     priceSingleTry: 14.99,
     priceTripleTry: 34.99,

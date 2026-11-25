@@ -426,7 +426,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
               {(
                 [
                   { id: 'bundles', label: 'Paketler', icon: Crown },
-                  { id: 'crates', label: 'Sandıklar', icon: Box },
+                  { id: 'crates', label: 'Kasalar', icon: Box },
                   { id: 'gold', label: 'Altın', icon: Coins },
                   { id: 'history', label: 'İşlemler', icon: History },
                 ] as const
@@ -637,7 +637,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
                   <h3 className="font-display text-base font-bold text-white sm:text-lg">
-                    Otomotiv Sandıkları
+                    Otomotiv Kasaları
                   </h3>
                   <p className="text-xs text-zinc-400">
                     Anında açılır · Altın, XP, modifiye parçası ve süper spor araçlar
@@ -727,7 +727,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                               onClick={() => startCrateCheckout(crate, 1)}
                               className="flex min-h-[48px] w-full items-center justify-between rounded-xl border border-white/15 bg-zinc-950 px-4 text-sm font-bold text-white transition-colors hover:bg-zinc-800 cursor-pointer"
                             >
-                              <span>1× Sandık Aç</span>
+                              <span>1× Kasa Aç</span>
                               <span className="font-mono-num text-amber-300">
                                 {formatPriceTry(crate.priceSingleTry)}
                               </span>
@@ -739,7 +739,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                               className="flex min-h-[50px] w-full items-center justify-between rounded-xl bg-amber-500 px-4 font-display text-sm font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 cursor-pointer"
                             >
                               <div className="flex items-center gap-1.5">
-                                <span>3× Sandık</span>
+                                <span>3× Kasa</span>
                                 <span className="text-xs font-semibold opacity-80">
                                   · {crate.tripleSaveLabel}
                                 </span>
@@ -906,7 +906,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     </strong>
                   </span>
                   <span>
-                    Açılan Sandık:{' '}
+                    Açılan Kasa:{' '}
                     <strong className="font-mono-num text-zinc-100">
                       {entitlements.totalCratesOpened}
                     </strong>
@@ -920,7 +920,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                       Henüz satın alma makbuzu yok
                     </div>
                     <p className="max-w-xs text-xs text-zinc-400">
-                      Marketten aldığın tüm altın, sandık ve VIP paketlerinin
+                      Marketten aldığın tüm altın, kasa ve VIP paketlerinin
                       makbuzları burada listelenir.
                     </p>
                   </div>

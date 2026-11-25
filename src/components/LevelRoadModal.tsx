@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Award,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -14,12 +13,10 @@ import {
   Package,
   Palette,
   Sparkles,
-  Trophy,
   X,
   Zap,
 } from 'lucide-react';
 import {
-  DRIVER_RANK_TIERS,
   getDriverRankTier,
   ITEM_RARITY_META,
   MAX_LEVEL_ROAD_LEVEL,
@@ -133,7 +130,6 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
   onClaimLevel,
   onClaimAll,
 }) => {
-  const [activeTab, setActiveTab] = useState<'road' | 'ranks'>('road');
   const [recentlyClaimed, setRecentlyClaimed] = useState<number | null>(null);
   const trackScrollRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef({
@@ -171,7 +167,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
   };
 
   useEffect(() => {
-    if (!open || activeTab !== 'road') return;
+    if (!open) return;
     const id = window.requestAnimationFrame(() => {
       if (focusLevel && focusLevel >= 1 && focusLevel <= MAX_LEVEL_ROAD_LEVEL) {
         scrollToLevel(focusLevel, 'auto');
@@ -188,7 +184,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
       scrollToLevel(firstUnclaimed ?? clampedProgressLevel, 'auto');
     });
     return () => window.cancelAnimationFrame(id);
-  }, [open, activeTab, focusLevel, clampedProgressLevel, claimedSet]);
+  }, [open, focusLevel, clampedProgressLevel, claimedSet]);
 
   if (!open) return null;
 
@@ -309,125 +305,82 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
           </div>
         </div>
 
-        {/* XP Progress & View Mode Switcher */}
+        {/* XP Progress & Quick Jump Controls */}
         <div className="flex flex-col gap-2.5 border-b border-white/10 bg-zinc-900/60 px-4 py-3 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-zinc-950 p-1">
-              <button
-                type="button"
-                onClick={() => setActiveTab('road')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-display text-xs font-bold transition-colors cursor-pointer ${
-                  activeTab === 'road'
-                    ? 'bg-amber-400 text-zinc-950'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <Trophy className="h-3.5 w-3.5" />
-                <span>Ödül Yolu (1–100)</span>
-                {unclaimedCount > 0 && (
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 font-mono-num text-[10px] font-black ${
-                      activeTab === 'road'
-                        ? 'bg-zinc-950 text-amber-300'
-                        : 'bg-amber-400 text-zinc-950'
-                    }`}
-                  >
-                    {unclaimedCount}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('ranks')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-display text-xs font-bold transition-colors cursor-pointer ${
-                  activeTab === 'ranks'
-                    ? 'bg-white text-zinc-950'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <Award className="h-3.5 w-3.5" />
-                <span>Rütbe Armaları</span>
-              </button>
+          {/* Active Level XP Meter */}
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-bold text-zinc-300">
+                Seviye {playerLevel.level + 1} Hedefi
+              </span>
+              <span className="font-mono-num font-bold text-amber-300">
+                {playerLevel.currentLevelXp.toLocaleString('tr-TR')} /{' '}
+                {playerLevel.nextLevelXpRequired.toLocaleString('tr-TR')} XP
+              </span>
             </div>
-
-            {/* Active Level XP Meter */}
-            <div className="flex min-w-[210px] flex-1 flex-col gap-1 sm:max-w-sm">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="font-bold text-zinc-300">
-                  Seviye {playerLevel.level + 1} Hedefi
-                </span>
-                <span className="font-mono-num font-bold text-amber-300">
-                  {playerLevel.currentLevelXp.toLocaleString('tr-TR')} /{' '}
-                  {playerLevel.nextLevelXpRequired.toLocaleString('tr-TR')} XP
-                </span>
-              </div>
-              <SegmentedXpBar
-                level={playerLevel.level}
-                progressRatio={playerLevel.progressRatio}
-                segments={12}
-                heightClass="h-2"
-              />
-            </div>
+            <SegmentedXpBar
+              level={playerLevel.level}
+              progressRatio={playerLevel.progressRatio}
+              segments={12}
+              heightClass="h-2"
+            />
           </div>
 
-          {/* Quick Jump Range Buttons (Road Tab) */}
-          {activeTab === 'road' && (
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {TIER_RANGES.map((range) => (
-                  <button
-                    key={range.label}
-                    type="button"
-                    onClick={() => scrollToLevel(range.start + 1)}
-                    className="rounded-lg border border-white/10 bg-zinc-950/90 px-2.5 py-1 font-mono-num text-[11px] font-bold text-zinc-300 transition-colors hover:border-amber-400/50 hover:text-amber-300 cursor-pointer"
-                  >
-                    Sv.{range.label}
-                  </button>
-                ))}
+          {/* Quick Jump Range Buttons */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {TIER_RANGES.map((range) => (
                 <button
+                  key={range.label}
                   type="button"
-                  onClick={() => scrollToLevel(clampedProgressLevel)}
-                  className="rounded-lg border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/25 cursor-pointer"
+                  onClick={() => scrollToLevel(range.start + 1)}
+                  className="rounded-lg border border-white/10 bg-zinc-950/90 px-2.5 py-1 font-mono-num text-[11px] font-bold text-zinc-300 transition-colors hover:border-amber-400/50 hover:text-amber-300 cursor-pointer"
                 >
-                  Konumum (Sv.{playerLevel.level})
+                  Sv.{range.label}
                 </button>
-              </div>
-
-              <div className="hidden sm:flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackScrollRef.current?.scrollBy({
-                      left: -NODE_WIDTH_PX * 3,
-                      behavior: 'smooth',
-                    });
-                  }}
-                  aria-label="Sola Kaydır"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/12 bg-zinc-950 text-zinc-300 hover:border-white/30 hover:text-white cursor-pointer"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    trackScrollRef.current?.scrollBy({
-                      left: NODE_WIDTH_PX * 3,
-                      behavior: 'smooth',
-                    });
-                  }}
-                  aria-label="Sağa Kaydır"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/12 bg-zinc-950 text-zinc-300 hover:border-white/30 hover:text-white cursor-pointer"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => scrollToLevel(clampedProgressLevel)}
+                className="rounded-lg border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/25 cursor-pointer"
+              >
+                Konumum (Sv.{playerLevel.level})
+              </button>
             </div>
-          )}
+
+            <div className="hidden sm:flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  trackScrollRef.current?.scrollBy({
+                    left: -NODE_WIDTH_PX * 3,
+                    behavior: 'smooth',
+                  });
+                }}
+                aria-label="Sola Kaydır"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/12 bg-zinc-950 text-zinc-300 hover:border-white/30 hover:text-white cursor-pointer"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  trackScrollRef.current?.scrollBy({
+                    left: NODE_WIDTH_PX * 3,
+                    behavior: 'smooth',
+                  });
+                }}
+                aria-label="Sağa Kaydır"
+                className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/12 bg-zinc-950 text-zinc-300 hover:border-white/30 hover:text-white cursor-pointer"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* MAIN CONTENT AREA */}
-        {activeTab === 'road' ? (
-          <div className="relative flex min-h-0 flex-1 flex-col bg-zinc-950">
+        <div className="relative flex min-h-0 flex-1 flex-col bg-zinc-950">
             <div className="custom-scroll flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
               {/* Horizontal Left -> Right Track */}
               <div
@@ -612,7 +565,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                                 {reward.kind === 'crate' ? (
                                   <>
                                     <Package className="h-3.5 w-3.5" />
-                                    <span>SANDIĞI AÇ</span>
+                                    <span>KASAYI AÇ</span>
                                   </>
                                 ) : (
                                   <>
@@ -651,65 +604,6 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
               </span>
             </div>
           </div>
-        ) : (
-          /* Rütbe Armaları Tab */
-          <div className="custom-scroll flex-1 space-y-2.5 overflow-y-auto p-4 sm:p-5">
-            {DRIVER_RANK_TIERS.map((tier) => {
-              const isCurrent = tier.id === currentRankTier.id;
-              const isUnlocked = playerLevel.level >= tier.minLevel;
-
-              return (
-                <div
-                  key={tier.id}
-                  className={`flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 ${
-                    isCurrent
-                      ? `${tier.borderClass} ${tier.bgTintClass}`
-                      : isUnlocked
-                        ? 'border-white/10 bg-zinc-900/65'
-                        : 'border-white/6 bg-zinc-900/35 opacity-70'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <DriverLevelEmblem level={tier.minLevel} size="md" />
-                    <div className="min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span
-                          className={`truncate font-display text-sm font-extrabold ${
-                            isUnlocked ? tier.textClass : 'text-zinc-400'
-                          }`}
-                        >
-                          {tier.title}
-                        </span>
-                        <span className="font-mono-num text-xs text-zinc-400 whitespace-nowrap">
-                          {tier.rangeLabel}
-                        </span>
-                      </div>
-                      <div className="truncate text-xs text-zinc-400">
-                        {tier.description}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 text-right text-xs font-bold">
-                    {isCurrent ? (
-                      <span className={tier.textClass}>Aktif</span>
-                    ) : isUnlocked ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-400">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span>Açık</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 font-mono-num text-zinc-500">
-                        <Lock className="h-3.5 w-3.5" />
-                        <span>Sv. {tier.minLevel}</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );
