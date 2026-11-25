@@ -553,7 +553,12 @@ export type WheelStyleId =
   | 'triBlade'
   | 'hexMono'
   | 'animVenomRing'
-  | 'animRubyPulse';
+  | 'animRubyPulse'
+  | 'wagonWoodWheel'
+  | 'monsterMudTire'
+  | 'voxelSquareWheel'
+  | 'spikedMadMaxWheel'
+  | 'hoverMaglevOrb';
 
 export type WheelColorId =
   | 'silver'
@@ -1077,6 +1082,87 @@ export const WHEEL_STYLES: WheelStyleSpec[] = [
     handlingRatingBonus: 0.6,
     effectLabel: '+5.6 km/h · +8% Tutuş',
   },
+  {
+    id: 'wagonWoodWheel',
+    rarity: 'rare',
+    name: 'Ahşap At Arabası Tekeri',
+    subtitle: 'Lastiksiz, demir çemberli ve 12 ahşap parmaklı sıfırdan el yapımı tekerlek',
+    category: 'classic',
+    colorMode: 'fixed',
+    fixedColorReason: 'Ahşap At Arabası Tekeri doğal meşe ahşap ve dövme demir dokusunu kullanır.',
+    priceGold: 480,
+    speedBonusMs: 0.45,
+    gripBonus: 0.04,
+    steerBonus: 0.25,
+    speedRatingBonus: 0.2,
+    handlingRatingBonus: 0.3,
+    effectLabel: '+1.6 km/h · +4% Tutuş',
+  },
+  {
+    id: 'monsterMudTire',
+    rarity: 'epic',
+    name: 'Dev Çamur Tekeri',
+    subtitle: '16 iri dişli off-road çamur bloğu ve cıvatalı arazi çemberli dev tekerlek',
+    category: 'classic',
+    colorMode: 'fixed',
+    fixedColorReason: 'Dev Çamur Tekeri mat arazi kauçuğu ve askeri çelik çember paletini kullanır.',
+    priceGold: 860,
+    speedBonusMs: 0.78,
+    gripBonus: 0.072,
+    steerBonus: 0.45,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.6,
+    effectLabel: '+2.8 km/h · +7.2% Tutuş',
+  },
+  {
+    id: 'voxelSquareWheel',
+    rarity: 'epic',
+    name: 'Küp Voxel Tekerlek',
+    subtitle: 'Yuvarlak lastiksiz, tamamen 8-bit obsidyen-taş-elmas küplerden oluşan voxel tekerlek',
+    category: 'classic',
+    colorMode: 'fixed',
+    fixedColorReason: 'Küp Voxel Tekerlek 8-bit obsidyen, taş ve parlayan elmas blok renklerini kullanır.',
+    priceGold: 920,
+    speedBonusMs: 0.85,
+    gripBonus: 0.062,
+    steerBonus: 0.48,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+3.1 km/h · +6.2% Tutuş',
+  },
+  {
+    id: 'spikedMadMaxWheel',
+    rarity: 'epic',
+    name: 'Dikenli Mad Max Tekeri',
+    subtitle: 'Zırhlı paslı çelik tambur, 12 sırt dikeni ve dışa uzanan gladyatör göbek mızrağı',
+    category: 'classic',
+    colorMode: 'fixed',
+    fixedColorReason: 'Dikenli Mad Max Tekeri paslı zırh çeliği ve dövme demir diken paletini kullanır.',
+    priceGold: 980,
+    speedBonusMs: 0.95,
+    gripBonus: 0.068,
+    steerBonus: 0.5,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+3.4 km/h · +6.8% Tutuş',
+  },
+  {
+    id: 'hoverMaglevOrb',
+    rarity: 'legendary',
+    name: 'Manyetik Hover Küre',
+    subtitle: 'Lastiksiz ve göbeksiz havada süzülen neon enerji halkası + dönen manyetik küre',
+    category: 'animated',
+    animated: true,
+    colorMode: 'fixed',
+    fixedColorReason: 'Manyetik Hover Küre camgöbeği-mor manyetik plazma paletini kullanır.',
+    priceGold: 2480,
+    speedBonusMs: 1.65,
+    gripBonus: 0.085,
+    steerBonus: 0.72,
+    speedRatingBonus: 0.6,
+    handlingRatingBonus: 0.7,
+    effectLabel: '+5.9 km/h · +8.5% Tutuş',
+  },
 ];
 
 export const WHEEL_COLORS: WheelColorOption[] = [
@@ -1236,7 +1322,11 @@ export type BodyKitId =
   | 'rallyArmor'
   | 'gt3Endurance'
   | 'royalGoldWide'
-  | 'hyperPlasmaKit';
+  | 'hyperPlasmaKit'
+  | 'madMaxArmor'
+  | 'dragBlowerKit'
+  | 'bosozokuExotic'
+  | 'cyberExoMech';
 export type SpoilerId =
   | 'none'
   | 'ducktail'
@@ -1256,7 +1346,17 @@ export type SpoilerId =
   | 'twinBladeCarbon'
   | 'viperArch'
   | 'animCyberHaloWing'
-  | 'animInfernoWing';
+  | 'animInfernoWing'
+  | 'parkBenchWood'
+  | 'chassisMountDrift'
+  | 'twinSharkFin'
+  | 'biplaneTriWing'
+  | 'batWings'
+  | 'katanaCrossWing'
+  | 'scrapMadMaxWing'
+  | 'pixelVoxelWing'
+  | 'animJetThrusterWing'
+  | 'animAngelWings';
 export type LiveryId =
   | 'solid'
   | 'racingStripes'
@@ -1312,7 +1412,17 @@ export type LiveryId =
   | 'jojaMartCorp'
   | 'mysteryMachine'
   | 'animWindStream'
-  | 'omnitrixAlien';
+  | 'omnitrixAlien'
+  | 'animSakuraStorm'
+  | 'animGlitchCorrupt'
+  | 'animToxicAcid'
+  | 'animOceanBiolum'
+  | 'animHeartbeatEcg'
+  | 'animHoloCircuit'
+  | 'animHypnoSpiral'
+  | 'animWarpHyperdrive'
+  | 'animCyberEqualizer'
+  | 'animSolarEclipse';
 
 export interface BodyKitSpec {
   id: BodyKitId;
@@ -1600,7 +1710,27 @@ export type MirrorCharmId =
   | 'miniTrophy'
   | 'miniNitro'
   | 'diamondGem'
-  | 'cyberSkull';
+  | 'cyberSkull'
+  | 'turkishTea'
+  | 'soccerBall'
+  | 'miniDuck'
+  | 'coffeeCup'
+  | 'simitRing'
+  | 'pizzaSlice'
+  | 'donutGlazed'
+  | 'gamepadMini'
+  | 'keychain8Ball'
+  | 'miniHeadcrab'
+  | 'companionCharm'
+  | 'pokeballMini'
+  | 'creeperCharm'
+  | 'ufoCharm'
+  | 'ghostGlow'
+  | 'lambdaCharm'
+  | 'wheatleyCharm'
+  | 'saturnPlanet'
+  | 'dragonEgg'
+  | 'infinityCube';
 
 export type VisualCategory =
   | 'paintFinish'
@@ -1898,6 +2028,55 @@ export const BODY_KITS: BodyKitSpec[] = [
     effectLabel: '+5.2 km/h · +8% Tutuş',
     animated: true,
   },
+  {
+    id: 'madMaxArmor',
+    rarity: 'epic',
+    name: 'Mad Max Çorak Zırh',
+    subtitle: 'Ön dikenli V-küreme tamponu, yan krom egzoz boruları ve paslı çelik koruma kafesi',
+    priceGold: 960,
+    speedBonusMs: 0.95,
+    gripBonus: 0.068,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+3.4 km/h · +6.8% Tutuş',
+  },
+  {
+    id: 'dragBlowerKit',
+    rarity: 'epic',
+    name: 'Süperşarj Drag Kiti',
+    subtitle: 'Kaputtan fırlayan krom V8 süperşarj, yan alev egzozları ve arka wheelie tekerleri',
+    priceGold: 1080,
+    speedBonusMs: 1.25,
+    gripBonus: 0.062,
+    speedRatingBonus: 0.5,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+4.5 km/h · +6.2% Tutuş',
+  },
+  {
+    id: 'bosozokuExotic',
+    rarity: 'epic',
+    name: 'Japon Bosozoku Kiti',
+    subtitle: 'Uzatılmış ön burun, harici yağ soğutucu, kutu çamurluklar ve göğe uzanan 4 egzoz',
+    priceGold: 1140,
+    speedBonusMs: 1.1,
+    gripBonus: 0.072,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.6,
+    effectLabel: '+4 km/h · +7.2% Tutuş',
+  },
+  {
+    id: 'cyberExoMech',
+    rarity: 'legendary',
+    name: 'Siber Dış İskelet',
+    subtitle: 'Tavanı saran titanyum dış kafes, ışıklı yan enerji podları ve arka türbin halkaları',
+    priceGold: 1680,
+    speedBonusMs: 1.55,
+    gripBonus: 0.085,
+    speedRatingBonus: 0.6,
+    handlingRatingBonus: 0.8,
+    effectLabel: '+5.6 km/h · +8.5% Tutuş',
+    animated: true,
+  },
 ];
 
 export const SPOILERS: SpoilerSpec[] = [
@@ -2133,6 +2312,128 @@ export const SPOILERS: SpoilerSpec[] = [
     speedRatingBonus: 0.5,
     handlingRatingBonus: 0.7,
     effectLabel: '+4.6 km/h · +8% Tutuş',
+    animated: true,
+  },
+  {
+    id: 'parkBenchWood',
+    rarity: 'common',
+    name: 'Ahşap Piknik Bankı',
+    subtitle: 'Döküm demir ayaklı ve 3 çıtalı gerçek ahşap park bankı rüzgarlığı',
+    priceGold: 280,
+    speedBonusMs: 0.28,
+    gripBonus: 0.036,
+    speedRatingBonus: 0.1,
+    handlingRatingBonus: 0.2,
+    effectLabel: '+1 km/h · +3.6% Tutuş',
+  },
+  {
+    id: 'chassisMountDrift',
+    rarity: 'rare',
+    name: 'Dev Şasi Drift Kanadı',
+    subtitle: 'Arka tampona inen çapraz X-kafesli yüksek martı kanatlı drift rüzgarlığı',
+    priceGold: 460,
+    speedBonusMs: 0.55,
+    gripBonus: 0.056,
+    speedRatingBonus: 0.2,
+    handlingRatingBonus: 0.4,
+    effectLabel: '+2 km/h · +5.6% Tutuş',
+  },
+  {
+    id: 'twinSharkFin',
+    rarity: 'rare',
+    name: 'Savaş Uçağı Kuyruğu',
+    subtitle: 'Yatay kanatsız, dışa açılı V-kuyruk ikiz jet dikey dengeleyicileri',
+    priceGold: 540,
+    speedBonusMs: 0.65,
+    gripBonus: 0.054,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.4,
+    effectLabel: '+2.3 km/h · +5.4% Tutuş',
+  },
+  {
+    id: 'biplaneTriWing',
+    rarity: 'epic',
+    name: 'Üç Katlı Tırmanış Kanadı',
+    subtitle: 'Pikes Peak tarzı üst üste kademeli 3 katlı devasa ralli kanadı',
+    priceGold: 780,
+    speedBonusMs: 0.78,
+    gripBonus: 0.068,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+2.8 km/h · +6.8% Tutuş',
+  },
+  {
+    id: 'batWings',
+    rarity: 'epic',
+    name: 'Yarasa Kanatları',
+    subtitle: 'Dışa kıvrılan keskin kemik kollu ve dilimli gotik yarasa kanatları',
+    priceGold: 840,
+    speedBonusMs: 0.85,
+    gripBonus: 0.066,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+3.1 km/h · +6.6% Tutuş',
+  },
+  {
+    id: 'scrapMadMaxWing',
+    rarity: 'epic',
+    name: 'Hurda Mad Max Kanat',
+    subtitle: 'Paslı kaynaklı sac levha, inşaat demiri ayaklar ve dikenli çorak kanat',
+    priceGold: 860,
+    speedBonusMs: 0.86,
+    gripBonus: 0.065,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.5,
+    effectLabel: '+3.1 km/h · +6.5% Tutuş',
+  },
+  {
+    id: 'katanaCrossWing',
+    rarity: 'epic',
+    name: 'Çapraz Katana Kanat',
+    subtitle: 'Bagaj üstünde X şeklinde çaprazlanmış iki dev samuray katanası',
+    priceGold: 890,
+    speedBonusMs: 0.9,
+    gripBonus: 0.067,
+    speedRatingBonus: 0.3,
+    handlingRatingBonus: 0.6,
+    effectLabel: '+3.2 km/h · +6.7% Tutuş',
+  },
+  {
+    id: 'pixelVoxelWing',
+    rarity: 'epic',
+    name: 'Piksel Voxel Kanat',
+    subtitle: 'Tamamen 8-bit küp bloklardan oluşan basamaklı elmas-obsidyen rüzgarlık',
+    priceGold: 910,
+    speedBonusMs: 0.92,
+    gripBonus: 0.068,
+    speedRatingBonus: 0.4,
+    handlingRatingBonus: 0.6,
+    effectLabel: '+3.3 km/h · +6.8% Tutuş',
+  },
+  {
+    id: 'animJetThrusterWing',
+    rarity: 'legendary',
+    name: 'İkiz Jet Türbin Kanat',
+    subtitle: 'İki yanda yanan art yakıcı jet türbinleri ve hıza duyarlı hareketli DRS kanadı',
+    priceGold: 1620,
+    speedBonusMs: 1.32,
+    gripBonus: 0.08,
+    speedRatingBonus: 0.5,
+    handlingRatingBonus: 0.7,
+    effectLabel: '+4.8 km/h · +8% Tutuş',
+    animated: true,
+  },
+  {
+    id: 'animAngelWings',
+    rarity: 'legendary',
+    name: 'Işıklı Melek Kanatları',
+    subtitle: 'Bagaj üstünde havada süzülen katmanlı altın-buz mavisi kristal kanatlar',
+    priceGold: 1780,
+    speedBonusMs: 1.38,
+    gripBonus: 0.084,
+    speedRatingBonus: 0.5,
+    handlingRatingBonus: 0.8,
+    effectLabel: '+5 km/h · +8.4% Tutuş',
     animated: true,
   },
 ];
@@ -2677,6 +2978,116 @@ export const LIVERIES: LiverySpec[] = [
     subtitle: 'Siyah-beyaz keskin fütüristik zırh çizgileri ve kaputta parlayan neon yeşil kum saati',
     priceGold: 2320,
     accentSwatch: 'linear-gradient(135deg, #09090b 0%, #f8fafc 38%, #22c55e 70%, #86efac 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animSakuraStorm',
+    rarity: 'legendary',
+    name: 'Kiraz Çiçeği Fırtınası',
+    subtitle: 'Gece moru gövdede rüzgarla çapraz süzülen parlayan pembe sakura yaprakları',
+    priceGold: 2140,
+    accentSwatch: 'linear-gradient(135deg, #120824 0%, #ec4899 50%, #fbcfe8 82%, #311042 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animHypnoSpiral',
+    rarity: 'legendary',
+    name: 'Hipnoz Dalgaları',
+    subtitle: 'Siyah-beyaz ve neon mor optik illüzyon dalga halkalarıyla göz alıcı akış',
+    priceGold: 2150,
+    accentSwatch: 'linear-gradient(135deg, #09090b 0%, #ffffff 36%, #a855f7 68%, #09090b 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animHeartbeatEcg',
+    rarity: 'legendary',
+    name: 'Kalp Atışı (EKG)',
+    subtitle: 'Siyah monitör ızgarasında ritmik nabızla atan parlak kızıl EKG yaşam çizgisi',
+    priceGold: 2160,
+    accentSwatch: 'linear-gradient(125deg, #09090b 0%, #dc2626 52%, #fca5a5 76%, #18181b 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animToxicAcid',
+    rarity: 'legendary',
+    name: 'Radyoaktif Asit',
+    subtitle: 'Koyu biyolojik tehlike zırhında fokurdayıp akan neon lime radyoaktif asit',
+    priceGold: 2190,
+    accentSwatch: 'linear-gradient(135deg, #071409 0%, #65a30d 45%, #bef264 78%, #14532d 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animGlitchCorrupt',
+    rarity: 'legendary',
+    name: 'Sistem Hatası (Glitch)',
+    subtitle: 'RGB renk sapmalı, atlayarak titreşen siberpunk dijital glitch tarama çizgileri',
+    priceGold: 2220,
+    accentSwatch: 'linear-gradient(125deg, #09090b 0%, #06b6d4 38%, #ec4899 68%, #ffffff 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animCyberEqualizer',
+    rarity: 'legendary',
+    name: 'Bas Ekolayzır (DJ)',
+    subtitle: '128 BPM bas ritmiyle zıplayıp parlayan çok renkli neon LED müzik ekolayzırı',
+    priceGold: 2260,
+    accentSwatch: 'linear-gradient(180deg, #ec4899 0%, #facc15 42%, #22c55e 74%, #09090b 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animOceanBiolum',
+    rarity: 'legendary',
+    name: 'Biyolüminesans Dalga',
+    subtitle: 'Derin okyanus gecesinde parıldayan canlı elektrik-turkuaz plankton dalgaları',
+    priceGold: 2290,
+    accentSwatch: 'linear-gradient(135deg, #020c1b 0%, #0284c7 44%, #2dd4bf 76%, #ccfbf1 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animHoloCircuit',
+    rarity: 'legendary',
+    name: 'Altın Mikroçip',
+    subtitle: 'Koyu anakart devresi boyunca ışık hızıyla akan 24K altın mikroçip veri hatları',
+    priceGold: 2380,
+    accentSwatch: 'linear-gradient(135deg, #042f2e 0%, #b45309 45%, #facc15 74%, #fef08a 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animWarpHyperdrive',
+    rarity: 'legendary',
+    name: 'Işık Hızı (Warp)',
+    subtitle: 'Hızlandıkça uzayıp coşan derin uzay ışık hızı yıldız çizgileri',
+    priceGold: 2490,
+    accentSwatch: 'linear-gradient(180deg, #020617 0%, #2563eb 46%, #67e8f9 78%, #ffffff 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animSolarEclipse',
+    rarity: 'legendary',
+    name: 'Güneş Tutulması',
+    subtitle: 'Simsiyah tutulma çekirdeğini saran alevli korona plazma halkaları',
+    priceGold: 2580,
+    accentSwatch: 'linear-gradient(135deg, #090405 0%, #dc2626 42%, #f97316 70%, #fef08a 100%)',
     category: 'animated',
     overridesBaseColor: true,
     animated: true,
@@ -4953,6 +5364,176 @@ export const MIRROR_CHARMS: MirrorCharmSpec[] = [
     subtitle: 'Mat siyah kurukafa, atan neon gözler ve dönen siber halka',
     priceGold: 790,
     swatch: 'linear-gradient(135deg, #18181b 0%, #22d3ee 52%, #ec4899 100%)',
+    animated: true,
+  },
+  {
+    id: 'turkishTea',
+    rarity: 'common',
+    name: 'İnce Belli Çay',
+    subtitle: 'Tabaklı, gümüş kaşıklı tavşan kanı ince belli Türk çayı',
+    priceGold: 150,
+    swatch: 'linear-gradient(135deg, #991b1b 0%, #dc2626 52%, #f8fafc 85%, #cbd5e1 100%)',
+  },
+  {
+    id: 'soccerBall',
+    rarity: 'common',
+    name: 'Futbol Topu',
+    subtitle: 'Klasik siyah-beyaz beşgen desenli sallanan futbol topu',
+    priceGold: 170,
+    swatch: 'linear-gradient(135deg, #ffffff 0%, #ffffff 48%, #18181b 48%, #18181b 100%)',
+  },
+  {
+    id: 'miniDuck',
+    rarity: 'common',
+    name: 'Mini Sarı Ördek',
+    subtitle: 'Aynada sevimlice sallanan parlak sarı plastik ördek',
+    priceGold: 180,
+    swatch: 'linear-gradient(135deg, #facc15 0%, #fde047 62%, #f97316 100%)',
+  },
+  {
+    id: 'coffeeCup',
+    rarity: 'common',
+    name: 'Karton Kahve',
+    subtitle: 'Uzun yol dostu kraft kılıflı sıcak karton kahve bardağı',
+    priceGold: 190,
+    swatch: 'linear-gradient(135deg, #f8fafc 0%, #b45309 55%, #18181b 100%)',
+  },
+  {
+    id: 'simitRing',
+    rarity: 'rare',
+    name: 'Çıtır Simit',
+    subtitle: 'Susamlı, kızarmış çıtır sokak simidi ayna süsü',
+    priceGold: 220,
+    swatch: 'linear-gradient(135deg, #92400e 0%, #d97706 58%, #fef3c7 100%)',
+  },
+  {
+    id: 'pizzaSlice',
+    rarity: 'rare',
+    name: 'Pizza Dilimi',
+    subtitle: 'Bol peynirli ve pepperonili minyatür sıcak pizza dilimi',
+    priceGold: 240,
+    swatch: 'linear-gradient(135deg, #b45309 0%, #facc15 55%, #dc2626 100%)',
+  },
+  {
+    id: 'donutGlazed',
+    rarity: 'rare',
+    name: 'Çilekli Donut',
+    subtitle: 'Pembe çilek soslu ve renkli şekerlemeli taze donut',
+    priceGold: 250,
+    swatch: 'linear-gradient(135deg, #d97706 0%, #f472b6 55%, #fef08a 100%)',
+  },
+  {
+    id: 'gamepadMini',
+    rarity: 'rare',
+    name: 'Oyun Kolu',
+    subtitle: 'Işıklı tuşlu ve çift analoglu minyatür konsol oyun kolu',
+    priceGold: 290,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #3f3f46 55%, #22d3ee 100%)',
+  },
+  {
+    id: 'keychain8Ball',
+    rarity: 'rare',
+    name: 'Siyah 8 Numara',
+    subtitle: 'Parlak lake siyah bilardo 8 numara şans topu',
+    priceGold: 300,
+    swatch: 'linear-gradient(135deg, #09090b 0%, #27272a 62%, #ffffff 100%)',
+  },
+  {
+    id: 'miniHeadcrab',
+    rarity: 'rare',
+    name: 'Mini Headcrab',
+    subtitle: 'Dikiz aynasından pençeleriyle sallanan minyatür Half-Life Headcrab',
+    priceGold: 340,
+    swatch: 'linear-gradient(135deg, #5c3322 0%, #c99c72 56%, #7f1d2d 100%)',
+  },
+  {
+    id: 'companionCharm',
+    rarity: 'epic',
+    name: 'Mini Companion Cube',
+    subtitle: 'Kendi ekseninde dönen pembe kalpli Portal Companion Cube süsü',
+    priceGold: 480,
+    swatch: 'linear-gradient(135deg, #64748b 0%, #e2e8f0 50%, #f472b6 100%)',
+    animated: true,
+  },
+  {
+    id: 'pokeballMini',
+    rarity: 'epic',
+    name: 'Canavar Topu',
+    subtitle: 'Kırmızı-beyaz parlak kapsül ve orta düğmede atan yakalama ışığı',
+    priceGold: 490,
+    swatch: 'linear-gradient(180deg, #dc2626 0%, #dc2626 45%, #18181b 45%, #18181b 55%, #ffffff 55%)',
+    animated: true,
+  },
+  {
+    id: 'creeperCharm',
+    rarity: 'epic',
+    name: 'Mini Creeper',
+    subtitle: 'Pikselli yeşil Minecraft Creeper kafası ve hafif patlama nabzı',
+    priceGold: 510,
+    swatch: 'linear-gradient(135deg, #15803d 0%, #4ade80 58%, #09090b 100%)',
+    animated: true,
+  },
+  {
+    id: 'ufoCharm',
+    rarity: 'epic',
+    name: 'Mini UFO',
+    subtitle: 'Dönen krom uçan daire, yeşil kokpit kubbesi ve ışıklı çember',
+    priceGold: 560,
+    swatch: 'linear-gradient(135deg, #94a3b8 0%, #22c55e 58%, #0f172a 100%)',
+    animated: true,
+  },
+  {
+    id: 'ghostGlow',
+    rarity: 'epic',
+    name: 'Sevimli Hayalet',
+    subtitle: 'Karanlıkta hafif nabızla parlayan sevimli buz mavisi hayalet',
+    priceGold: 580,
+    swatch: 'linear-gradient(135deg, #e0f2fe 0%, #38bdf8 60%, #1e293b 100%)',
+    animated: true,
+  },
+  {
+    id: 'lambdaCharm',
+    rarity: 'legendary',
+    name: 'Altın Lambda (λ)',
+    subtitle: 'Zırhlı halka içinde dönen parlak HEV turuncusu 3D Lambda amblemi',
+    priceGold: 720,
+    swatch: 'linear-gradient(135deg, #18181b 0%, #f97316 55%, #facc15 100%)',
+    animated: true,
+  },
+  {
+    id: 'wheatleyCharm',
+    rarity: 'legendary',
+    name: 'Mini Wheatley',
+    subtitle: 'Tutamaklı ve parlayan mavi gözlü minyatür Portal 2 Wheatley çekirdeği',
+    priceGold: 760,
+    swatch: 'linear-gradient(135deg, #1e293b 0%, #e2e8f0 50%, #38bdf8 100%)',
+    animated: true,
+  },
+  {
+    id: 'saturnPlanet',
+    rarity: 'legendary',
+    name: 'Satürn Gezegeni',
+    subtitle: 'Dönen altın gezegen ve etrafında çapraz dönen ışıklı halkalar',
+    priceGold: 810,
+    swatch: 'linear-gradient(135deg, #f59e0b 0%, #fef08a 48%, #38bdf8 100%)',
+    animated: true,
+  },
+  {
+    id: 'dragonEgg',
+    rarity: 'legendary',
+    name: 'Ejderha Yumurtası',
+    subtitle: 'Obsidyen kabuk çatlaklarından canlı lav parıltısı atan ejderha yumurtası',
+    priceGold: 860,
+    swatch: 'linear-gradient(135deg, #0c0a09 0%, #dc2626 52%, #facc15 100%)',
+    animated: true,
+  },
+  {
+    id: 'infinityCube',
+    rarity: 'legendary',
+    name: 'Kozmik Küp',
+    subtitle: 'Ters dönen altın jiroskop halkaları içinde renk değiştiren enerji küpü',
+    priceGold: 940,
+    swatch: 'linear-gradient(135deg, #22d3ee 0%, #a855f7 50%, #facc15 100%)',
     animated: true,
   },
 ];

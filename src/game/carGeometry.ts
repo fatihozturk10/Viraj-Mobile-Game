@@ -1005,7 +1005,17 @@ export function isAnimatedLivery(livery: LiveryId): boolean {
     livery === 'animVenomSymbiote' ||
     livery === 'animLiquidAquarium' ||
     livery === 'animWindStream' ||
-    livery === 'omnitrixAlien'
+    livery === 'omnitrixAlien' ||
+    livery === 'animSakuraStorm' ||
+    livery === 'animGlitchCorrupt' ||
+    livery === 'animToxicAcid' ||
+    livery === 'animOceanBiolum' ||
+    livery === 'animHeartbeatEcg' ||
+    livery === 'animHoloCircuit' ||
+    livery === 'animHypnoSpiral' ||
+    livery === 'animWarpHyperdrive' ||
+    livery === 'animCyberEqualizer' ||
+    livery === 'animSolarEclipse'
   );
 }
 
@@ -2156,6 +2166,531 @@ function createAnimatedLiveryTextures(
 
     drawOmnitrixDial(256, 178, 72);
     drawOmnitrixDial(256, 366, 48);
+  } else if (livery === 'animSakuraStorm') {
+    // Midnight Japanese Sakura Petal Storm: Deep twilight indigo + swirling misty ribbons & glowing pink petals!
+    ctx.fillStyle = '#120824';
+    ctx.fillRect(0, 0, S, S);
+
+    // Seamless moonlit pink-violet wind ribbons
+    for (const [baseY, col, amp] of [
+      [110, 'rgba(244, 114, 182, 0.34)', 34],
+      [280, 'rgba(192, 132, 252, 0.32)', 38],
+      [430, 'rgba(251, 207, 232, 0.28)', 30],
+    ] as [number, string, number][]) {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.strokeStyle = col;
+        target.lineWidth = target === ectx ? 16 : 24;
+        target.lineCap = 'round';
+        for (const oy of [-S, 0, S]) {
+          target.beginPath();
+          for (let x = 0; x <= S; x += 8) {
+            const t = (x / S) * Math.PI * 2;
+            const y = baseY + oy + Math.sin(t * 2 + baseY * 0.01) * amp;
+            if (x === 0) target.moveTo(x, y);
+            else target.lineTo(x, y);
+          }
+          target.stroke();
+        }
+        target.restore();
+      }
+    }
+
+    // 78 Seamless drifting glowing Sakura cherry blossom petals
+    let seed = 77109;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 78; i++) {
+      const px = rand() * S;
+      const py = rand() * S;
+      const ang = rand() * Math.PI * 2;
+      const rx = 5 + rand() * 7;
+      const ry = 3 + rand() * 4;
+      const col = i % 3 === 0 ? '#fbcfe8' : i % 3 === 1 ? '#f472b6' : '#f9a8d4';
+      for (const ox of [-S, 0, S]) {
+        for (const oy of [-S, 0, S]) {
+          if (px + ox < -20 || px + ox > S + 20 || py + oy < -20 || py + oy > S + 20) continue;
+          for (const target of [ctx, ectx]) {
+            target.save();
+            target.translate(px + ox, py + oy);
+            target.rotate(ang);
+            target.fillStyle = col;
+            target.globalAlpha = target === ectx ? 0.78 : 0.94;
+            target.beginPath();
+            target.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+            target.fill();
+            target.restore();
+          }
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animGlitchCorrupt') {
+    // Cyberpunk RGB Digital Glitch Scanlines: Pitch-black chassis sliced by chromatic cyan/magenta/white blocks!
+    ctx.fillStyle = '#07070c';
+    ctx.fillRect(0, 0, S, S);
+
+    // Subtle CRT horizontal scanline texture
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    for (let y = 0; y < S; y += 4) {
+      ctx.fillRect(0, y, S, 1.5);
+    }
+
+    let seed = 40413;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    // Corrupted RGB-split glitch bars (seamless in X & Y)
+    for (let i = 0; i < 58; i++) {
+      const gx = rand() * S;
+      const gy = Math.floor(rand() * 64) * 8;
+      const gw = 24 + rand() * 140;
+      const gh = i % 5 === 0 ? 12 : 4 + Math.floor(rand() * 3) * 4;
+      const shift = 5 + rand() * 8;
+
+      for (const ox of [-S, 0, S]) {
+        for (const target of [ctx, ectx]) {
+          target.globalAlpha = target === ectx ? 0.85 : 0.92;
+          // Cyan left chromatic channel
+          target.fillStyle = '#06b6d4';
+          target.fillRect(gx + ox - shift, gy, gw, gh);
+          // Magenta right chromatic channel
+          target.fillStyle = '#ec4899';
+          target.fillRect(gx + ox + shift, gy, gw, gh);
+          // White hot center core glitch bar
+          target.fillStyle = i % 3 === 0 ? '#ffffff' : '#e0f2fe';
+          target.fillRect(gx + ox, gy, gw * 0.82, gh * 0.72);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animToxicAcid') {
+    // Radioactive Bubbling Toxic Acid Pool: Biohazard dark slate overflowing with neon-lime oozing rivers & bubbles!
+    ctx.fillStyle = '#071409';
+    ctx.fillRect(0, 0, S, S);
+
+    // Seamless oozing toxic acid wave rivers
+    for (const [baseY, amp, freq] of [
+      [84, 34, 2],
+      [212, 40, 3],
+      [348, 32, 2],
+      [462, 36, 3],
+    ]) {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.lineCap = 'round';
+        for (const oy of [-S, 0, S]) {
+          target.strokeStyle = '#4d7c0f';
+          target.lineWidth = target === ectx ? 38 : 48;
+          target.globalAlpha = target === ectx ? 0.55 : 0.85;
+          target.beginPath();
+          for (let x = 0; x <= S; x += 8) {
+            const t = (x / S) * Math.PI * 2;
+            const y = baseY + oy + Math.sin(t * freq + baseY * 0.02) * amp;
+            if (x === 0) target.moveTo(x, y);
+            else target.lineTo(x, y);
+          }
+          target.stroke();
+
+          target.strokeStyle = '#a3e635';
+          target.lineWidth = target === ectx ? 16 : 20;
+          target.globalAlpha = 0.95;
+          target.stroke();
+
+          target.strokeStyle = '#ecfccb';
+          target.lineWidth = 4;
+          target.stroke();
+        }
+        target.restore();
+      }
+    }
+
+    // Bubbling glowing toxic acid spheres (seamless)
+    let seed = 23592;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 62; i++) {
+      const bx = rand() * S;
+      const by = rand() * S;
+      const br = 4 + rand() * 14;
+      for (const ox of [-S, 0, S]) {
+        for (const oy of [-S, 0, S]) {
+          if (bx + ox < -20 || bx + ox > S + 20 || by + oy < -20 || by + oy > S + 20) continue;
+          ctx.fillStyle = '#0b1f0e';
+          ctx.beginPath();
+          ctx.arc(bx + ox, by + oy, br, 0, Math.PI * 2);
+          ctx.fill();
+          for (const target of [ctx, ectx]) {
+            target.strokeStyle = i % 2 === 0 ? '#bef264' : '#84cc16';
+            target.lineWidth = 2.6;
+            target.beginPath();
+            target.arc(bx + ox, by + oy, br, 0, Math.PI * 2);
+            target.stroke();
+          }
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animOceanBiolum') {
+    // Deep Abyssal Bioluminescent Ocean Waves & Glowing Electric-Teal Plankton Trails!
+    ctx.fillStyle = '#020c1b';
+    ctx.fillRect(0, 0, S, S);
+
+    // Layered rolling bioluminescent seafoam crests (seamless in X & Y)
+    for (const [baseY, amp, freq, col, core] of [
+      [72, 26, 2, '#0284c7', '#7dd3fc'],
+      [186, 34, 3, '#0d9488', '#5eead4'],
+      [304, 28, 2, '#0369a1', '#38bdf8'],
+      [428, 32, 3, '#14b8a6', '#ccfbf1'],
+    ] as [number, number, number, string, string][]) {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.lineCap = 'round';
+        for (const oy of [-S, 0, S]) {
+          target.strokeStyle = col;
+          target.lineWidth = target === ectx ? 28 : 38;
+          target.globalAlpha = target === ectx ? 0.5 : 0.72;
+          target.beginPath();
+          for (let x = 0; x <= S; x += 8) {
+            const t = (x / S) * Math.PI * 2;
+            const y =
+              baseY +
+              oy +
+              Math.sin(t * freq + baseY * 0.015) * amp +
+              Math.cos(t * (freq + 1)) * (amp * 0.3);
+            if (x === 0) target.moveTo(x, y);
+            else target.lineTo(x, y);
+          }
+          target.stroke();
+
+          target.strokeStyle = core;
+          target.lineWidth = 5;
+          target.globalAlpha = 0.96;
+          target.stroke();
+        }
+        target.restore();
+      }
+    }
+
+    // Glowing floating bioluminescent plankton sparkles
+    let seed = 51923;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 160; i++) {
+      const px = rand() * S;
+      const py = rand() * S;
+      const pr = 1.0 + rand() * 2.4;
+      const c = i % 2 === 0 ? '#5eead4' : '#7dd3fc';
+      for (const target of [ctx, ectx]) {
+        target.fillStyle = c;
+        target.globalAlpha = 0.85;
+        target.beginPath();
+        target.arc(px, py, pr, 0, Math.PI * 2);
+        target.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animHeartbeatEcg') {
+    // Crimson ECG Heartbeat Monitor: Dark clinical grid + razor-sharp glowing red-white heartbeat waveform spikes!
+    ctx.fillStyle = '#09090d';
+    ctx.fillRect(0, 0, S, S);
+
+    // Subtle dark-red ECG oscilloscope grid (exact 32px spacing)
+    ctx.strokeStyle = 'rgba(220, 38, 38, 0.22)';
+    ctx.lineWidth = 1.4;
+    for (let g = 0; g < S; g += 32) {
+      ctx.beginPath();
+      ctx.moveTo(g, 0);
+      ctx.lineTo(g, S);
+      ctx.moveTo(0, g);
+      ctx.lineTo(S, g);
+      ctx.stroke();
+    }
+
+    // Draw 4 crisp vertical-running ECG pulse lines along the length of the car (seamless in Y, 2 beats per 512px)
+    const beatCols = [64, 192, 320, 448];
+    const beatOffsets: [number, number][] = [
+      [0, 0], [56, 0], [72, -14], [86, 8], [100, -54], [116, 44], [130, -18], [148, 0], [256, 0],
+    ];
+    for (const bx of beatCols) {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.lineCap = 'round';
+        target.lineJoin = 'round';
+        for (const [col, lw, alpha] of [
+          ['#dc2626', target === ectx ? 14 : 16, 0.55],
+          ['#f43f5e', 6, 0.92],
+          ['#fff1f2', 2.4, 1.0],
+        ] as [string, number, number][]) {
+          target.strokeStyle = col;
+          target.lineWidth = lw;
+          target.globalAlpha = alpha;
+          target.beginPath();
+          for (let cyc = 0; cyc < 2; cyc++) {
+            const yBase = cyc * 256;
+            beatOffsets.forEach(([dy, dx], idx) => {
+              const px = bx + dx;
+              const py = yBase + dy;
+              if (cyc === 0 && idx === 0) target.moveTo(px, py);
+              else target.lineTo(px, py);
+            });
+          }
+          target.stroke();
+        }
+        target.restore();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animHoloCircuit') {
+    // Royal 24K Gold Microchip PCB: Deep emerald-black board + precision 45° golden traces & luminous data pulses!
+    ctx.fillStyle = '#041c1a';
+    ctx.fillRect(0, 0, S, S);
+
+    // Subtle dark micro-grid etched onto motherboard
+    ctx.strokeStyle = 'rgba(20, 184, 166, 0.12)';
+    ctx.lineWidth = 1;
+    for (let g = 0; g < S; g += 16) {
+      ctx.beginPath();
+      ctx.moveTo(g, 0);
+      ctx.lineTo(g, S);
+      ctx.moveTo(0, g);
+      ctx.lineTo(S, g);
+      ctx.stroke();
+    }
+
+    // 16 Seamless Gold PCB traces with 45-degree dogleg bends & glowing solder nodes
+    for (let c = 0; c < 16; c++) {
+      const x = c * 32 + 16;
+      const jog = c % 2 === 0 ? 12 : -12;
+      const isPowerBus = c % 3 === 0;
+      const pts: [number, number][] = [
+        [x, 0],
+        [x, 96],
+        [x + jog, 128],
+        [x + jog, 256],
+        [x, 288],
+        [x, 416],
+        [x + jog, 448],
+        [x + jog, 480],
+        [x, 512],
+      ];
+
+      ctx.strokeStyle = isPowerBus ? '#f59e0b' : '#b45309';
+      ctx.lineWidth = isPowerBus ? 4.2 : 2.6;
+      ctx.beginPath();
+      pts.forEach(([px, py], i) => (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
+      ctx.stroke();
+
+      // Glowing golden data-packet bursts traveling along the traces on emissive map
+      const pulseY = ((c * 97) % S);
+      for (const target of [ctx, ectx]) {
+        target.strokeStyle = target === ectx ? '#fef08a' : '#fde047';
+        target.lineWidth = isPowerBus ? 5 : 3.4;
+        target.globalAlpha = 0.95;
+        target.beginPath();
+        pts.forEach(([px, py], i) => (i === 0 ? target.moveTo(px, py) : target.lineTo(px, py)));
+        target.stroke();
+
+        // Bright golden solder pad via nodes
+        target.fillStyle = '#fef08a';
+        target.beginPath();
+        target.arc(x, pulseY, isPowerBus ? 6 : 4, 0, Math.PI * 2);
+        target.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animHypnoSpiral') {
+    // Optical-Illusion Hypno Waves: High-contrast hypnotic concentric wave bands + neon violet highlight!
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(0, 0, S, S);
+
+    // 16 Seamless interlocking hypnotic sinusoidal bands (exact 32px period along Y)
+    for (let band = -2; band <= 18; band++) {
+      const baseY = band * 32;
+      const isLight = band % 2 === 0;
+      const isVioletAccent = band % 4 === 0;
+      ctx.strokeStyle = isVioletAccent ? '#c084fc' : isLight ? '#f8fafc' : '#18181b';
+      ctx.lineWidth = 16;
+      ctx.beginPath();
+      for (let x = 0; x <= S; x += 8) {
+        const t = (x / S) * Math.PI * 2;
+        const y = baseY + Math.sin(t * 2) * 28;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      if (isVioletAccent) {
+        ectx.strokeStyle = '#e879f9';
+        ectx.lineWidth = 9;
+        ectx.globalAlpha = 0.9;
+        ectx.beginPath();
+        for (let x = 0; x <= S; x += 8) {
+          const t = (x / S) * Math.PI * 2;
+          const y = baseY + Math.sin(t * 2) * 28;
+          if (x === 0) ectx.moveTo(x, y);
+          else ectx.lineTo(x, y);
+        }
+        ectx.stroke();
+      }
+    }
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animWarpHyperdrive') {
+    // Hyperspace Light-Speed Jump: Deep void pierced by hundreds of blazing stretched blue-white starlight streaks!
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(0, 0, S, S);
+
+    // Subtle cosmic blue tunnel glow down center
+    const wg = ctx.createLinearGradient(0, 0, S, 0);
+    wg.addColorStop(0, 'rgba(37, 99, 235, 0.28)');
+    wg.addColorStop(0.5, 'rgba(2, 6, 23, 0)');
+    wg.addColorStop(1, 'rgba(37, 99, 235, 0.28)');
+    ctx.fillStyle = wg;
+    ctx.fillRect(0, 0, S, S);
+
+    let seed = 11380;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    // 110 Stretched hyperspace starlight streaks (seamless in Y)
+    for (let i = 0; i < 110; i++) {
+      const sx = rand() * S;
+      const sy = rand() * S;
+      const len = 45 + rand() * 175;
+      const w = 1.2 + rand() * 3.4;
+      const col = i % 5 === 0 ? '#ffffff' : i % 3 === 0 ? '#67e8f9' : '#60a5fa';
+      for (const oy of [-S, 0, S]) {
+        for (const target of [ctx, ectx]) {
+          const sg = target.createLinearGradient(sx, sy + oy, sx, sy + oy + len);
+          sg.addColorStop(0, 'rgba(255,255,255,0)');
+          sg.addColorStop(0.75, col);
+          sg.addColorStop(1, '#ffffff');
+          target.fillStyle = sg;
+          target.globalAlpha = target === ectx ? 0.92 : 0.96;
+          target.fillRect(sx - w * 0.5, sy + oy, w, len);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animCyberEqualizer') {
+    // Neon Club DJ Audio Spectrum Equalizer: Stepping LED bars from Emerald -> Yellow -> Hot Pink -> Violet!
+    ctx.fillStyle = '#08080e';
+    ctx.fillRect(0, 0, S, S);
+
+    const cols = 16; // 32px per column
+    const segH = 16; // 32 rows
+    const colHeights = [18, 24, 14, 28, 22, 30, 16, 26, 26, 16, 30, 22, 28, 14, 24, 18];
+
+    for (let c = 0; c < cols; c++) {
+      const x = c * 32 + 4;
+      const peak = colHeights[c];
+      for (let r = 0; r < 32; r++) {
+        const y = r * segH + 2;
+        const distFromMid = Math.abs(r - 15.5);
+        const lit = distFromMid < peak * 0.5;
+        if (!lit) {
+          ctx.fillStyle = '#181826';
+          ctx.fillRect(x, y, 24, segH - 4);
+          continue;
+        }
+        const frac = distFromMid / 16;
+        const col =
+          frac < 0.25
+            ? '#22c55e'
+            : frac < 0.5
+              ? '#facc15'
+              : frac < 0.72
+                ? '#ec4899'
+                : '#a855f7';
+        for (const target of [ctx, ectx]) {
+          target.fillStyle = col;
+          target.globalAlpha = target === ectx ? 0.9 : 0.96;
+          target.fillRect(x, y, 24, segH - 4);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animSolarEclipse') {
+    // Cosmic Solar Eclipse Corona: Pitch-black solar umbra bands framed by blazing white-gold & crimson coronal loops!
+    ctx.fillStyle = '#060304';
+    ctx.fillRect(0, 0, S, S);
+
+    // Sweeping fiery coronal plasma arches (seamless in X & Y)
+    for (const [baseY, amp, freq, phase] of [
+      [128, 42, 2, 0.2],
+      [256, 36, 1, 2.4],
+      [384, 42, 2, 4.1],
+    ]) {
+      for (const target of [ctx, ectx]) {
+        target.save();
+        target.lineCap = 'round';
+        for (const oy of [-S, 0, S]) {
+          for (const [col, lw, alpha] of [
+            ['#991b1b', target === ectx ? 48 : 58, 0.55],
+            ['#ea580c', target === ectx ? 26 : 32, 0.85],
+            ['#facc15', 10, 0.98],
+            ['#ffffff', 3.2, 1.0],
+          ] as [string, number, number][]) {
+            target.strokeStyle = col;
+            target.lineWidth = lw;
+            target.globalAlpha = alpha;
+            target.beginPath();
+            for (let x = 0; x <= S; x += 8) {
+              const t = (x / S) * Math.PI * 2;
+              const y = baseY + oy + Math.sin(t * freq + phase) * amp;
+              if (x === 0) target.moveTo(x, y);
+              else target.lineTo(x, y);
+            }
+            target.stroke();
+          }
+        }
+        target.restore();
+      }
+    }
+
+    // Dramatic pitch-black solar eclipse discs occluding parts of the blazing corona!
+    for (const [ex, ey, er] of [
+      [128, 128, 52],
+      [384, 384, 52],
+      [256, 256, 44],
+    ]) {
+      ctx.fillStyle = '#030203';
+      ctx.beginPath();
+      ctx.arc(ex, ey, er, 0, Math.PI * 2);
+      ctx.fill();
+      ectx.fillStyle = '#000000';
+      ectx.beginPath();
+      ectx.arc(ex, ey, er - 2, 0, Math.PI * 2);
+      ectx.fill();
+      // Blazing diamond-ring eclipse rim
+      for (const target of [ctx, ectx]) {
+        target.strokeStyle = '#fef08a';
+        target.lineWidth = 4;
+        target.beginPath();
+        target.arc(ex, ey, er, 0, Math.PI * 2);
+        target.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
   }
 
   const map = new THREE.CanvasTexture(mapCanvas);

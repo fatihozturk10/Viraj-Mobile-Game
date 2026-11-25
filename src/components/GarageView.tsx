@@ -774,6 +774,70 @@ const WheelRimPreview: React.FC<{ styleId: WheelStyleId; color: string }> = ({
           ))}
         </>
       )}
+      {styleId === 'wagonWoodWheel' && (
+        <>
+          <circle cx="20" cy="20" r="15.5" fill="none" stroke="#a1622a" strokeWidth="3.2" />
+          <circle cx="20" cy="20" r="17.2" fill="none" stroke="#52525b" strokeWidth="1.3" />
+          {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
+            <line
+              key={deg}
+              x1="20"
+              y1="20"
+              x2="20"
+              y2="5.5"
+              stroke="#b45309"
+              strokeWidth="1.5"
+              transform={`rotate(${deg} 20 20)`}
+            />
+          ))}
+        </>
+      )}
+      {styleId === 'monsterMudTire' && (
+        <>
+          <circle cx="20" cy="20" r="14.2" fill="none" stroke="#1f2937" strokeWidth="4.2" />
+          {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
+            <rect
+              key={deg}
+              x="18.2"
+              y="1.2"
+              width="3.6"
+              height="3.6"
+              rx="0.6"
+              fill="#374151"
+              transform={`rotate(${deg} 20 20)`}
+            />
+          ))}
+          <circle cx="20" cy="20" r="9.5" fill="none" stroke="#65a30d" strokeWidth="2" />
+        </>
+      )}
+      {styleId === 'voxelSquareWheel' && (
+        <>
+          <rect x="4" y="4" width="32" height="32" rx="4" fill="none" stroke="#1e293b" strokeWidth="4.5" />
+          <rect x="8.5" y="8.5" width="23" height="23" fill="none" stroke="#64748b" strokeWidth="2.4" />
+          <rect x="15" y="15" width="10" height="10" fill="#22d3ee" />
+        </>
+      )}
+      {styleId === 'spikedMadMaxWheel' && (
+        <>
+          <circle cx="20" cy="20" r="13.5" fill="#27272a" stroke="#7c3a1d" strokeWidth="3.2" />
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+            <polygon
+              key={deg}
+              points="20,1 18,6 22,6"
+              fill="#9ca3af"
+              transform={`rotate(${deg} 20 20)`}
+            />
+          ))}
+          <circle cx="20" cy="20" r="5" fill="#9a3412" stroke="#d4d4d8" strokeWidth="1.2" />
+        </>
+      )}
+      {styleId === 'hoverMaglevOrb' && (
+        <>
+          <circle cx="20" cy="20" r="15.2" fill="none" stroke="#22d3ee" strokeWidth="2.4" />
+          <circle cx="20" cy="20" r="10.2" fill="none" stroke="#c084fc" strokeWidth="1.6" strokeDasharray="4 2" />
+          <circle cx="20" cy="20" r="5.5" fill="#38bdf8" opacity="0.85" />
+        </>
+      )}
       <circle
         cx="20"
         cy="20"
@@ -1667,7 +1731,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                     [
                       { id: 'paint', label: 'Boya' },
                       { id: 'livery', label: 'Kaplama' },
-                      { id: 'wheels', label: 'Jant' },
+                      { id: 'wheels', label: 'Tekerlekler' },
                       { id: 'kit', label: 'Gövde Kiti' },
                       { id: 'spoiler', label: 'Rüzgarlık' },
                       { id: 'neon', label: 'Neon' },
@@ -2203,7 +2267,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                       className="flex items-center gap-2 overflow-x-auto no-scrollbar touch-pan-x py-0.5"
                     >
                       <span className="shrink-0 text-[11px] font-bold text-zinc-400">
-                        Jant Rengi:
+                        Tekerlek Rengi:
                       </span>
                       {WHEEL_COLORS.map((wc) => {
                         const active = wc.id === equippedWheel.color;
