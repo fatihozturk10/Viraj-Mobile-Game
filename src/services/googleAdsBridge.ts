@@ -94,6 +94,8 @@ let sdkLoaded = false;
 let sdkFailed = false;
 let sdkReadyPromise: Promise<boolean> | null = null;
 let admobInitPromise: Promise<boolean> | null = null;
+let admobInitialized = false;
+let pendingNativeSoundEnabled: boolean | null = null;
 
 function isAdMobUnitValid(id: string): boolean {
   return /^ca-app-pub-\d{10,20}\/\d{6,15}$/.test(id);
@@ -115,6 +117,9 @@ export function isGoogleAdsTestMode(): boolean {
 
 async function initNativeAdMob(soundEnabled: boolean): Promise<boolean> {
   if (!isGoogleAdsConfigured()) return false;
+  if (pendingNativeSoundEnabled === null) {
+    pendingNativeSoundEnabled = soundEnabled;
+  }
   if (admobInitPromise) return admobInitPromise;
 
   admobInitPromise = (async () => {
@@ -122,9 +127,13 @@ async function initNativeAdMob(soundEnabled: boolean): Promise<boolean> {
       await AdMob.initialize({
         initializeForTesting: TEST_MODE,
       });
-      await AdMob.setApplicationMuted({ muted: !soundEnabled }).catch(() => {});
+      admobInitialized = true;
+      const targetSound = pendingNativeSoundEnabled ?? soundEnabled;
+      await AdMob.setApplicationMuted({ muted: !targetSound }).catch(() => {});
       return true;
     } catch {
+      admobInitialized = false;
+      admobInitPromise = null;
       return false;
     }
   })();
@@ -222,7 +231,18 @@ export function syncGoogleAdsSound(soundEnabled: boolean): void {
   if (typeof window === 'undefined') return;
   if (Capacitor.isNativePlatform()) {
     if (!isGoogleAdsConfigured()) return;
-    void AdMob.setApplicationMuted({ muted: !soundEnabled }).catch(() => {});
+    pendingNativeSoundEnabled = soundEnabled;
+    if (admobInitialized) {
+      void AdMob.setApplicationMuted({ muted: !soundEnabled }).catch(() => {});
+    } else if (admobInitPromise) {
+      void admobInitPromise.then((ready) => {
+        if (ready && admobInitialized && pendingNativeSoundEnabled !== null) {
+          void AdMob.setApplicationMuted({
+            muted: !pendingNativeSoundEnabled,
+          }).catch(() => {});
+        }
+      });
+    }
     return;
   }
   if (!isGoogleAdsConfigured()) return;
