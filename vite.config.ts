@@ -16,7 +16,7 @@ export default defineConfig(() => {
         includeAssets: [
           'manifest.webmanifest',
           'manifest.json',
-          'icon.svg',
+          'favicon-32x32.png',
           'apple-touch-icon.png',
           'pwa-192x192.png',
           'pwa-512x512.png',

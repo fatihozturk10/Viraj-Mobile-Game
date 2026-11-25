@@ -427,220 +427,222 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
 
         {/* MAIN CONTENT AREA */}
         {activeTab === 'road' ? (
-          <div className="relative flex flex-1 flex-col justify-center overflow-hidden bg-zinc-950">
-            {/* Horizontal Left -> Right Track */}
-            <div
-              ref={trackScrollRef}
-              onWheel={handleWheelScroll}
-              onPointerDown={handleTrackPointerDown}
-              onPointerMove={handleTrackPointerMove}
-              onPointerUp={handleTrackPointerUp}
-              onPointerLeave={handleTrackPointerUp}
-              className="custom-scroll relative flex-1 overflow-x-auto overflow-y-hidden select-none cursor-grab active:cursor-grabbing"
-            >
+          <div className="relative flex min-h-0 flex-1 flex-col bg-zinc-950">
+            <div className="custom-scroll flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+              {/* Horizontal Left -> Right Track */}
               <div
-                className="relative flex min-h-[364px] items-start py-4"
-                style={{ width: `${totalTrackPx}px` }}
+                ref={trackScrollRef}
+                onWheel={handleWheelScroll}
+                onPointerDown={handleTrackPointerDown}
+                onPointerMove={handleTrackPointerMove}
+                onPointerUp={handleTrackPointerUp}
+                onPointerLeave={handleTrackPointerUp}
+                className="custom-scroll relative shrink-0 my-auto overflow-x-auto overflow-y-hidden select-none cursor-grab active:cursor-grabbing"
               >
-                {/* Continuous Horizontal Highway Progress Rail centered behind Level Number Nodes */}
                 <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-[60px] h-3 rounded-full border border-white/10 bg-zinc-900"
-                  style={{
-                    left: `${railStartPx}px`,
-                    width: `${railTotalSpanPx}px`,
-                  }}
+                  className="relative flex items-start pt-3 pb-8"
+                  style={{ width: `${totalTrackPx}px` }}
                 >
-                  {/* Asphalt center dashes */}
+                  {/* Continuous Horizontal Highway Progress Rail centered behind Level Number Nodes */}
                   <div
-                    className="absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 opacity-35"
+                    aria-hidden="true"
+                    className="pointer-events-none absolute top-[52px] h-3 rounded-full border border-white/10 bg-zinc-900"
                     style={{
-                      backgroundImage:
-                        'repeating-linear-gradient(90deg, #ffffff 0px, #ffffff 12px, transparent 12px, transparent 26px)',
+                      left: `${railStartPx}px`,
+                      width: `${railTotalSpanPx}px`,
                     }}
-                  />
-                  {/* Active illuminated highway fill from 1 -> current level */}
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-orange-400 shadow-[0_0_16px_rgba(251,191,36,0.55)] transition-[width] duration-500"
-                    style={{ width: `${railFillPx}px` }}
-                  />
-                </div>
-
-                {/* 100 Level Columns (Left -> Right: 1, 2, 3, ..., 100) */}
-                {LEVEL_ROAD_REWARDS.map((reward) => {
-                  const isUnlocked = playerLevel.level >= reward.level;
-                  const isClaimed = claimedSet.has(reward.level);
-                  const isClaimable = isUnlocked && !isClaimed;
-                  const isCurrent =
-                    playerLevel.level === reward.level ||
-                    (playerLevel.level >= MAX_LEVEL_ROAD_LEVEL &&
-                      reward.level === MAX_LEVEL_ROAD_LEVEL);
-                  const isFocused = focusLevel === reward.level;
-                  const isJustClaimed = recentlyClaimed === reward.level;
-                  const rMeta = ITEM_RARITY_META[reward.rarity];
-
-                  return (
+                  >
+                    {/* Asphalt center dashes */}
                     <div
-                      key={reward.level}
-                      className="relative flex shrink-0 flex-col items-center px-2"
-                      style={{ width: `${NODE_WIDTH_PX}px` }}
-                    >
-                      {/* Top Current-Level Marker (fixed height on every column) */}
-                      <div className="mb-1.5 flex h-5 w-full shrink-0 items-center justify-center">
-                        {isCurrent ? (
-                          <span className="rounded-md border border-amber-300/60 bg-amber-400 px-2 py-0.5 font-display text-[10px] font-black tracking-wider text-zinc-950 uppercase shadow-[0_0_14px_rgba(251,191,36,0.5)]">
-                            BURADASIN
-                          </span>
-                        ) : reward.kind === 'powerup_unlock' ? (
-                          <span className="rounded-md border border-cyan-400/50 bg-cyan-500/20 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-cyan-200 uppercase">
-                            GÜÇ AÇILIŞI
-                          </span>
-                        ) : reward.level === 100 ? (
-                          <span className="rounded-md border border-rose-400/60 bg-rose-500/25 px-2 py-0.5 font-display text-[9px] font-black tracking-wider text-rose-200 uppercase">
-                            BÜYÜK FİNAL
-                          </span>
-                        ) : reward.exclusive ? (
-                          <span className="rounded-md border border-amber-400/40 bg-amber-500/15 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-amber-300 uppercase">
-                            SEVİYE ÖZEL
-                          </span>
-                        ) : null}
-                      </div>
+                      className="absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 opacity-35"
+                      style={{
+                        backgroundImage:
+                          'repeating-linear-gradient(90deg, #ffffff 0px, #ffffff 12px, transparent 12px, transparent 26px)',
+                      }}
+                    />
+                    {/* Active illuminated highway fill from 1 -> current level */}
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-orange-400 shadow-[0_0_16px_rgba(251,191,36,0.55)] transition-[width] duration-500"
+                      style={{ width: `${railFillPx}px` }}
+                    />
+                  </div>
 
-                      {/* Numbered Level Node sitting squarely on the horizontal rail */}
+                  {/* 100 Level Columns (Left -> Right: 1, 2, 3, ..., 100) */}
+                  {LEVEL_ROAD_REWARDS.map((reward) => {
+                    const isUnlocked = playerLevel.level >= reward.level;
+                    const isClaimed = claimedSet.has(reward.level);
+                    const isClaimable = isUnlocked && !isClaimed;
+                    const isCurrent =
+                      playerLevel.level === reward.level ||
+                      (playerLevel.level >= MAX_LEVEL_ROAD_LEVEL &&
+                        reward.level === MAX_LEVEL_ROAD_LEVEL);
+                    const isFocused = focusLevel === reward.level;
+                    const isJustClaimed = recentlyClaimed === reward.level;
+                    const rMeta = ITEM_RARITY_META[reward.rarity];
+
+                    return (
                       <div
-                        className={`relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 font-mono-num text-base font-black transition-transform ${
-                          isClaimable
-                            ? 'scale-110 border-amber-300 bg-amber-400 text-zinc-950 shadow-[0_0_24px_rgba(251,191,36,0.7)]'
-                            : isClaimed
-                              ? 'border-emerald-400 bg-emerald-950 text-emerald-300'
-                              : isCurrent
-                                ? 'scale-105 border-amber-400 bg-zinc-900 text-amber-300'
-                                : 'border-white/15 bg-zinc-900 text-zinc-400'
-                        }`}
+                        key={reward.level}
+                        className="relative flex shrink-0 flex-col items-center px-2"
+                        style={{ width: `${NODE_WIDTH_PX}px` }}
                       >
-                        {reward.level}
-                        {isClaimed && (
-                          <span className="absolute -right-1.5 -bottom-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-zinc-950 bg-emerald-400 text-zinc-950">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Vertical stem from rail node down to reward card */}
-                      <div
-                        aria-hidden="true"
-                        className={`h-3.5 w-0.5 shrink-0 ${
-                          isUnlocked ? 'bg-amber-400/70' : 'bg-white/12'
-                        }`}
-                      />
-
-                      {/* Uniform Fixed-Size Reward Card */}
-                      <div
-                        className={`relative flex h-[244px] w-full shrink-0 flex-col items-center overflow-hidden rounded-2xl border p-3 text-center transition-colors ${
-                          isJustClaimed
-                            ? 'border-emerald-400 bg-emerald-950/60 shadow-[0_0_26px_rgba(52,211,153,0.45)]'
-                            : isClaimable
-                              ? 'border-amber-400/80 bg-zinc-900 shadow-[0_0_22px_rgba(251,191,36,0.22)]'
-                              : isFocused
-                                ? 'border-sky-400/80 bg-zinc-900 shadow-[0_0_20px_rgba(56,189,248,0.25)]'
-                                : isClaimed
-                                  ? 'border-emerald-500/30 bg-zinc-900/65'
-                                  : reward.exclusive || reward.kind === 'powerup_unlock'
-                                    ? `${rMeta.borderClass} bg-zinc-900/85`
-                                    : 'border-white/10 bg-zinc-900/55'
-                        }`}
-                      >
-                        {/* Top rarity bar */}
-                        <span
-                          aria-hidden="true"
-                          className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${rMeta.barClass}`}
-                        />
-
-                        {/* Slot 1: Fixed-height Badge Label */}
-                        <div className="flex h-5 w-full shrink-0 items-center justify-center">
-                          <span
-                            className={`max-w-full truncate rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider uppercase ${
-                              reward.kind === 'powerup_unlock'
-                                ? 'bg-cyan-500/20 text-cyan-200'
-                                : reward.exclusive
-                                  ? 'bg-amber-500/20 text-amber-200'
-                                  : 'bg-white/8 text-zinc-400'
-                            }`}
-                          >
-                            {reward.badgeLabel}
-                          </span>
-                        </div>
-
-                        {/* Slot 2: Fixed-height Visual Medallion */}
-                        <div className="my-1.5 flex h-[62px] w-full shrink-0 items-center justify-center">
-                          {renderRewardArtwork(reward)}
-                        </div>
-
-                        {/* Slot 3: Fixed-slot Title, Subtitle & Optional Bonus Gold */}
-                        <div className="flex w-full flex-1 flex-col items-center justify-start overflow-hidden">
-                          <div className="flex h-[30px] w-full shrink-0 items-center justify-center">
-                            <span className="line-clamp-2 font-display text-xs font-extrabold leading-[1.2] text-white">
-                              {reward.title}
+                        {/* Top Current-Level Marker (fixed height on every column) */}
+                        <div className="mb-1 flex h-5 w-full shrink-0 items-center justify-center">
+                          {isCurrent ? (
+                            <span className="rounded-md border border-amber-300/60 bg-amber-400 px-2 py-0.5 font-display text-[10px] font-black tracking-wider text-zinc-950 uppercase shadow-[0_0_14px_rgba(251,191,36,0.5)]">
+                              BURADASIN
                             </span>
-                          </div>
-                          <div className="mt-0.5 flex h-[28px] w-full shrink-0 items-start justify-center">
-                            <span className="line-clamp-2 text-[10px] leading-[1.3] text-zinc-400">
-                              {reward.subtitle}
+                          ) : reward.kind === 'powerup_unlock' ? (
+                            <span className="rounded-md border border-cyan-400/50 bg-cyan-500/20 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-cyan-200 uppercase">
+                              GÜÇ AÇILIŞI
                             </span>
-                          </div>
-                          <div className="mt-0.5 flex h-[18px] w-full shrink-0 items-center justify-center">
-                            {reward.bonusGold && reward.kind !== 'powerup_unlock' ? (
-                              <span className="inline-flex items-center justify-center gap-1 font-mono-num text-[10px] font-bold text-amber-300">
-                                <Coins className="h-3 w-3 text-amber-400" />
-                                <span>
-                                  +{reward.bonusGold.toLocaleString('tr-TR')} Altın
-                                </span>
-                              </span>
-                            ) : null}
-                          </div>
+                          ) : reward.level === 100 ? (
+                            <span className="rounded-md border border-rose-400/60 bg-rose-500/25 px-2 py-0.5 font-display text-[9px] font-black tracking-wider text-rose-200 uppercase">
+                              BÜYÜK FİNAL
+                            </span>
+                          ) : reward.exclusive ? (
+                            <span className="rounded-md border border-amber-400/40 bg-amber-500/15 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-amber-300 uppercase">
+                              SEVİYE ÖZEL
+                            </span>
+                          ) : null}
                         </div>
 
-                        {/* Slot 4: Fixed-height Claim / Status Action */}
-                        <div className="mt-auto w-full shrink-0 pt-1.5">
-                          {isClaimable ? (
-                            <button
-                              type="button"
-                              onClick={() => handleClaimNode(reward)}
-                              className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-amber-400 font-display text-xs font-black text-zinc-950 shadow-md transition-transform hover:bg-amber-300 active:scale-95 cursor-pointer"
-                            >
-                              {reward.kind === 'crate' ? (
-                                <>
-                                  <Package className="h-3.5 w-3.5" />
-                                  <span>SANDIĞI AÇ</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Gift className="h-3.5 w-3.5" />
-                                  <span>TOPLA</span>
-                                </>
-                              )}
-                            </button>
-                          ) : isClaimed ? (
-                            <div className="flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-emerald-500/35 bg-emerald-500/12 font-display text-[11px] font-extrabold text-emerald-300">
+                        {/* Numbered Level Node sitting squarely on the horizontal rail */}
+                        <div
+                          className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 font-mono-num text-base font-black transition-transform ${
+                            isClaimable
+                              ? 'scale-110 border-amber-300 bg-amber-400 text-zinc-950 shadow-[0_0_24px_rgba(251,191,36,0.7)]'
+                              : isClaimed
+                                ? 'border-emerald-400 bg-emerald-950 text-emerald-300'
+                                : isCurrent
+                                  ? 'scale-105 border-amber-400 bg-zinc-900 text-amber-300'
+                                  : 'border-white/15 bg-zinc-900 text-zinc-400'
+                          }`}
+                        >
+                          {reward.level}
+                          {isClaimed && (
+                            <span className="absolute -right-1.5 -bottom-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-zinc-950 bg-emerald-400 text-zinc-950">
                               <CheckCircle2 className="h-3.5 w-3.5" />
-                              <span>TOPLANDI</span>
-                            </div>
-                          ) : (
-                            <div className="flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-white/10 bg-zinc-950/80 font-mono-num text-[11px] font-bold text-zinc-500">
-                              <Lock className="h-3.5 w-3.5" />
-                              <span>Sv.{reward.level}</span>
-                            </div>
+                            </span>
                           )}
                         </div>
+
+                        {/* Vertical stem from rail node down to reward card */}
+                        <div
+                          aria-hidden="true"
+                          className={`h-3 w-0.5 shrink-0 ${
+                            isUnlocked ? 'bg-amber-400/70' : 'bg-white/12'
+                          }`}
+                        />
+
+                        {/* Uniform Fixed-Size Reward Card */}
+                        <div
+                          className={`relative flex h-[232px] w-full shrink-0 flex-col items-center overflow-hidden rounded-2xl border p-2.5 text-center transition-colors ${
+                            isJustClaimed
+                              ? 'border-emerald-400 bg-emerald-950/60 shadow-[0_0_26px_rgba(52,211,153,0.45)]'
+                              : isClaimable
+                                ? 'border-amber-400/80 bg-zinc-900 shadow-[0_0_22px_rgba(251,191,36,0.22)]'
+                                : isFocused
+                                  ? 'border-sky-400/80 bg-zinc-900 shadow-[0_0_20px_rgba(56,189,248,0.25)]'
+                                  : isClaimed
+                                    ? 'border-emerald-500/30 bg-zinc-900/65'
+                                    : reward.exclusive || reward.kind === 'powerup_unlock'
+                                      ? `${rMeta.borderClass} bg-zinc-900/85`
+                                      : 'border-white/10 bg-zinc-900/55'
+                          }`}
+                        >
+                          {/* Top rarity bar */}
+                          <span
+                            aria-hidden="true"
+                            className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${rMeta.barClass}`}
+                          />
+
+                          {/* Slot 1: Fixed-height Badge Label */}
+                          <div className="flex h-5 w-full shrink-0 items-center justify-center">
+                            <span
+                              className={`max-w-full truncate rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider uppercase ${
+                                reward.kind === 'powerup_unlock'
+                                  ? 'bg-cyan-500/20 text-cyan-200'
+                                  : reward.exclusive
+                                    ? 'bg-amber-500/20 text-amber-200'
+                                    : 'bg-white/8 text-zinc-400'
+                              }`}
+                            >
+                              {reward.badgeLabel}
+                            </span>
+                          </div>
+
+                          {/* Slot 2: Fixed-height Visual Medallion */}
+                          <div className="my-1 flex h-[58px] w-full shrink-0 items-center justify-center">
+                            {renderRewardArtwork(reward)}
+                          </div>
+
+                          {/* Slot 3: Fixed-slot Title, Subtitle & Optional Bonus Gold */}
+                          <div className="flex w-full flex-1 flex-col items-center justify-start overflow-hidden">
+                            <div className="flex h-[28px] w-full shrink-0 items-center justify-center">
+                              <span className="line-clamp-2 font-display text-xs font-extrabold leading-[1.18] text-white">
+                                {reward.title}
+                              </span>
+                            </div>
+                            <div className="mt-0.5 flex h-[26px] w-full shrink-0 items-start justify-center">
+                              <span className="line-clamp-2 text-[10px] leading-[1.28] text-zinc-400">
+                                {reward.subtitle}
+                              </span>
+                            </div>
+                            <div className="mt-0.5 flex h-[16px] w-full shrink-0 items-center justify-center">
+                              {reward.bonusGold && reward.kind !== 'powerup_unlock' ? (
+                                <span className="inline-flex items-center justify-center gap-1 font-mono-num text-[10px] font-bold text-amber-300">
+                                  <Coins className="h-3 w-3 text-amber-400" />
+                                  <span>
+                                    +{reward.bonusGold.toLocaleString('tr-TR')} Altın
+                                  </span>
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {/* Slot 4: Fixed-height Claim / Status Action */}
+                          <div className="mt-auto w-full shrink-0 pt-1">
+                            {isClaimable ? (
+                              <button
+                                type="button"
+                                onClick={() => handleClaimNode(reward)}
+                                className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-amber-400 font-display text-xs font-black text-zinc-950 shadow-md transition-transform hover:bg-amber-300 active:scale-95 cursor-pointer"
+                              >
+                                {reward.kind === 'crate' ? (
+                                  <>
+                                    <Package className="h-3.5 w-3.5" />
+                                    <span>SANDIĞI AÇ</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Gift className="h-3.5 w-3.5" />
+                                    <span>TOPLA</span>
+                                  </>
+                                )}
+                              </button>
+                            ) : isClaimed ? (
+                              <div className="flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-emerald-500/35 bg-emerald-500/12 font-display text-[11px] font-extrabold text-emerald-300">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                <span>TOPLANDI</span>
+                              </div>
+                            ) : (
+                              <div className="flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-white/10 bg-zinc-950/80 font-mono-num text-[11px] font-bold text-zinc-500">
+                                <Lock className="h-3.5 w-3.5" />
+                                <span>Sv.{reward.level}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
             {/* Bottom Legend */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-zinc-900/70 px-4 py-2 text-[11px] text-zinc-400 sm:px-6">
+            <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-zinc-900/70 px-4 py-2 text-[11px] text-zinc-400 sm:px-6">
               <span>
                 Sola/sağa kaydırarak 1&apos;den 100&apos;e kadar tüm seviye ödüllerini incele.
               </span>

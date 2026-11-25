@@ -582,8 +582,8 @@
     top: 48%;
   }
 
-  .top-\[62px\] {
-    top: 62px;
+  .top-\[52px\] {
+    top: 52px;
   }
 
   .-right-1 {
@@ -764,16 +764,20 @@
     margin-inline: auto;
   }
 
+  .my-1 {
+    margin-block: var(--spacing);
+  }
+
   .my-1\.5 {
     margin-block: calc(var(--spacing) * 1.5);
   }
 
-  .my-2 {
-    margin-block: calc(var(--spacing) * 2);
-  }
-
   .my-5 {
     margin-block: calc(var(--spacing) * 5);
+  }
+
+  .my-auto {
+    margin-block: auto;
   }
 
   .-mt-1 {
@@ -820,6 +824,10 @@
     margin-top: calc(var(--spacing) * 6);
   }
 
+  .mt-auto {
+    margin-top: auto;
+  }
+
   .-mb-1 {
     margin-bottom: calc(var(--spacing) * -1);
   }
@@ -834,10 +842,6 @@
 
   .mb-1 {
     margin-bottom: var(--spacing);
-  }
-
-  .mb-1\.5 {
-    margin-bottom: calc(var(--spacing) * 1.5);
   }
 
   .mb-2 {
@@ -1030,8 +1034,28 @@
     height: 3px;
   }
 
+  .h-\[16px\] {
+    height: 16px;
+  }
+
+  .h-\[26px\] {
+    height: 26px;
+  }
+
+  .h-\[28px\] {
+    height: 28px;
+  }
+
   .h-\[58dvh\] {
     height: 58dvh;
+  }
+
+  .h-\[58px\] {
+    height: 58px;
+  }
+
+  .h-\[232px\] {
+    height: 232px;
   }
 
   .h-full {
@@ -1140,10 +1164,6 @@
 
   .min-h-\[78px\] {
     min-height: 78px;
-  }
-
-  .min-h-\[372px\] {
-    min-height: 372px;
   }
 
   .\!w-24 {
@@ -1534,6 +1554,10 @@
 
   .justify-end {
     justify-content: flex-end;
+  }
+
+  .justify-start {
+    justify-content: flex-start;
   }
 
   .gap-0\.5 {
@@ -4237,6 +4261,10 @@
     padding: calc(var(--spacing) * 2);
   }
 
+  .p-2\.5 {
+    padding: calc(var(--spacing) * 2.5);
+  }
+
   .p-3 {
     padding: calc(var(--spacing) * 3);
   }
@@ -4329,10 +4357,6 @@
     padding-block: calc(var(--spacing) * 4);
   }
 
-  .py-5 {
-    padding-block: calc(var(--spacing) * 5);
-  }
-
   .py-6 {
     padding-block: calc(var(--spacing) * 6);
   }
@@ -4417,6 +4441,10 @@
     padding-bottom: calc(var(--spacing) * 3.5);
   }
 
+  .pb-8 {
+    padding-bottom: calc(var(--spacing) * 8);
+  }
+
   .pl-2\.5 {
     padding-left: calc(var(--spacing) * 2.5);
   }
@@ -4499,6 +4527,16 @@
 
   .text-\[26px\] {
     font-size: 26px;
+  }
+
+  .leading-\[1\.18\] {
+    --tw-leading: 1.18;
+    line-height: 1.18;
+  }
+
+  .leading-\[1\.28\] {
+    --tw-leading: 1.28;
+    line-height: 1.28;
   }
 
   .leading-none {
@@ -5043,6 +5081,11 @@
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
 
+  .shadow-\[0_3px_12px_rgba\(0\,0\,0\,0\.45\)\] {
+    --tw-shadow: 0 3px 12px var(--tw-shadow-color, #00000073);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+
   .shadow-\[0_4px_18px_rgba\(245\,158\,11\,0\.25\)\] {
     --tw-shadow: 0 4px 18px var(--tw-shadow-color, #f59e0b40);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -5343,6 +5386,10 @@
 
     :is(:where(.group):hover .group-hover\:text-zinc-200) {
       color: var(--color-zinc-200);
+    }
+
+    :is(:where(.group):hover .group-hover\:text-zinc-300) {
+      color: var(--color-zinc-300);
     }
   }
 
@@ -5679,6 +5726,16 @@
       }
     }
 
+    .hover\:bg-white\/\[0\.06\]:hover {
+      background-color: #ffffff0f;
+    }
+
+    @supports (color: color-mix(in lab, red, red)) {
+      .hover\:bg-white\/\[0\.06\]:hover {
+        background-color: color-mix(in oklab, var(--color-white) 6%, transparent);
+      }
+    }
+
     .hover\:bg-zinc-800:hover {
       background-color: var(--color-zinc-800);
     }
@@ -5931,6 +5988,10 @@
       width: calc(var(--spacing) * 9);
     }
 
+    .sm\:w-10 {
+      width: calc(var(--spacing) * 10);
+    }
+
     .sm\:w-24 {
       width: calc(var(--spacing) * 24);
     }
@@ -6098,14 +6159,6 @@
     .sm\:border {
       border-style: var(--tw-border-style);
       border-width: 1px;
-    }
-
-    .sm\:bg-transparent {
-      background-color: #0000;
-    }
-
-    .sm\:p-0 {
-      padding: 0;
     }
 
     .sm\:p-1 {
@@ -6564,6 +6617,7 @@
 
 .custom-scroll::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 .custom-scroll::-webkit-scrollbar-track {

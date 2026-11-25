@@ -67,7 +67,6 @@ import {
   SegmentedXpBar,
   UpgradeLevelMeter,
 } from './DriverLevelEmblem';
-import { PWAInstallButton } from './PWAInstallButton';
 import {
   AchievementCategory,
   BODY_KITS,
@@ -1150,8 +1149,6 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                 <span>{garageMenuCollapsed ? 'Göster' : 'Gizle'}</span>
               </button>
             )}
-
-            {phase === 'menu' && <PWAInstallButton />}
 
             {(isPlaying || phase === 'paused') && (
               <>

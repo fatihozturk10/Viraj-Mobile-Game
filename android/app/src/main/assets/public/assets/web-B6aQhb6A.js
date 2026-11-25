@@ -1,4 +1,4 @@
-import { i as WebPlugin } from "./index-DiYaEAHX.js";
+import { i as WebPlugin } from "./index-DkdtuGLC.js";
 // node_modules/@capacitor/screen-orientation/dist/esm/web.js
 var ScreenOrientationWeb = class extends WebPlugin {
 	constructor() {

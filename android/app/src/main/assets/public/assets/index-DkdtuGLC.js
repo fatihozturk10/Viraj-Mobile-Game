@@ -59637,7 +59637,7 @@ var CareerMapScenery = import_react.memo(({ mapWidth, mapHeight, levelCoords, fu
 });
 CareerMapScenery.displayName = "CareerMapScenery";
 // node_modules/@capacitor/app/dist/esm/index.js
-var App$1 = registerPlugin("App", { web: () => __vitePreload(() => import("./web-DQAe-tA9.js").then((m) => new m.AppWeb()), []) });
+var App$1 = registerPlugin("App", { web: () => __vitePreload(() => import("./web-yYsj9KDD.js").then((m) => new m.AppWeb()), []) });
 // node_modules/@capacitor/haptics/dist/esm/definitions.js
 var ImpactStyle;
 (function(ImpactStyle) {
@@ -59682,11 +59682,11 @@ var NotificationType;
 	NotificationType["Error"] = "ERROR";
 })(NotificationType || (NotificationType = {}));
 // node_modules/@capacitor/haptics/dist/esm/index.js
-var Haptics = registerPlugin("Haptics", { web: () => __vitePreload(() => import("./web-O5BdqaP9.js").then((m) => new m.HapticsWeb()), []) });
+var Haptics = registerPlugin("Haptics", { web: () => __vitePreload(() => import("./web-CEimfBG-.js").then((m) => new m.HapticsWeb()), []) });
 // node_modules/@capacitor/screen-orientation/dist/esm/index.js
-var ScreenOrientation = registerPlugin("ScreenOrientation", { web: () => __vitePreload(() => import("./web-Dlr91s9P.js").then((m) => new m.ScreenOrientationWeb()), []) });
+var ScreenOrientation = registerPlugin("ScreenOrientation", { web: () => __vitePreload(() => import("./web-B6aQhb6A.js").then((m) => new m.ScreenOrientationWeb()), []) });
 // node_modules/@capacitor/splash-screen/dist/esm/index.js
-var SplashScreen = registerPlugin("SplashScreen", { web: () => __vitePreload(() => import("./web-18q6_3Ee.js").then((m) => new m.SplashScreenWeb()), []) });
+var SplashScreen = registerPlugin("SplashScreen", { web: () => __vitePreload(() => import("./web-COEYPzBm.js").then((m) => new m.SplashScreenWeb()), []) });
 // node_modules/@capacitor/status-bar/dist/esm/definitions.js
 var Style;
 (function(Style) {
@@ -118120,25 +118120,33 @@ var GameHud = import_react.memo(({ phase, gameMode, showGameOverModal, stats, go
 								})
 							]
 						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "col-start-1 row-start-1 pointer-events-auto flex min-w-0 items-baseline gap-x-2",
-							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "font-display text-xl font-extrabold tracking-tight text-white whitespace-nowrap drop-shadow sm:text-2xl",
-									children: "Viraj"
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "text-xs text-zinc-400 hidden sm:inline",
-									children: "Sonsuz Otoyol"
-								}),
-								stats.bestScore > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									"aria-hidden": "true",
-									className: "hidden sm:inline text-zinc-500",
-									children: "·"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-									className: "hidden sm:inline font-mono-num text-xs font-bold text-amber-300 whitespace-nowrap drop-shadow",
-									children: ["Rekor ", stats.bestScore.toLocaleString("tr-TR")]
-								})] })
-							]
+							className: "col-start-1 row-start-1 pointer-events-auto flex min-w-0 items-center gap-2.5",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: "/pwa-192x192.png",
+								alt: "Viraj Drift",
+								referrerPolicy: "no-referrer",
+								className: "h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl border border-amber-400/45 object-cover shadow-[0_3px_12px_rgba(0,0,0,0.45)]"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex min-w-0 items-baseline gap-x-2",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "font-display text-xl font-extrabold tracking-tight text-white whitespace-nowrap drop-shadow sm:text-2xl",
+										children: "Viraj"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-xs text-zinc-400 hidden sm:inline",
+										children: "Sonsuz Otoyol"
+									}),
+									stats.bestScore > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										"aria-hidden": "true",
+										className: "hidden sm:inline text-zinc-500",
+										children: "·"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										className: "hidden sm:inline font-mono-num text-xs font-bold text-amber-300 whitespace-nowrap drop-shadow",
+										children: ["Rekor ", stats.bestScore.toLocaleString("tr-TR")]
+									})] })
+								]
+							})]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: `pointer-events-auto relative flex items-center gap-1.5 sm:gap-2 shrink-0 ${phase === "menu" ? "col-start-2 row-start-1 justify-self-end sm:row-span-2" : ""}`,
@@ -118466,12 +118474,12 @@ var GameHud = import_react.memo(({ phase, gameMode, showGameOverModal, stats, go
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "flex flex-col gap-3.5 px-4 pt-3.5 pb-1 sm:p-5",
 						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "flex items-center justify-between",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 									type: "button",
 									onClick: onOpenGarage,
-									className: "flex items-center justify-between gap-2.5 rounded-xl bg-white/[0.03] px-3 py-2 text-left group cursor-pointer sm:bg-transparent sm:p-0",
+									className: "flex w-full items-center justify-between gap-2.5 rounded-xl bg-white/[0.03] px-3 py-2 text-left group cursor-pointer transition-colors hover:bg-white/[0.06]",
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 										className: "flex items-center gap-2.5 min-w-0",
 										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
@@ -118487,14 +118495,8 @@ var GameHud = import_react.memo(({ phase, gameMode, showGameOverModal, stats, go
 												children: [licensePlate, " · Garajı Aç"]
 											})]
 										})]
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRight, { className: "h-4 w-4 text-zinc-500 sm:hidden shrink-0" })]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex items-center justify-center gap-2 rounded-xl border border-white/8 bg-zinc-900/75 px-3 py-2 text-[11px] font-bold text-zinc-300",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Layers$1, { className: "h-3.5 w-3.5 text-sky-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "whitespace-nowrap",
-										children: "Dinamik Hava · Gece/Gündüz · 4 Biyom"
-									})]
-								})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRight, { className: "h-4 w-4 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-300 shrink-0" })]
+								})
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								className: "flex flex-col gap-1.5",
@@ -122641,133 +122643,145 @@ var LevelRoadModal = ({ open, playerLevel, claimedLevels, focusLevel, onClose, o
 					})]
 				}),
 				activeTab === "road" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "relative flex flex-1 flex-col justify-center overflow-hidden bg-zinc-950",
+					className: "relative flex min-h-0 flex-1 flex-col bg-zinc-950",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						ref: trackScrollRef,
-						onWheel: handleWheelScroll,
-						onPointerDown: handleTrackPointerDown,
-						onPointerMove: handleTrackPointerMove,
-						onPointerUp: handleTrackPointerUp,
-						onPointerLeave: handleTrackPointerUp,
-						className: "custom-scroll relative flex-1 overflow-x-auto overflow-y-hidden select-none cursor-grab active:cursor-grabbing",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "relative flex h-full min-h-[372px] items-center py-5",
-							style: { width: `${totalTrackPx}px` },
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								"aria-hidden": "true",
-								className: "pointer-events-none absolute top-[62px] h-3 rounded-full border border-white/10 bg-zinc-900",
-								style: {
-									left: `${railStartPx}px`,
-									width: `${railTotalSpanPx}px`
-								},
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 opacity-35",
-									style: { backgroundImage: "repeating-linear-gradient(90deg, #ffffff 0px, #ffffff 12px, transparent 12px, transparent 26px)" }
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-orange-400 shadow-[0_0_16px_rgba(251,191,36,0.55)] transition-[width] duration-500",
-									style: { width: `${railFillPx}px` }
-								})]
-							}), LEVEL_ROAD_REWARDS.map((reward) => {
-								const isUnlocked = playerLevel.level >= reward.level;
-								const isClaimed = claimedSet.has(reward.level);
-								const isClaimable = isUnlocked && !isClaimed;
-								const isCurrent = playerLevel.level === reward.level || playerLevel.level >= 100 && reward.level === 100;
-								const isFocused = focusLevel === reward.level;
-								const isJustClaimed = recentlyClaimed === reward.level;
-								const rMeta = ITEM_RARITY_META[reward.rarity];
-								return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "relative flex h-full shrink-0 flex-col items-center px-2",
-									style: { width: `${NODE_WIDTH_PX}px` },
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "mb-1.5 flex h-5 items-center justify-center",
-											children: isCurrent ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "rounded-md border border-amber-300/60 bg-amber-400 px-2 py-0.5 font-display text-[10px] font-black tracking-wider text-zinc-950 uppercase shadow-[0_0_14px_rgba(251,191,36,0.5)]",
-												children: "BURADASIN"
-											}) : reward.kind === "powerup_unlock" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "rounded-md border border-cyan-400/50 bg-cyan-500/20 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-cyan-200 uppercase",
-												children: "GÜÇ AÇILIŞI"
-											}) : reward.level === 100 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "rounded-md border border-rose-400/60 bg-rose-500/25 px-2 py-0.5 font-display text-[9px] font-black tracking-wider text-rose-200 uppercase",
-												children: "BÜYÜK FİNAL"
-											}) : reward.exclusive ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "rounded-md border border-amber-400/40 bg-amber-500/15 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-amber-300 uppercase",
-												children: "SEVİYE ÖZEL"
-											}) : null
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: `relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl border-2 font-mono-num text-base font-black transition-transform ${isClaimable ? "scale-110 border-amber-300 bg-amber-400 text-zinc-950 shadow-[0_0_24px_rgba(251,191,36,0.7)]" : isClaimed ? "border-emerald-400 bg-emerald-950 text-emerald-300" : isCurrent ? "scale-105 border-amber-400 bg-zinc-900 text-amber-300" : "border-white/15 bg-zinc-900 text-zinc-400"}`,
-											children: [reward.level, isClaimed && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "absolute -right-1.5 -bottom-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-zinc-950 bg-emerald-400 text-zinc-950",
-												children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "h-3.5 w-3.5" })
-											})]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											"aria-hidden": "true",
-											className: `h-4 w-0.5 ${isUnlocked ? "bg-amber-400/70" : "bg-white/12"}`
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: `relative flex w-full flex-1 flex-col items-center justify-between overflow-hidden rounded-2xl border p-3 text-center transition-all ${isJustClaimed ? "scale-105 border-emerald-400 bg-emerald-950/60 shadow-[0_0_26px_rgba(52,211,153,0.45)]" : isClaimable ? "border-amber-400/80 bg-zinc-900 shadow-[0_0_22px_rgba(251,191,36,0.22)]" : isFocused ? "border-sky-400/80 bg-zinc-900 shadow-[0_0_20px_rgba(56,189,248,0.25)]" : isClaimed ? "border-emerald-500/30 bg-zinc-900/65" : reward.exclusive || reward.kind === "powerup_unlock" ? `${rMeta.borderClass} bg-zinc-900/85` : "border-white/10 bg-zinc-900/55"}`,
-											children: [
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													"aria-hidden": "true",
-													className: `pointer-events-none absolute inset-x-0 top-0 h-1 ${rMeta.barClass}`
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-													className: "mt-0.5 flex flex-col items-center gap-1",
-													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-														className: `rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider uppercase ${reward.kind === "powerup_unlock" ? "bg-cyan-500/20 text-cyan-200" : reward.exclusive ? "bg-amber-500/20 text-amber-200" : "bg-white/8 text-zinc-400"}`,
-														children: reward.badgeLabel
-													})
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-													className: "my-2 flex flex-col items-center",
-													children: renderRewardArtwork(reward)
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-													className: "flex w-full flex-col gap-0.5",
-													children: [
-														/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-															className: "line-clamp-2 font-display text-xs font-extrabold leading-tight text-white",
-															children: reward.title
-														}),
-														/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-															className: "line-clamp-2 text-[10px] leading-snug text-zinc-400",
-															children: reward.subtitle
-														}),
-														reward.bonusGold && reward.kind !== "powerup_unlock" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-															className: "mt-0.5 inline-flex items-center justify-center gap-1 font-mono-num text-[10px] font-bold text-amber-300",
-															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coins, { className: "h-3 w-3 text-amber-400" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-																"+",
-																reward.bonusGold.toLocaleString("tr-TR"),
-																" Altın"
-															] })]
+						className: "custom-scroll flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							ref: trackScrollRef,
+							onWheel: handleWheelScroll,
+							onPointerDown: handleTrackPointerDown,
+							onPointerMove: handleTrackPointerMove,
+							onPointerUp: handleTrackPointerUp,
+							onPointerLeave: handleTrackPointerUp,
+							className: "custom-scroll relative shrink-0 my-auto overflow-x-auto overflow-y-hidden select-none cursor-grab active:cursor-grabbing",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "relative flex items-start pt-3 pb-8",
+								style: { width: `${totalTrackPx}px` },
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									"aria-hidden": "true",
+									className: "pointer-events-none absolute top-[52px] h-3 rounded-full border border-white/10 bg-zinc-900",
+									style: {
+										left: `${railStartPx}px`,
+										width: `${railTotalSpanPx}px`
+									},
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 opacity-35",
+										style: { backgroundImage: "repeating-linear-gradient(90deg, #ffffff 0px, #ffffff 12px, transparent 12px, transparent 26px)" }
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-orange-400 shadow-[0_0_16px_rgba(251,191,36,0.55)] transition-[width] duration-500",
+										style: { width: `${railFillPx}px` }
+									})]
+								}), LEVEL_ROAD_REWARDS.map((reward) => {
+									const isUnlocked = playerLevel.level >= reward.level;
+									const isClaimed = claimedSet.has(reward.level);
+									const isClaimable = isUnlocked && !isClaimed;
+									const isCurrent = playerLevel.level === reward.level || playerLevel.level >= 100 && reward.level === 100;
+									const isFocused = focusLevel === reward.level;
+									const isJustClaimed = recentlyClaimed === reward.level;
+									const rMeta = ITEM_RARITY_META[reward.rarity];
+									return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "relative flex shrink-0 flex-col items-center px-2",
+										style: { width: `${NODE_WIDTH_PX}px` },
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+												className: "mb-1 flex h-5 w-full shrink-0 items-center justify-center",
+												children: isCurrent ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "rounded-md border border-amber-300/60 bg-amber-400 px-2 py-0.5 font-display text-[10px] font-black tracking-wider text-zinc-950 uppercase shadow-[0_0_14px_rgba(251,191,36,0.5)]",
+													children: "BURADASIN"
+												}) : reward.kind === "powerup_unlock" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "rounded-md border border-cyan-400/50 bg-cyan-500/20 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-cyan-200 uppercase",
+													children: "GÜÇ AÇILIŞI"
+												}) : reward.level === 100 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "rounded-md border border-rose-400/60 bg-rose-500/25 px-2 py-0.5 font-display text-[9px] font-black tracking-wider text-rose-200 uppercase",
+													children: "BÜYÜK FİNAL"
+												}) : reward.exclusive ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "rounded-md border border-amber-400/40 bg-amber-500/15 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-amber-300 uppercase",
+													children: "SEVİYE ÖZEL"
+												}) : null
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: `relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 font-mono-num text-base font-black transition-transform ${isClaimable ? "scale-110 border-amber-300 bg-amber-400 text-zinc-950 shadow-[0_0_24px_rgba(251,191,36,0.7)]" : isClaimed ? "border-emerald-400 bg-emerald-950 text-emerald-300" : isCurrent ? "scale-105 border-amber-400 bg-zinc-900 text-amber-300" : "border-white/15 bg-zinc-900 text-zinc-400"}`,
+												children: [reward.level, isClaimed && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "absolute -right-1.5 -bottom-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-zinc-950 bg-emerald-400 text-zinc-950",
+													children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "h-3.5 w-3.5" })
+												})]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+												"aria-hidden": "true",
+												className: `h-3 w-0.5 shrink-0 ${isUnlocked ? "bg-amber-400/70" : "bg-white/12"}`
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: `relative flex h-[232px] w-full shrink-0 flex-col items-center overflow-hidden rounded-2xl border p-2.5 text-center transition-colors ${isJustClaimed ? "border-emerald-400 bg-emerald-950/60 shadow-[0_0_26px_rgba(52,211,153,0.45)]" : isClaimable ? "border-amber-400/80 bg-zinc-900 shadow-[0_0_22px_rgba(251,191,36,0.22)]" : isFocused ? "border-sky-400/80 bg-zinc-900 shadow-[0_0_20px_rgba(56,189,248,0.25)]" : isClaimed ? "border-emerald-500/30 bg-zinc-900/65" : reward.exclusive || reward.kind === "powerup_unlock" ? `${rMeta.borderClass} bg-zinc-900/85` : "border-white/10 bg-zinc-900/55"}`,
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+														"aria-hidden": "true",
+														className: `pointer-events-none absolute inset-x-0 top-0 h-1 ${rMeta.barClass}`
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "flex h-5 w-full shrink-0 items-center justify-center",
+														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: `max-w-full truncate rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider uppercase ${reward.kind === "powerup_unlock" ? "bg-cyan-500/20 text-cyan-200" : reward.exclusive ? "bg-amber-500/20 text-amber-200" : "bg-white/8 text-zinc-400"}`,
+															children: reward.badgeLabel
 														})
-													]
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-													className: "mt-2.5 w-full",
-													children: isClaimable ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-														type: "button",
-														onClick: () => handleClaimNode(reward),
-														className: "flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-amber-400 font-display text-xs font-black text-zinc-950 shadow-md transition-transform hover:bg-amber-300 active:scale-95 cursor-pointer",
-														children: reward.kind === "crate" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Package, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "SANDIĞI AÇ" })] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gift, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "TOPLA" })] })
-													}) : isClaimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-														className: "flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-emerald-500/35 bg-emerald-500/12 font-display text-[11px] font-extrabold text-emerald-300",
-														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "TOPLANDI" })]
-													}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-														className: "flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-white/10 bg-zinc-950/80 font-mono-num text-[11px] font-bold text-zinc-500",
-														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Lock, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Sv.", reward.level] })]
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "my-1 flex h-[58px] w-full shrink-0 items-center justify-center",
+														children: renderRewardArtwork(reward)
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "flex w-full flex-1 flex-col items-center justify-start overflow-hidden",
+														children: [
+															/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+																className: "flex h-[28px] w-full shrink-0 items-center justify-center",
+																children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																	className: "line-clamp-2 font-display text-xs font-extrabold leading-[1.18] text-white",
+																	children: reward.title
+																})
+															}),
+															/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+																className: "mt-0.5 flex h-[26px] w-full shrink-0 items-start justify-center",
+																children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+																	className: "line-clamp-2 text-[10px] leading-[1.28] text-zinc-400",
+																	children: reward.subtitle
+																})
+															}),
+															/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+																className: "mt-0.5 flex h-[16px] w-full shrink-0 items-center justify-center",
+																children: reward.bonusGold && reward.kind !== "powerup_unlock" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+																	className: "inline-flex items-center justify-center gap-1 font-mono-num text-[10px] font-bold text-amber-300",
+																	children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coins, { className: "h-3 w-3 text-amber-400" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+																		"+",
+																		reward.bonusGold.toLocaleString("tr-TR"),
+																		" Altın"
+																	] })]
+																}) : null
+															})
+														]
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "mt-auto w-full shrink-0 pt-1",
+														children: isClaimable ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+															type: "button",
+															onClick: () => handleClaimNode(reward),
+															className: "flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-amber-400 font-display text-xs font-black text-zinc-950 shadow-md transition-transform hover:bg-amber-300 active:scale-95 cursor-pointer",
+															children: reward.kind === "crate" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Package, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "SANDIĞI AÇ" })] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gift, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "TOPLA" })] })
+														}) : isClaimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+															className: "flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-emerald-500/35 bg-emerald-500/12 font-display text-[11px] font-extrabold text-emerald-300",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "TOPLANDI" })]
+														}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+															className: "flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-white/10 bg-zinc-950/80 font-mono-num text-[11px] font-bold text-zinc-500",
+															children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Lock, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Sv.", reward.level] })]
+														})
 													})
-												})
-											]
-										})
-									]
-								}, reward.level);
-							})]
+												]
+											})
+										]
+									}, reward.level);
+								})]
+							})
 						})
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-zinc-900/70 px-4 py-2 text-[11px] text-zinc-400 sm:px-6",
+						className: "shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-zinc-900/70 px-4 py-2 text-[11px] text-zinc-400 sm:px-6",
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Sola/sağa kaydırarak 1'den 100'e kadar tüm seviye ödüllerini incele." }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 							className: "font-semibold text-amber-300",
 							children: "Özel boyalar, aksesuarlar ve otoyol güçleri sadece bu yoldan açılır!"
@@ -123173,7 +123187,7 @@ var Weekday;
 	Weekday[Weekday["Saturday"] = 7] = "Saturday";
 })(Weekday || (Weekday = {}));
 // node_modules/@capacitor/local-notifications/dist/esm/index.js
-var LocalNotifications = registerPlugin("LocalNotifications", { web: () => __vitePreload(() => import("./web-BeUMyIuB.js").then((m) => new m.LocalNotificationsWeb()), []) });
+var LocalNotifications = registerPlugin("LocalNotifications", { web: () => __vitePreload(() => import("./web-DpVJwSxW.js").then((m) => new m.LocalNotificationsWeb()), []) });
 // src/services/notificationService.ts
 var STORAGE_KEY$1 = "viraj_notification_settings_v1";
 var ANDROID_CHANNEL_ID = "viraj_reminders";
@@ -137925,7 +137939,7 @@ var NativeAdPluginEvents;
 	NativeAdPluginEvents["Closed"] = "nativeAdClosed";
 	NativeAdPluginEvents["AdPaid"] = "nativeAdPaid";
 })(NativeAdPluginEvents || (NativeAdPluginEvents = {}));
-var AdMob = registerPlugin("AdMob", { web: () => __vitePreload(() => import("./web-DK1SxwoW.js").then((m) => new m.AdMobWeb()), []) });
+var AdMob = registerPlugin("AdMob", { web: () => __vitePreload(() => import("./web-Diu93Bo1.js").then((m) => new m.AdMobWeb()), []) });
 // src/services/googleAdsBridge.ts
 var DEFAULT_ADMOB_REWARDED_ID = "ca-app-pub-6050401092680348/4424510794";
 var DEFAULT_ADMOB_INTERSTITIAL_ID = "ca-app-pub-6050401092680348/1243813688";
