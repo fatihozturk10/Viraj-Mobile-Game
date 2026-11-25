@@ -22449,26 +22449,6 @@ var Disc3 = createLucideIcon("disc-3", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
-var Download = createLucideIcon("download", [
-	["path", {
-		d: "M12 15V3",
-		key: "m9g1x1"
-	}],
-	["path", {
-		d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
-		key: "ih7n3h"
-	}],
-	["path", {
-		d: "m7 10 5 5 5-5",
-		key: "brsn70"
-	}]
-]);
-/**
-* @license lucide-react v0.546.0 - ISC
-*
-* This source code is licensed under the ISC license.
-* See the LICENSE file in the root directory of this source tree.
-*/
 var EyeOff = createLucideIcon("eye-off", [
 	["path", {
 		d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
@@ -22632,16 +22612,6 @@ var House = createLucideIcon("house", [["path", {
 }], ["path", {
 	d: "M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
 	key: "r6nss1"
-}]]);
-/**
-* @license lucide-react v0.546.0 - ISC
-*
-* This source code is licensed under the ISC license.
-* See the LICENSE file in the root directory of this source tree.
-*/
-var Infinity$1 = createLucideIcon("infinity", [["path", {
-	d: "M6 16c5 0 7-8 12-8a4 4 0 0 1 0 8c-5 0-7-8-12-8a4 4 0 1 0 0 8",
-	key: "18ogeb"
 }]]);
 /**
 * @license lucide-react v0.546.0 - ISC
@@ -51464,7 +51434,7 @@ async function fetchLeaderboard(period) {
 }
 // src/services/adManager.ts
 var ADS_STATE_KEY = "viraj_ads_state_v1";
-var AD_FREE_PRICE_LABEL = "49,99 ₺";
+var AD_FREE_PRICE_LABEL = "9,99 ₺";
 var DAILY_WHEEL_SLICES = [
 	{
 		id: "gold_30",
@@ -52602,48 +52572,14 @@ var CareerProgressManager = class {
 	}
 };
 // src/types/game.ts
-var GAME_MODES = [
-	{
-		id: "endless",
-		label: "Sonsuz Otoyol",
-		shortLabel: "Sonsuz",
-		tagline: "Klasik tek yön trafik ve kesintisiz sürüş",
-		rewardMultiplier: 1,
-		accentHex: "#f59e0b"
-	},
-	{
-		id: "pursuit",
-		label: "Polis Takibi",
-		shortLabel: "Polis",
-		tagline: "1★-5★ aranma, polis barikatları ve kaçış bonusu",
-		rewardMultiplier: 1.45,
-		accentHex: "#3b82f6"
-	},
-	{
-		id: "twoway",
-		label: "Çift Yön",
-		shortLabel: "Çift Yön",
-		tagline: "Sol şeritte karşıdan gelen trafik, ters şerit ×2 puan",
-		rewardMultiplier: 1.5,
-		accentHex: "#ef4444"
-	},
-	{
-		id: "timeattack",
-		label: "Zamana Karşı",
-		shortLabel: "Zaman",
-		tagline: "45 sn ile başla, her 750 m kontrol noktasında +14 sn kazan",
-		rewardMultiplier: 1.3,
-		accentHex: "#10b981"
-	},
-	{
-		id: "bomb",
-		label: "Hız Bombası",
-		shortLabel: "Bomba",
-		tagline: "Minimum hızın altına düşersen 5 sn fitil patlar",
-		rewardMultiplier: 1.45,
-		accentHex: "#f97316"
-	}
-];
+var GAME_MODES = [{
+	id: "endless",
+	label: "Sonsuz Otoyol",
+	shortLabel: "Sonsuz",
+	tagline: "Klasik tek yön trafik ve kesintisiz sürüş",
+	rewardMultiplier: 1,
+	accentHex: "#f59e0b"
+}];
 var CAMERA_MODES = [
 	{
 		id: "chase",
@@ -59637,7 +59573,7 @@ var CareerMapScenery = import_react.memo(({ mapWidth, mapHeight, levelCoords, fu
 });
 CareerMapScenery.displayName = "CareerMapScenery";
 // node_modules/@capacitor/app/dist/esm/index.js
-var App$1 = registerPlugin("App", { web: () => __vitePreload(() => import("./web-yYsj9KDD.js").then((m) => new m.AppWeb()), []) });
+var App$1 = registerPlugin("App", { web: () => __vitePreload(() => import("./web-gPLKkiAY.js").then((m) => new m.AppWeb()), []) });
 // node_modules/@capacitor/haptics/dist/esm/definitions.js
 var ImpactStyle;
 (function(ImpactStyle) {
@@ -59682,11 +59618,11 @@ var NotificationType;
 	NotificationType["Error"] = "ERROR";
 })(NotificationType || (NotificationType = {}));
 // node_modules/@capacitor/haptics/dist/esm/index.js
-var Haptics = registerPlugin("Haptics", { web: () => __vitePreload(() => import("./web-CEimfBG-.js").then((m) => new m.HapticsWeb()), []) });
+var Haptics = registerPlugin("Haptics", { web: () => __vitePreload(() => import("./web-CU9k6XZE.js").then((m) => new m.HapticsWeb()), []) });
 // node_modules/@capacitor/screen-orientation/dist/esm/index.js
-var ScreenOrientation = registerPlugin("ScreenOrientation", { web: () => __vitePreload(() => import("./web-B6aQhb6A.js").then((m) => new m.ScreenOrientationWeb()), []) });
+var ScreenOrientation = registerPlugin("ScreenOrientation", { web: () => __vitePreload(() => import("./web-DKtkUkf7.js").then((m) => new m.ScreenOrientationWeb()), []) });
 // node_modules/@capacitor/splash-screen/dist/esm/index.js
-var SplashScreen = registerPlugin("SplashScreen", { web: () => __vitePreload(() => import("./web-COEYPzBm.js").then((m) => new m.SplashScreenWeb()), []) });
+var SplashScreen = registerPlugin("SplashScreen", { web: () => __vitePreload(() => import("./web-Csw0X62y.js").then((m) => new m.SplashScreenWeb()), []) });
 // node_modules/@capacitor/status-bar/dist/esm/definitions.js
 var Style;
 (function(Style) {
@@ -113973,72 +113909,81 @@ function resolveColorHex(colorId) {
 	const found = CAR_COLORS.find((c) => c.id === colorId);
 	return found ? found.hex : CAR_COLORS[0].hex;
 }
-function buildFocusCameraPlan(item, modelId) {
+function buildFocusCameraPlan(item, modelId, aspect) {
 	const bp = getCarBlueprint(modelId);
+	const safeAspect = Math.max(.4, aspect || 1);
+	const portraitFactor = MathUtils.clamp((1.05 - safeAspect) / .58, 0, 1);
+	const extraNarrow = Math.max(1, .5 / safeAspect);
+	const portraitYOffset = -.12 * portraitFactor;
 	if (item.kind === "wheel") return {
-		target: new Vector3(bp.trackHalf + .04, bp.wheelRadius, -bp.wheelBaseHalf),
+		target: new Vector3(bp.trackHalf + .04, bp.wheelRadius + portraitYOffset * .5, -bp.wheelBaseHalf),
 		startAzimuth: 2.38,
 		endAzimuth: 1.62,
 		orbitSweepAmp: .42,
 		orbitSweepSpeed: .58,
 		continuousSpin: false,
-		startRadius: 5.5,
-		endRadius: 1.48,
+		startRadius: MathUtils.lerp(5.8, 8.4 * extraNarrow, portraitFactor),
+		endRadius: MathUtils.lerp(1.95, 3.25 * extraNarrow, portraitFactor),
 		startElevation: .25,
-		endElevation: .14,
-		steerFrontWheelRad: -.26
+		endElevation: MathUtils.lerp(.14, .18, portraitFactor),
+		steerFrontWheelRad: -.26,
+		fov: MathUtils.lerp(42, 46, portraitFactor)
 	};
 	if (item.kind === "spoiler") return {
-		target: new Vector3(0, bp.wingY + .06, bp.wingZ),
+		target: new Vector3(0, bp.wingY + .04 + portraitYOffset * .6, bp.wingZ),
 		startAzimuth: 2.35,
 		endAzimuth: .54,
 		orbitSweepAmp: .55,
 		orbitSweepSpeed: .52,
 		continuousSpin: false,
-		startRadius: 5.4,
-		endRadius: 2.25,
+		startRadius: MathUtils.lerp(5.8, 8.5 * extraNarrow, portraitFactor),
+		endRadius: MathUtils.lerp(2.85, 4.95 * extraNarrow, portraitFactor),
 		startElevation: .24,
-		endElevation: .28,
-		steerFrontWheelRad: .12
+		endElevation: MathUtils.lerp(.28, .3, portraitFactor),
+		steerFrontWheelRad: .12,
+		fov: MathUtils.lerp(43, 48, portraitFactor)
 	};
 	if (item.kind === "bodyKit") return {
-		target: new Vector3(0, .52, -.35),
+		target: new Vector3(0, .52 + portraitYOffset, -.25),
 		startAzimuth: 2.55,
 		endAzimuth: 1.92,
 		orbitSweepAmp: .72,
 		orbitSweepSpeed: .46,
 		continuousSpin: true,
-		startRadius: 5.7,
-		endRadius: 3.55,
+		startRadius: MathUtils.lerp(6, 9.4 * extraNarrow, portraitFactor),
+		endRadius: MathUtils.lerp(4.25, 7.35 * extraNarrow, portraitFactor),
 		startElevation: .24,
-		endElevation: .16,
-		steerFrontWheelRad: -.18
+		endElevation: MathUtils.lerp(.16, .2, portraitFactor),
+		steerFrontWheelRad: -.18,
+		fov: MathUtils.lerp(44, 49, portraitFactor)
 	};
 	if (item.kind === "livery") return {
-		target: new Vector3(0, .72, 0),
+		target: new Vector3(0, .68 + portraitYOffset, 0),
 		startAzimuth: 2.38,
 		endAzimuth: 1.85,
 		orbitSweepAmp: 0,
 		orbitSweepSpeed: .45,
 		continuousSpin: true,
-		startRadius: 5.8,
-		endRadius: 4.3,
+		startRadius: MathUtils.lerp(6.2, 10.2 * extraNarrow, portraitFactor),
+		endRadius: MathUtils.lerp(4.95, 8.45 * extraNarrow, portraitFactor),
 		startElevation: .26,
-		endElevation: .42,
-		steerFrontWheelRad: -.12
+		endElevation: MathUtils.lerp(.42, .38, portraitFactor),
+		steerFrontWheelRad: -.12,
+		fov: MathUtils.lerp(44, 50, portraitFactor)
 	};
 	return {
-		target: new Vector3(0, .68, 0),
+		target: new Vector3(0, .62 + portraitYOffset, 0),
 		startAzimuth: 2.48,
 		endAzimuth: 1.95,
 		orbitSweepAmp: 0,
 		orbitSweepSpeed: .42,
 		continuousSpin: true,
-		startRadius: 6.1,
-		endRadius: 4.55,
+		startRadius: MathUtils.lerp(6.5, 10.6 * extraNarrow, portraitFactor),
+		endRadius: MathUtils.lerp(5.25, 8.85 * extraNarrow, portraitFactor),
 		startElevation: .28,
-		endElevation: .22,
-		steerFrontWheelRad: -.2
+		endElevation: MathUtils.lerp(.22, .25, portraitFactor),
+		steerFrontWheelRad: -.2,
+		fov: MathUtils.lerp(44, 50, portraitFactor)
 	};
 }
 var CrateCarShowcase3D = ({ lootItem, baseCar, accentHex, secondaryHex }) => {
@@ -114087,12 +114032,13 @@ var CrateCarShowcase3D = ({ lootItem, baseCar, accentHex, secondaryHex }) => {
 		container.appendChild(renderer.domElement);
 		const scene = new Scene();
 		scene.background = new Color(461072);
-		scene.fog = new FogExp2(461072, .038);
+		scene.fog = new FogExp2(461072, .024);
 		const pmremGenerator = new PMREMGenerator(renderer);
 		const envTarget = pmremGenerator.fromScene(new RoomEnvironment(), .04);
 		scene.environment = envTarget.texture;
 		pmremGenerator.dispose();
-		const camera = new PerspectiveCamera(42, initialW / initialH, .1, 100);
+		const initialAspect = initialW / initialH;
+		const camera = new PerspectiveCamera(44, initialAspect, .1, 120);
 		const hemiLight = new HemisphereLight(10930431, 1382692, .95);
 		scene.add(hemiLight);
 		const keyLight = new DirectionalLight(16774370, 2.25);
@@ -114193,7 +114139,10 @@ var CrateCarShowcase3D = ({ lootItem, baseCar, accentHex, secondaryHex }) => {
 		scene.add(barRight);
 		const contactShadowTex = createShowcaseContactShadow();
 		let carRig = null;
-		let plan = buildFocusCameraPlan(activePropsRef.current.lootItem, activePropsRef.current.baseCar.modelId);
+		let activeModelId = activePropsRef.current.lootItem.kind === "car" && activePropsRef.current.lootItem.carId ? activePropsRef.current.lootItem.carId : activePropsRef.current.baseCar.modelId;
+		let plan = buildFocusCameraPlan(activePropsRef.current.lootItem, activeModelId, initialAspect);
+		camera.fov = plan.fov;
+		camera.updateProjectionMatrix();
 		let showcaseElapsed = 0;
 		let carRollZ = 3.4;
 		let wheelSpinAngle = 0;
@@ -114238,7 +114187,10 @@ var CrateCarShowcase3D = ({ lootItem, baseCar, accentHex, secondaryHex }) => {
 			detailSpotLight.color.set(sec);
 			outerRingMat.color.set(acc);
 			innerRingMat.color.set(sec);
-			plan = buildFocusCameraPlan(item, targetModelId);
+			activeModelId = targetModelId;
+			plan = buildFocusCameraPlan(item, targetModelId, camera.aspect);
+			camera.fov = plan.fov;
+			camera.updateProjectionMatrix();
 			showcaseElapsed = 0;
 			carRollZ = 3.4;
 			userTookControl = false;
@@ -114247,7 +114199,7 @@ var CrateCarShowcase3D = ({ lootItem, baseCar, accentHex, secondaryHex }) => {
 			currentRadius = plan.startRadius;
 			manualAzimuth = plan.endAzimuth;
 			manualElevation = plan.endElevation;
-			_camTarget.set(0, .72, 0);
+			_camTarget.set(0, .68, 0);
 		};
 		rebuildCarFnRef.current = rebuildShowcaseCar;
 		rebuildShowcaseCar();
@@ -114279,7 +114231,10 @@ var CrateCarShowcase3D = ({ lootItem, baseCar, accentHex, secondaryHex }) => {
 			if (!container) return;
 			const w = Math.max(1, container.clientWidth);
 			const h = Math.max(1, container.clientHeight);
-			camera.aspect = w / h;
+			const nextAspect = w / h;
+			camera.aspect = nextAspect;
+			plan = buildFocusCameraPlan(activePropsRef.current.lootItem, activeModelId, nextAspect);
+			camera.fov = plan.fov;
 			camera.updateProjectionMatrix();
 			renderer.setSize(w, h);
 		};
@@ -114547,9 +114502,30 @@ var CrateOpeningCeremony = ({ title, subtitle, rewardSummary, crateTierId, crate
 	const [tapRecoilKey, setTapRecoilKey] = (0, import_react.useState)(0);
 	const [upgradeBannerText, setUpgradeBannerText] = (0, import_react.useState)(null);
 	const [activeShowcaseIdx, setActiveShowcaseIdx] = (0, import_react.useState)(0);
+	const [showcaseHudHidden, setShowcaseHudHidden] = (0, import_react.useState)(false);
 	const burstTriggeredRef = (0, import_react.useRef)(false);
 	const beatStageRef = (0, import_react.useRef)(0);
 	const chargeFloorRef = (0, import_react.useRef)(0);
+	const chipStripRef = (0, import_react.useRef)(null);
+	const chipButtonsRef = (0, import_react.useRef)([]);
+	(0, import_react.useEffect)(() => {
+		if (phase !== "showcase" || showcaseHudHidden) return;
+		const strip = chipStripRef.current;
+		const btn = chipButtonsRef.current[activeShowcaseIdx];
+		if (!strip || !btn) return;
+		const stripRect = strip.getBoundingClientRect();
+		const btnRect = btn.getBoundingClientRect();
+		const targetLeft = strip.scrollLeft + (btnRect.left - stripRect.left) - (stripRect.width - btnRect.width) / 2;
+		strip.scrollTo({
+			left: Math.max(0, targetLeft),
+			behavior: prefersReducedMotion ? "auto" : "smooth"
+		});
+	}, [
+		activeShowcaseIdx,
+		phase,
+		showcaseHudHidden,
+		prefersReducedMotion
+	]);
 	const highestRarity = (0, import_react.useMemo)(() => {
 		if (!lootItems || lootItems.length === 0) return resolveTierFallbackRarity(crateTierId);
 		let best = "common";
@@ -114836,99 +114812,173 @@ var CrateOpeningCeremony = ({ title, subtitle, rewardSummary, crateTierId, crate
 						secondaryHex: activePalette.secondaryHex
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "pointer-events-none absolute inset-x-4 top-4 z-30 flex items-start justify-between gap-3",
+						className: "pointer-events-none absolute inset-x-3 top-3 z-30 flex items-start justify-between gap-2 sm:inset-x-4 sm:top-4",
 						style: { marginTop: "env(safe-area-inset-top)" },
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "pointer-events-auto animate-crate-callout-slam max-w-md rounded-2xl border bg-zinc-950/92 px-4 py-3 shadow-2xl",
+						children: [!showcaseHudHidden ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "pointer-events-auto animate-crate-callout-slam min-w-0 max-w-[calc(100%-6.25rem)] sm:max-w-md rounded-2xl border bg-zinc-950/90 px-3 py-2 sm:px-4 sm:py-2.5 shadow-2xl",
 							style: {
 								borderColor: activePalette.accentHex,
-								boxShadow: `0 12px 34px rgba(0,0,0,0.75), 0 0 24px ${activePalette.glowHex}`
+								boxShadow: `0 10px 28px rgba(0,0,0,0.72), 0 0 20px ${activePalette.glowHex}`
 							},
 							children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex flex-wrap items-center gap-2",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-										className: `inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${activePalette.badgeBgClass}`,
-										children: [activeShowcaseItem.rarity === "legendary" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Crown, { className: "h-3 w-3 text-amber-300" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { className: "h-3 w-3" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: activePalette.label })]
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "text-[10px] font-extrabold uppercase tracking-widest text-zinc-400",
-										children: getShowcaseFocusLabel(activeShowcaseItem)
-									})]
+									className: "flex flex-wrap items-center gap-1.5",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: `inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${activePalette.badgeBgClass}`,
+											children: [activeShowcaseItem.rarity === "legendary" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Crown, { className: "h-3 w-3 text-amber-300" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkles, { className: "h-3 w-3" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: activePalette.label })]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "text-[10px] font-extrabold uppercase tracking-wider text-zinc-400",
+											children: getShowcaseFocusLabel(activeShowcaseItem)
+										}),
+										visualDrops.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "rounded bg-white/10 px-1.5 py-0.5 font-mono-num text-[10px] font-bold text-zinc-200",
+											children: [
+												activeShowcaseIdx + 1,
+												"/",
+												visualDrops.length
+											]
+										}),
+										bonusSummaryText && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 font-mono-num text-[10px] font-extrabold text-amber-300",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coins, { className: "h-3 w-3" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: bonusSummaryText })]
+										})
+									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-									className: "mt-1 font-display text-xl font-black text-white sm:text-2xl",
+									className: "mt-0.5 truncate font-display text-base font-black text-white sm:text-xl",
 									children: activeShowcaseItem.title
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "mt-0.5 text-xs font-medium text-zinc-300",
+									className: "truncate text-[11px] font-medium text-zinc-300 sm:text-xs",
 									children: activeShowcaseItem.duplicateConvertedGold ? `+${activeShowcaseItem.duplicateConvertedGold.toLocaleString("tr-TR")} Altın telafisi` : activeShowcaseItem.subtitle
 								})
 							]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							type: "button",
-							onClick: onClose,
-							"aria-label": "Kapat",
-							className: "pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-zinc-950/90 text-zinc-200 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X$1, { className: "h-5 w-5" })
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "pointer-events-auto flex shrink-0 items-center gap-1.5",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => setShowcaseHudHidden((prev) => !prev),
+								"aria-label": showcaseHudHidden ? "Arayüzü Göster" : "Arayüzü Gizle",
+								title: showcaseHudHidden ? "Arayüzü Göster" : "Arayüzü Gizle",
+								className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-zinc-950/90 text-zinc-200 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer",
+								children: showcaseHudHidden ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Eye, { className: "h-4.5 w-4.5 text-amber-400" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EyeOff, { className: "h-4.5 w-4.5" })
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: onClose,
+								"aria-label": "Kapat",
+								className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-zinc-950/90 text-zinc-200 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X$1, { className: "h-5 w-5" })
+							})]
 						})]
 					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						className: "pointer-events-none absolute inset-x-4 bottom-4 z-30 flex justify-center",
+					!showcaseHudHidden && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "pointer-events-none absolute inset-x-3 bottom-3 z-30 flex justify-center sm:inset-x-4 sm:bottom-4",
 						style: { marginBottom: "env(safe-area-inset-bottom)" },
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "pointer-events-auto flex w-full max-w-2xl flex-col gap-2.5 rounded-2xl border border-white/12 bg-zinc-950/92 p-3.5 shadow-2xl",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex flex-wrap items-center justify-between gap-2",
-								children: [visualDrops.length > 1 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "flex flex-wrap items-center gap-1.5",
-									children: visualDrops.map((drop, idx) => {
-										const isActive = idx === activeShowcaseIdx;
-										const dropPalette = RARITY_THEMES[drop.rarity];
-										return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-											type: "button",
-											onClick: () => {
-												setActiveShowcaseIdx(idx);
-												playLootCardTickSfx(drop.rarity, idx);
-											},
-											className: `flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${isActive ? "bg-zinc-800 text-white" : "border-white/10 bg-zinc-900/90 text-zinc-400 hover:text-white"}`,
-											style: isActive ? { borderColor: dropPalette.accentHex } : void 0,
-											children: [renderLootIcon(drop), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: "max-w-[130px] truncate",
-												children: drop.title
-											})]
-										}, drop.id);
+							className: "pointer-events-auto flex w-full max-w-2xl flex-col gap-2 rounded-2xl border border-white/12 bg-zinc-950/90 p-2.5 sm:p-3 shadow-2xl",
+							children: [visualDrops.length > 1 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center gap-1.5",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => {
+											const nextIdx = (activeShowcaseIdx - 1 + visualDrops.length) % visualDrops.length;
+											setActiveShowcaseIdx(nextIdx);
+											playLootCardTickSfx(visualDrops[nextIdx].rarity, nextIdx);
+										},
+										"aria-label": "Önceki parça",
+										className: "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/12 bg-zinc-900 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronLeft, { className: "h-4 w-4" })
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										ref: chipStripRef,
+										className: "no-scrollbar flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto",
+										children: visualDrops.map((drop, idx) => {
+											const isActive = idx === activeShowcaseIdx;
+											const dropPalette = RARITY_THEMES[drop.rarity];
+											return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+												ref: (el) => {
+													chipButtonsRef.current[idx] = el;
+												},
+												type: "button",
+												onClick: () => {
+													setActiveShowcaseIdx(idx);
+													playLootCardTickSfx(drop.rarity, idx);
+												},
+												className: `flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-bold transition-colors cursor-pointer ${isActive ? "bg-zinc-800 text-white" : "border-white/10 bg-zinc-900/90 text-zinc-400 hover:text-white"}`,
+												style: isActive ? { borderColor: dropPalette.accentHex } : void 0,
+												children: [renderLootIcon(drop), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "max-w-[110px] truncate sm:max-w-[140px]",
+													children: drop.title
+												})]
+											}, drop.id);
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => {
+											const nextIdx = (activeShowcaseIdx + 1) % visualDrops.length;
+											setActiveShowcaseIdx(nextIdx);
+											playLootCardTickSfx(visualDrops[nextIdx].rarity, nextIdx);
+										},
+										"aria-label": "Sonraki parça",
+										className: "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/12 bg-zinc-900 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRight, { className: "h-4 w-4" })
 									})
-								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex items-center gap-1.5 text-xs font-semibold text-zinc-400",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCw, { className: "h-3.5 w-3.5 text-zinc-400" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "İncelemek için sürükle" })]
-								}), bonusSummaryText && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/12 px-2.5 py-1 text-xs font-extrabold text-amber-300",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coins, { className: "h-3.5 w-3.5" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: bonusSummaryText })]
-								})]
+								]
+							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center justify-center gap-1.5 text-[11px] font-semibold text-zinc-400",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCw, { className: "h-3 w-3 text-zinc-400" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "İncelemek için sürükle" })]
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex flex-col gap-2 sm:flex-row",
+								className: "flex items-center gap-2",
 								children: [
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 										type: "button",
 										onClick: () => setPhase("revealed"),
-										className: "flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-zinc-900 px-4 font-display text-sm font-bold text-white transition-colors hover:bg-zinc-800 cursor-pointer",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LayoutGrid, { className: "h-4 w-4 text-sky-400" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-											"Tüm Ödüller (",
-											sortedLootItems.length,
-											")"
-										] })]
+										className: "flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-zinc-900 px-2.5 font-display text-xs font-bold text-white transition-colors hover:bg-zinc-800 sm:px-4 sm:text-sm cursor-pointer whitespace-nowrap",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LayoutGrid, { className: "h-4 w-4 shrink-0 text-sky-400" }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+												className: "sm:hidden",
+												children: [
+													"Ödüller (",
+													sortedLootItems.length,
+													")"
+												]
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+												className: "hidden sm:inline",
+												children: [
+													"Tüm Ödüller (",
+													sortedLootItems.length,
+													")"
+												]
+											})
+										]
 									}),
 									unlockedCarNames.length > 0 && onOpenGarage && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 										type: "button",
 										onClick: onOpenGarage,
-										className: "flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-zinc-900 px-4 font-display text-sm font-bold text-white transition-colors hover:bg-zinc-800 cursor-pointer",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CarFront, { className: "h-4 w-4 text-amber-400" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Garajda Gör" })]
+										className: "flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-zinc-900 px-2.5 font-display text-xs font-bold text-white transition-colors hover:bg-zinc-800 sm:px-4 sm:text-sm cursor-pointer whitespace-nowrap",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CarFront, { className: "h-4 w-4 shrink-0 text-amber-400" }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "sm:hidden",
+												children: "Garaj"
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "hidden sm:inline",
+												children: "Garajda Gör"
+											})
+										]
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 										type: "button",
 										onClick: onClose,
-										className: "flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 font-display text-sm font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 cursor-pointer",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "h-4 w-4" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: ctaLabel })]
+										className: "flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-3 font-display text-xs font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 sm:px-5 sm:text-sm cursor-pointer whitespace-nowrap",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "h-4 w-4 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: ctaLabel })]
 									})
 								]
 							})]
@@ -117004,121 +117054,6 @@ var UpgradeLevelMeter = ({ part, level }) => {
 		})]
 	});
 };
-// src/hooks/usePWAInstall.ts
-function usePWAInstall() {
-	const [deferredPrompt, setDeferredPrompt] = (0, import_react.useState)(null);
-	const [isInstalled, setIsInstalled] = (0, import_react.useState)(() => Capacitor.isNativePlatform());
-	const [isIOS, setIsIOS] = (0, import_react.useState)(false);
-	const [isAndroid, setIsAndroid] = (0, import_react.useState)(false);
-	(0, import_react.useEffect)(() => {
-		const isStandalone = Capacitor.isNativePlatform() || window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: fullscreen)").matches || window.navigator.standalone === true;
-		setIsInstalled(isStandalone);
-		const ua = window.navigator.userAgent.toLowerCase();
-		setIsIOS(/iphone|ipad|ipod/.test(ua));
-		setIsAndroid(/android/.test(ua));
-		const handleBeforeInstallPrompt = (e) => {
-			e.preventDefault();
-			setDeferredPrompt(e);
-		};
-		const handleAppInstalled = () => {
-			setIsInstalled(true);
-			setDeferredPrompt(null);
-		};
-		window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-		window.addEventListener("appinstalled", handleAppInstalled);
-		return () => {
-			window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-			window.removeEventListener("appinstalled", handleAppInstalled);
-		};
-	}, []);
-	const install = (0, import_react.useCallback)(async () => {
-		if (!deferredPrompt) return false;
-		await deferredPrompt.prompt();
-		const { outcome } = await deferredPrompt.userChoice;
-		if (outcome === "accepted") {
-			setIsInstalled(true);
-			setDeferredPrompt(null);
-			return true;
-		}
-		return false;
-	}, [deferredPrompt]);
-	return {
-		isInstallable: !!deferredPrompt,
-		isInstalled,
-		isIOS,
-		isAndroid,
-		install
-	};
-}
-// src/components/PWAInstallButton.tsx
-var PWAInstallButton = () => {
-	const { isInstallable, isInstalled, isIOS, isAndroid, install } = usePWAInstall();
-	const [showGuide, setShowGuide] = (0, import_react.useState)(false);
-	if (isInstalled) return null;
-	const handleClick = async () => {
-		if (isInstallable) await install();
-		else setShowGuide(true);
-	};
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-		type: "button",
-		onClick: handleClick,
-		className: "flex min-h-[44px] items-center gap-2 rounded-lg border border-white/15 bg-zinc-950/80 px-3.5 py-2 text-xs font-semibold text-zinc-100 transition-colors hover:bg-zinc-900 focus-visible:outline-2 focus-visible:outline-amber-400 whitespace-nowrap shrink-0 cursor-pointer",
-		children: [isInstallable ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, { className: "h-4 w-4 text-amber-400" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Smartphone, { className: "h-4 w-4 text-amber-400" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Telefona Yükle" })]
-	}), showGuide && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: "fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4",
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "w-full max-w-sm rounded-2xl border border-white/15 bg-zinc-950 p-6 shadow-2xl",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex items-start justify-between gap-3",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-						className: "font-display text-lg font-bold text-white",
-						children: isIOS ? "iPhone / iPad Ana Ekrana Ekle" : isAndroid ? "Android Telefona Uygulama Olarak Kur" : "Telefona Uygulama Olarak Kur"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						onClick: () => setShowGuide(false),
-						"aria-label": "Kapat",
-						className: "flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-900 hover:text-white cursor-pointer",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X$1, { className: "h-4 w-4" })
-					})]
-				}),
-				isIOS ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ol", {
-					className: "mt-3 space-y-2 text-sm text-zinc-300",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "1. Safari alt çubuğundaki Paylaş simgesine dokun." }),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "2. Aşağı kaydırıp Ana Ekrana Ekle seçeneğini seç." }),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "3. Sağ üstten Ekle butonuna dokunarak tam ekran başlat." })
-					]
-				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ol", {
-					className: "mt-3 space-y-2 text-sm text-zinc-300",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
-							"1. Bu sayfayı Android telefonunda ",
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Chrome" }),
-							" ile aç."
-						] }),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
-							"2. Sağ üstteki üç nokta menüsünden",
-							" ",
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Uygulamayı yükle" }),
-							" veya",
-							" ",
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Ana ekrana ekle" }),
-							" seçeneğine dokun."
-						] }),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: "3. Oyun telefonuna tam ekran uygulama olarak kurulur ve çevrimdışı da çalışır." })
-					]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => setShowGuide(false),
-					className: "mt-5 flex min-h-[44px] w-full items-center justify-center rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-amber-400 cursor-pointer",
-					children: "Anladım"
-				})
-			]
-		})
-	})] });
-};
 // src/components/GameHud.tsx
 function formatTimeUntilMidnight() {
 	const now = /* @__PURE__ */ new Date();
@@ -117737,7 +117672,7 @@ var GameHud = import_react.memo(({ phase, gameMode, showGameOverModal, stats, go
 	const activeColorOpt = CAR_COLORS.find((c) => c.id === carColor) || CAR_COLORS[0];
 	const activeColorSwatch = activeColorOpt.swatch;
 	const integrityColor = stats.integrity > 60 ? "bg-emerald-400" : stats.integrity > 30 ? "bg-amber-400" : "bg-rose-500";
-	const activeGameModeSpec = GAME_MODES.find((m) => m.id === (isPlaying ? stats.gameMode : gameMode)) || GAME_MODES[0];
+	GAME_MODES.find((m) => m.id === (isPlaying ? stats.gameMode : gameMode)) || GAME_MODES[0];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "pointer-events-none fixed inset-0 z-10 flex flex-col justify-between",
 		children: [
@@ -118042,233 +117977,185 @@ var GameHud = import_react.memo(({ phase, gameMode, showGameOverModal, stats, go
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "flex flex-col",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-					className: `relative bg-gradient-to-b from-black/80 via-black/35 to-transparent px-3 pb-3 sm:px-6 sm:pb-4 ${phase === "menu" ? "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 sm:items-start sm:gap-x-3" : "flex items-start justify-between gap-2 sm:gap-3"}`,
+					className: "relative flex items-start justify-between gap-2 bg-gradient-to-b from-black/80 via-black/35 to-transparent px-3 pb-3 sm:gap-3 sm:px-6 sm:pb-4",
 					style: { paddingTop: "max(0.75rem, env(safe-area-inset-top))" },
-					children: [
-						phase === "garage" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "pointer-events-auto flex min-w-0 items-center gap-2.5 sm:gap-3",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-								type: "button",
-								onClick: onReturnMenu,
-								onPointerDown: (e) => e.stopPropagation(),
-								className: "flex h-11 items-center gap-1.5 rounded-xl border border-white/14 bg-zinc-950/90 px-3.5 text-sm font-bold text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer whitespace-nowrap shrink-0 shadow-lg",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowLeft, { className: "h-4.5 w-4.5 text-amber-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Geri" })]
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "hidden sm:flex flex-col min-w-0",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "font-display text-base font-bold tracking-tight text-white",
-									children: "3D Garaj"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "text-[11px] text-zinc-400",
-									children: "İncelemek için aracı sürükle"
-								})]
+					children: [phase === "garage" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "pointer-events-auto flex min-w-0 items-center gap-2.5 sm:gap-3",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							type: "button",
+							onClick: onReturnMenu,
+							onPointerDown: (e) => e.stopPropagation(),
+							className: "flex h-11 items-center gap-1.5 rounded-xl border border-white/14 bg-zinc-950/90 px-3.5 text-sm font-bold text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer whitespace-nowrap shrink-0 shadow-lg",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowLeft, { className: "h-4.5 w-4.5 text-amber-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Geri" })]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "hidden sm:flex flex-col min-w-0",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "font-display text-base font-bold tracking-tight text-white",
+								children: "3D Garaj"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-[11px] text-zinc-400",
+								children: "İncelemek için aracı sürükle"
 							})]
-						}) : phase !== "menu" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex min-w-0 flex-1 flex-col gap-1 pr-1",
-							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex items-baseline gap-2 text-white",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "font-display text-2xl font-extrabold leading-tight tracking-tight font-mono-num drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)] sm:text-3xl",
-										children: stats.score.toLocaleString("tr-TR")
-									}), stats.combo > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-										className: "font-display text-base font-extrabold text-amber-400 font-mono-num drop-shadow sm:text-lg",
-										children: ["×", stats.combo]
-									})]
-								}),
-								stats.combo > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "h-1.5 w-20 sm:w-24 overflow-hidden rounded-full bg-white/15",
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-										className: "h-full bg-amber-400 transition-[width] duration-75",
-										style: { width: `${Math.round(stats.comboTimerRatio * 100)}%` }
-									})
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-zinc-200 font-mono-num drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]",
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "whitespace-nowrap font-semibold",
-											children: formatDistance$1(stats.distanceMeters)
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											"aria-hidden": "true",
-											className: "hidden sm:inline text-zinc-500",
-											children: "·"
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "hidden sm:inline font-sans text-zinc-200 truncate",
-											children: stats.biomeLabel
-										}),
-										stats.roadZone !== "open" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											"aria-hidden": "true",
-											className: "text-zinc-500",
-											children: "·"
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: `font-sans font-bold whitespace-nowrap ${stats.roadZone === "tunnel" ? "text-sky-300" : "text-amber-300"}`,
-											children: stats.roadZone === "tunnel" ? "Tünel" : "Köprü"
-										})] }),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											"aria-hidden": "true",
-											className: "text-zinc-500",
-											children: "·"
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-											className: "inline-flex items-center gap-1 text-amber-300 font-bold whitespace-nowrap",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coins, { className: "h-3.5 w-3.5 text-amber-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: goldCoins.toLocaleString("tr-TR") })]
-										})
-									]
+						})]
+					}) : phase !== "menu" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex min-w-0 flex-1 flex-col gap-1 pr-1",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-baseline gap-2 text-white",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "font-display text-2xl font-extrabold leading-tight tracking-tight font-mono-num drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)] sm:text-3xl",
+									children: stats.score.toLocaleString("tr-TR")
+								}), stats.combo > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+									className: "font-display text-base font-extrabold text-amber-400 font-mono-num drop-shadow sm:text-lg",
+									children: ["×", stats.combo]
+								})]
+							}),
+							stats.combo > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "h-1.5 w-20 sm:w-24 overflow-hidden rounded-full bg-white/15",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "h-full bg-amber-400 transition-[width] duration-75",
+									style: { width: `${Math.round(stats.comboTimerRatio * 100)}%` }
 								})
-							]
-						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "col-start-1 row-start-1 pointer-events-auto flex min-w-0 items-center gap-2.5",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-								src: "/pwa-192x192.png",
-								alt: "Viraj Drift",
-								referrerPolicy: "no-referrer",
-								className: "h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl border border-amber-400/45 object-cover shadow-[0_3px_12px_rgba(0,0,0,0.45)]"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex min-w-0 items-baseline gap-x-2",
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-zinc-200 font-mono-num drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]",
 								children: [
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "font-display text-xl font-extrabold tracking-tight text-white whitespace-nowrap drop-shadow sm:text-2xl",
-										children: "Viraj"
+										className: "whitespace-nowrap font-semibold",
+										children: formatDistance$1(stats.distanceMeters)
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "text-xs text-zinc-400 hidden sm:inline",
-										children: "Sonsuz Otoyol"
-									}),
-									stats.bestScore > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 										"aria-hidden": "true",
 										className: "hidden sm:inline text-zinc-500",
 										children: "·"
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-										className: "hidden sm:inline font-mono-num text-xs font-bold text-amber-300 whitespace-nowrap drop-shadow",
-										children: ["Rekor ", stats.bestScore.toLocaleString("tr-TR")]
-									})] })
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "hidden sm:inline font-sans text-zinc-200 truncate",
+										children: stats.biomeLabel
+									}),
+									stats.roadZone !== "open" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										"aria-hidden": "true",
+										className: "text-zinc-500",
+										children: "·"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: `font-sans font-bold whitespace-nowrap ${stats.roadZone === "tunnel" ? "text-sky-300" : "text-amber-300"}`,
+										children: stats.roadZone === "tunnel" ? "Tünel" : "Köprü"
+									})] }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										"aria-hidden": "true",
+										className: "text-zinc-500",
+										children: "·"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										className: "inline-flex items-center gap-1 text-amber-300 font-bold whitespace-nowrap",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coins, { className: "h-3.5 w-3.5 text-amber-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: goldCoins.toLocaleString("tr-TR") })]
+									})
 								]
-							})]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: `pointer-events-auto relative flex items-center gap-1.5 sm:gap-2 shrink-0 ${phase === "menu" ? "col-start-2 row-start-1 justify-self-end sm:row-span-2" : ""}`,
+							})
+						]
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "pointer-events-auto flex min-w-0 flex-1 flex-col items-start gap-1.5 sm:flex-initial sm:flex-row sm:items-center sm:gap-2.5",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							type: "button",
+							onClick: () => onOpenLevelRoad(),
+							onPointerDown: (e) => e.stopPropagation(),
+							title: "Seviye Yolu (1–100) ve Ödüller",
+							className: `group flex min-w-0 w-full sm:w-fit max-w-full items-center gap-2 sm:gap-2.5 overflow-hidden rounded-xl border ${unclaimedLevelRewardsCount > 0 ? "border-amber-400/75 shadow-[0_0_18px_rgba(245,158,11,0.28)]" : playerRankTier.borderClass} bg-zinc-950/90 px-2 py-1.5 sm:px-2.5 sm:py-2 text-left transition-colors hover:bg-zinc-900/95 cursor-pointer shadow-lg`,
 							children: [
-								(phase === "menu" || phase === "garage") && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-									type: "button",
-									onClick: () => onOpenStore("gold"),
-									onPointerDown: (e) => e.stopPropagation(),
-									title: "Altın ve Sandık Marketini Aç",
-									className: "group flex h-11 items-center gap-1.5 rounded-xl border border-amber-400/40 bg-zinc-950/90 pl-2.5 pr-1.5 sm:pl-3 sm:pr-2 text-xs sm:text-sm font-bold text-amber-300 font-mono-num transition-colors hover:border-amber-400/70 hover:bg-zinc-900 cursor-pointer shadow-lg",
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coins, { className: "h-4 w-4 text-amber-400 shrink-0" }),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: goldCoins.toLocaleString("tr-TR") }),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "ml-0.5 flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500 text-zinc-950 transition-colors group-hover:bg-amber-400 shrink-0",
-											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { className: "h-3.5 w-3.5 stroke-[3]" })
-										})
-									]
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DriverLevelEmblem, {
+									level: playerLevel.level,
+									size: "sm"
 								}),
-								phase === "garage" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-									type: "button",
-									onClick: onToggleGarageMenu,
-									onPointerDown: (e) => e.stopPropagation(),
-									"aria-label": garageMenuCollapsed ? "Paneli Göster" : "Paneli Gizle",
-									className: "flex h-11 items-center gap-1.5 rounded-xl border border-white/14 bg-zinc-950/90 px-3 text-xs sm:text-sm font-bold text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer whitespace-nowrap shadow-lg",
-									children: [garageMenuCollapsed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Eye, { className: "h-4 w-4 text-amber-400 shrink-0" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EyeOff, { className: "h-4 w-4 text-amber-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: garageMenuCollapsed ? "Göster" : "Gizle" })]
-								}),
-								phase === "menu" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PWAInstallButton, {}),
-								(isPlaying || phase === "paused") && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-									type: "button",
-									onClick: onToggleCamera,
-									onPointerDown: (e) => e.stopPropagation(),
-									"aria-label": "Kamera Açısını Değiştir",
-									title: "Kamera Açısı (C)",
-									className: "flex h-11 w-11 sm:w-auto items-center justify-center gap-1.5 rounded-xl border border-white/14 bg-zinc-950/90 sm:px-3.5 text-xs font-bold text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer whitespace-nowrap shadow-lg",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Camera$1, { className: "h-5 w-5 sm:h-4 sm:w-4 text-amber-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "hidden sm:inline",
-										children: activeCameraLabel
-									})]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									onClick: onToggleMusic,
-									onPointerDown: (e) => e.stopPropagation(),
-									"aria-label": musicState.playing ? "Müziği Duraklat" : "Müziği Çal",
-									title: musicState.playing ? `${musicState.track.title} — Duraklat` : `${musicState.track.title} — Çal`,
-									className: `flex h-11 w-11 items-center justify-center rounded-xl border transition-colors cursor-pointer shadow-lg ${musicState.playing && !muted ? "border-amber-400/45 bg-zinc-950/92 text-amber-300" : "border-white/14 bg-zinc-950/90 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"}`,
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Music, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" })
-								})] }),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									onClick: onToggleMute,
-									"aria-label": muted ? "Sesi Aç" : "Sesi Kapat",
-									className: "flex h-11 w-11 items-center justify-center rounded-xl border border-white/14 bg-zinc-950/90 text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer shadow-lg",
-									children: muted ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(VolumeX, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Volume2, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" })
-								}),
-								!isPlaying && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									onClick: onOpenSettings,
-									onPointerDown: (e) => e.stopPropagation(),
-									"aria-label": "Ayarlar",
-									title: "Ayarlar",
-									className: "flex h-11 w-11 items-center justify-center rounded-xl border border-white/14 bg-zinc-950/90 text-zinc-100 transition-colors hover:border-amber-400/40 hover:bg-zinc-900 hover:text-amber-300 cursor-pointer shadow-lg",
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Settings, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" })
-								}),
-								(isPlaying || phase === "paused") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									onClick: onTogglePause,
-									"aria-label": phase === "paused" ? "Devam Et" : "Duraklat",
-									className: "flex h-11 w-11 items-center justify-center rounded-xl border border-white/14 bg-zinc-950/90 text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer shadow-lg",
-									children: phase === "paused" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Play, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pause, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" })
-								})
-							]
-						}),
-						phase === "menu" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "col-span-2 row-start-2 pointer-events-auto flex min-w-0 items-stretch gap-2 sm:col-span-1 sm:col-start-1 sm:row-start-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-								type: "button",
-								onClick: () => onOpenLevelRoad(),
-								onPointerDown: (e) => e.stopPropagation(),
-								title: "Seviye Yolu (1–100) ve Ödüller",
-								className: `group flex min-w-0 flex-1 sm:flex-initial sm:w-fit max-w-full items-center gap-2.5 overflow-hidden rounded-xl border ${unclaimedLevelRewardsCount > 0 ? "border-amber-400/75 shadow-[0_0_18px_rgba(245,158,11,0.28)]" : playerRankTier.borderClass} bg-zinc-950/90 px-2.5 py-2 text-left transition-colors hover:bg-zinc-900/95 cursor-pointer shadow-lg`,
-								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DriverLevelEmblem, {
-										level: playerLevel.level,
-										size: "sm"
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "flex min-w-0 flex-1 flex-col gap-1 sm:min-w-[154px]",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: "flex items-baseline justify-between gap-2 min-w-0",
-											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-												className: `truncate font-display text-xs font-extrabold ${playerRankTier.textClass}`,
-												children: playerLevel.rankTitle
-											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-												className: "font-mono-num text-[11px] font-bold text-zinc-300 whitespace-nowrap shrink-0",
-												children: ["Sv.", playerLevel.level]
-											})]
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SegmentedXpBar, {
-											level: playerLevel.level,
-											progressRatio: playerLevel.progressRatio,
-											segments: 8,
-											heightClass: "h-1.5"
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex min-w-0 flex-1 flex-col gap-1 sm:min-w-[154px]",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex items-baseline justify-between gap-2 min-w-0",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: `truncate font-display text-xs font-extrabold ${playerRankTier.textClass}`,
+											children: playerLevel.rankTitle
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "font-mono-num text-[11px] font-bold text-zinc-300 whitespace-nowrap shrink-0",
+											children: ["Sv.", playerLevel.level]
 										})]
-									}),
-									unclaimedLevelRewardsCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-										className: "inline-flex items-center gap-1 rounded-lg bg-amber-400 px-2 py-0.5 text-[10.5px] font-extrabold text-zinc-950 font-mono-num shrink-0 shadow-sm",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gift, { className: "h-3 w-3 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: unclaimedLevelRewardsCount })]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRight, { className: "h-4 w-4 text-zinc-400 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-200 shrink-0" })
-								]
-							}), stats.bestScore > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex sm:hidden shrink-0 flex-col items-end justify-center rounded-xl border border-amber-400/25 bg-zinc-950/90 px-3 py-1.5 shadow-lg",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "text-[10px] font-semibold leading-none text-zinc-400",
-									children: "Rekor"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "mt-1 font-mono-num text-xs font-extrabold leading-none text-amber-300",
-									children: stats.bestScore.toLocaleString("tr-TR")
-								})]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SegmentedXpBar, {
+										level: playerLevel.level,
+										progressRatio: playerLevel.progressRatio,
+										segments: 8,
+										heightClass: "h-1.5"
+									})]
+								}),
+								unclaimedLevelRewardsCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+									className: "inline-flex items-center gap-1 rounded-lg bg-amber-400 px-1.5 py-0.5 text-[10px] font-extrabold text-zinc-950 font-mono-num shrink-0 shadow-sm sm:px-2 sm:text-[10.5px]",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Gift, { className: "h-3 w-3 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: unclaimedLevelRewardsCount })]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRight, { className: "h-4 w-4 text-zinc-400 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-200 shrink-0" })
+							]
+						}), stats.bestScore > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-400/25 bg-zinc-950/90 px-2.5 py-1 shadow-lg sm:rounded-xl sm:px-3 sm:py-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-[10px] font-semibold leading-none text-zinc-400",
+								children: "Rekor"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "font-mono-num text-xs font-extrabold leading-none text-amber-300",
+								children: stats.bestScore.toLocaleString("tr-TR")
 							})]
-						})
-					]
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "pointer-events-auto relative flex items-center gap-1.5 sm:gap-2 shrink-0",
+						children: [
+							(phase === "menu" || phase === "garage") && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								onClick: () => onOpenStore("gold"),
+								onPointerDown: (e) => e.stopPropagation(),
+								title: "Altın ve Sandık Marketini Aç",
+								className: "group flex h-11 items-center gap-1.5 rounded-xl border border-amber-400/40 bg-zinc-950/90 pl-2.5 pr-1.5 sm:pl-3 sm:pr-2 text-xs sm:text-sm font-bold text-amber-300 font-mono-num transition-colors hover:border-amber-400/70 hover:bg-zinc-900 cursor-pointer shadow-lg",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Coins, { className: "h-4 w-4 text-amber-400 shrink-0" }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: goldCoins.toLocaleString("tr-TR") }),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "ml-0.5 flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500 text-zinc-950 transition-colors group-hover:bg-amber-400 shrink-0",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { className: "h-3.5 w-3.5 stroke-[3]" })
+									})
+								]
+							}),
+							phase === "garage" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								onClick: onToggleGarageMenu,
+								onPointerDown: (e) => e.stopPropagation(),
+								"aria-label": garageMenuCollapsed ? "Paneli Göster" : "Paneli Gizle",
+								className: "flex h-11 items-center gap-1.5 rounded-xl border border-white/14 bg-zinc-950/90 px-3 text-xs sm:text-sm font-bold text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer whitespace-nowrap shadow-lg",
+								children: [garageMenuCollapsed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Eye, { className: "h-4 w-4 text-amber-400 shrink-0" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EyeOff, { className: "h-4 w-4 text-amber-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: garageMenuCollapsed ? "Göster" : "Gizle" })]
+							}),
+							(isPlaying || phase === "paused") && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+								type: "button",
+								onClick: onToggleCamera,
+								onPointerDown: (e) => e.stopPropagation(),
+								"aria-label": "Kamera Açısını Değiştir",
+								title: "Kamera Açısı (C)",
+								className: "flex h-11 w-11 sm:w-auto items-center justify-center gap-1.5 rounded-xl border border-white/14 bg-zinc-950/90 sm:px-3.5 text-xs font-bold text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer whitespace-nowrap shadow-lg",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Camera$1, { className: "h-5 w-5 sm:h-4 sm:w-4 text-amber-400 shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "hidden sm:inline",
+									children: activeCameraLabel
+								})]
+							}),
+							!isPlaying && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: onOpenSettings,
+								onPointerDown: (e) => e.stopPropagation(),
+								"aria-label": "Ayarlar",
+								title: "Ayarlar",
+								className: "flex h-11 w-11 items-center justify-center rounded-xl border border-white/14 bg-zinc-950/90 text-zinc-100 transition-colors hover:border-amber-400/40 hover:bg-zinc-900 hover:text-amber-300 cursor-pointer shadow-lg",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Settings, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" })
+							}),
+							(isPlaying || phase === "paused") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: onTogglePause,
+								"aria-label": phase === "paused" ? "Devam Et" : "Duraklat",
+								className: "flex h-11 w-11 items-center justify-center rounded-xl border border-white/14 bg-zinc-950/90 text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer shadow-lg",
+								children: phase === "paused" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Play, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pause, { className: "h-5 w-5 sm:h-4.5 sm:w-4.5" })
+							})
+						]
+					})]
 				}), isPlaying && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "pointer-events-none flex flex-col items-center gap-1.5 px-3 pt-0.5",
 					children: [
@@ -118498,52 +118385,6 @@ var GameHud = import_react.memo(({ phase, gameMode, showGameOverModal, stats, go
 									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronRight, { className: "h-4 w-4 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-300 shrink-0" })]
 								})
 							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex flex-col gap-1.5",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									role: "radiogroup",
-									"aria-label": "Oyun Modu",
-									className: "flex gap-1.5 overflow-x-auto no-scrollbar snap-x rounded-xl bg-zinc-900/90 p-1.5 sm:grid sm:grid-cols-5 sm:gap-1 sm:overflow-visible sm:p-1",
-									children: GAME_MODES.map((m) => {
-										const active = m.id === gameMode;
-										const ModeIcon = m.id === "pursuit" ? Siren : m.id === "twoway" ? ArrowLeftRight : m.id === "timeattack" ? Timer$1 : m.id === "bomb" ? Bomb : Infinity$1;
-										return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-											type: "button",
-											role: "radio",
-											"aria-checked": active,
-											onClick: () => onSelectGameMode(m.id),
-											className: `snap-start min-w-[86px] shrink-0 sm:min-w-0 flex min-h-[58px] sm:min-h-0 flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-2 sm:px-1 sm:py-1.5 text-center transition-colors cursor-pointer ${active ? "bg-zinc-100 text-zinc-950 shadow-sm" : "text-zinc-300 hover:bg-white/6 hover:text-white"}`,
-											children: [
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ModeIcon, {
-													className: "h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0",
-													style: active ? void 0 : { color: m.accentHex }
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "text-xs sm:text-[10.5px] font-bold leading-tight whitespace-nowrap",
-													children: m.shortLabel
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-													className: `font-mono-num text-[11px] sm:text-[9.5px] font-bold leading-none ${active ? "text-zinc-700" : "text-zinc-400"}`,
-													children: ["×", m.rewardMultiplier.toFixed(m.rewardMultiplier % 1 === 0 ? 0 : 2).replace(/0$/, "")]
-												})
-											]
-										}, m.id);
-									})
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "flex items-center justify-between gap-2 px-0.5 text-xs text-zinc-400",
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-										className: "truncate",
-										children: [
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", {
-												className: "font-bold text-zinc-200",
-												children: [activeGameModeSpec.label, ":"]
-											}),
-											" ",
-											activeGameModeSpec.tagline
-										]
-									})
-								})]
-							}),
 							(() => {
 								const activeChapter = CAREER_CHAPTERS.find((c) => careerProgress.highestUnlockedLevel >= c.startLevel && careerProgress.highestUnlockedLevel <= c.endLevel) || CAREER_CHAPTERS[0];
 								const claimableChestCount = CAREER_STAR_CHESTS.filter((c) => careerProgress.totalStars >= c.starsRequired && !careerProgress.claimedChests.includes(c.starsRequired)).length;
@@ -118610,7 +118451,7 @@ var GameHud = import_react.memo(({ phase, gameMode, showGameOverModal, stats, go
 									className: "flex min-h-[54px] sm:min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 sm:px-6 font-display text-base font-extrabold text-zinc-950 shadow-[0_6px_24px_rgba(245,158,11,0.28)] transition-colors hover:bg-amber-400 active:scale-[0.99] cursor-pointer",
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Play, { className: "h-5 w-5 sm:h-4 sm:w-4 fill-current shrink-0" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 										className: "truncate",
-										children: gameMode === "endless" ? "Sürüşe Başla" : `${activeGameModeSpec.label} Başlat`
+										children: "Sonsuz Sürüşe Başla"
 									})]
 								})]
 							}),
@@ -123187,7 +123028,7 @@ var Weekday;
 	Weekday[Weekday["Saturday"] = 7] = "Saturday";
 })(Weekday || (Weekday = {}));
 // node_modules/@capacitor/local-notifications/dist/esm/index.js
-var LocalNotifications = registerPlugin("LocalNotifications", { web: () => __vitePreload(() => import("./web-DpVJwSxW.js").then((m) => new m.LocalNotificationsWeb()), []) });
+var LocalNotifications = registerPlugin("LocalNotifications", { web: () => __vitePreload(() => import("./web-BlOBkYF3.js").then((m) => new m.LocalNotificationsWeb()), []) });
 // src/services/notificationService.ts
 var STORAGE_KEY$1 = "viraj_notification_settings_v1";
 var ANDROID_CHANNEL_ID = "viraj_reminders";
@@ -123912,8 +123753,8 @@ var BUNDLE_PRODUCTS = [
 		title: "Başlangıç Paketi",
 		subtitle: "Tek Seferlik · %65 İndirimli",
 		tagline: "Hızlı yükseliş için araç, altın ve ilk sandık bir arada.",
-		priceTry: 39.99,
-		compareAtTry: 114.99,
+		priceTry: 4.99,
+		compareAtTry: 14.99,
 		oneTimeOnly: true,
 		goldAmount: 1500,
 		cars: ["hatch"],
@@ -123936,7 +123777,7 @@ var BUNDLE_PRODUCTS = [
 		title: "Reklamsız VIP Geçiş",
 		subtitle: "Kalıcı Ayrıcalık · Tek Seferlik",
 		tagline: "Tüm zorunlu geçiş reklamlarını sonsuza dek kaldır ve bonus altın kazan.",
-		priceTry: 49.99,
+		priceTry: 9.99,
 		oneTimeOnly: true,
 		includesAdFree: true,
 		goldAmount: 600,
@@ -123955,8 +123796,8 @@ var BUNDLE_PRODUCTS = [
 		title: "Süper Garaj Paketi",
 		subtitle: "Tek Seferlik · İki Efsane Araç",
 		tagline: "DTM efsanesi M3 GTR ve Skyline R34 ile otoyola hükmet.",
-		priceTry: 149.99,
-		compareAtTry: 329.99,
+		priceTry: 19.99,
+		compareAtTry: 49.99,
 		oneTimeOnly: true,
 		goldAmount: 4e3,
 		cars: ["m3gtr", "jdm"],
@@ -123979,8 +123820,8 @@ var BUNDLE_PRODUCTS = [
 		title: "Hiper Şampiyon Paketi",
 		subtitle: "Tek Seferlik · Amiral Gemisi",
 		tagline: "Koenigsegg Jesko, 12.000 Altın ve 3 Efsanevi Hiper Sandık.",
-		priceTry: 299.99,
-		compareAtTry: 699.99,
+		priceTry: 39.99,
+		compareAtTry: 99.99,
 		oneTimeOnly: true,
 		goldAmount: 12e3,
 		cars: ["jesko"],
@@ -124007,9 +123848,9 @@ var CRATE_PRODUCTS = [
 		skuTriple: "viraj_crate_street_3",
 		title: "Sokak Sandığı",
 		subtitle: "Cadde modifiyesi, altın ve spor araç şansı",
-		priceSingleTry: 19.99,
-		priceTripleTry: 49.99,
-		tripleSaveLabel: "%17 Tasarruf",
+		priceSingleTry: 2.99,
+		priceTripleTry: 6.99,
+		tripleSaveLabel: "%22 Tasarruf",
 		imageUrl: store_crate_street_1795078812518_default,
 		accentClass: "text-amber-300",
 		borderClass: "border-amber-400/35",
@@ -124048,9 +123889,9 @@ var CRATE_PRODUCTS = [
 		skuTriple: "viraj_crate_pro_3",
 		title: "Pist Sandığı",
 		subtitle: "Yüksek altın, karbon aero ve süper spor araçlar",
-		priceSingleTry: 49.99,
-		priceTripleTry: 129.99,
-		tripleSaveLabel: "%13 Tasarruf",
+		priceSingleTry: 6.99,
+		priceTripleTry: 16.99,
+		tripleSaveLabel: "%19 Tasarruf",
 		imageUrl: store_crate_pro_1795078814149_default,
 		accentClass: "text-sky-300",
 		borderClass: "border-sky-400/40",
@@ -124090,9 +123931,9 @@ var CRATE_PRODUCTS = [
 		skuTriple: "viraj_crate_legendary_3",
 		title: "Efsanevi Hiper Sandık",
 		subtitle: "Garanti hiper otomobil, dev altın kasası ve elit aero",
-		priceSingleTry: 119.99,
-		priceTripleTry: 299.99,
-		tripleSaveLabel: "%17 Tasarruf",
+		priceSingleTry: 14.99,
+		priceTripleTry: 34.99,
+		tripleSaveLabel: "%22 Tasarruf",
 		imageUrl: store_crate_legendary_1795078823167_default,
 		accentClass: "text-rose-300",
 		borderClass: "border-rose-400/45",
@@ -124135,7 +123976,7 @@ var GOLD_PACKS = [
 		title: "Avuç Altın",
 		subtitle: "Hızlı yükseltme ve tekerlek için",
 		goldAmount: 500,
-		priceTry: 14.99
+		priceTry: 1.99
 	},
 	{
 		sku: "viraj_gold_1500",
@@ -124143,7 +123984,7 @@ var GOLD_PACKS = [
 		subtitle: "Yeni araç veya tam motor kiti",
 		goldAmount: 1500,
 		bonusLabel: "+%15 Bonus",
-		priceTry: 39.99
+		priceTry: 4.99
 	},
 	{
 		sku: "viraj_gold_4000",
@@ -124152,7 +123993,7 @@ var GOLD_PACKS = [
 		goldAmount: 4e3,
 		bonusLabel: "+%25 Bonus",
 		highlightLabel: "En Popüler",
-		priceTry: 89.99,
+		priceTry: 9.99,
 		featured: true
 	},
 	{
@@ -124161,7 +124002,7 @@ var GOLD_PACKS = [
 		subtitle: "Üst sınıf pist araçları ve tam modifiye",
 		goldAmount: 1e4,
 		bonusLabel: "+%40 Bonus",
-		priceTry: 199.99
+		priceTry: 19.99
 	},
 	{
 		sku: "viraj_gold_25000",
@@ -124169,7 +124010,7 @@ var GOLD_PACKS = [
 		subtitle: "Hiper otomobilleri anında aç",
 		goldAmount: 25e3,
 		bonusLabel: "+%60 Bonus",
-		priceTry: 449.99
+		priceTry: 39.99
 	},
 	{
 		sku: "viraj_gold_60000",
@@ -124178,7 +124019,7 @@ var GOLD_PACKS = [
 		goldAmount: 6e4,
 		bonusLabel: "+%85 Bonus",
 		highlightLabel: "En İyi Değer",
-		priceTry: 899.99
+		priceTry: 69.99
 	}
 ];
 var ALL_VALID_STORE_SKUS = [
@@ -132719,6 +132560,10 @@ var HighwayEngine = class {
 		try {
 			const savedMode = localStorage.getItem(GAME_MODE_KEY);
 			if (savedMode && GAME_MODES.some((m) => m.id === savedMode)) this.gameMode = savedMode;
+			else {
+				this.gameMode = "endless";
+				localStorage.setItem(GAME_MODE_KEY, "endless");
+			}
 		} catch {}
 		this.applyAtmosphere(this.atmosphereId);
 		this.resetWorld();
@@ -134133,6 +133978,7 @@ var HighwayEngine = class {
 	}
 	startGame(keepRental = false) {
 		this.clearCareerModeIfActive();
+		this.gameMode = "endless";
 		this.launchRunInternal(keepRental);
 	}
 	launchRunInternal(keepRental = false) {
@@ -136437,6 +136283,11 @@ var HighwayEngine = class {
 		const inDrive = this.phase === "playing" || this.phase === "paused";
 		this.cockpit.root.visible = inDrive && this.cameraMode === "cockpit";
 		this.playerCar.root.visible = !inDrive || this.cameraMode === "chase" || this.cameraMode === "cine";
+		const aspect = Math.max(.38, this.camera.aspect || 1);
+		const portraitFactor = MathUtils.clamp((1 - aspect) / .54, 0, 1);
+		const yawFactor = MathUtils.lerp(.032, .005, portraitFactor);
+		const absLane = Math.abs(laneRatio);
+		const edgeWeight = absLane * absLane;
 		if (this.cameraMode === "hood") {
 			_vecA.copy(_roadSample.pos).addScaledVector(_roadSample.right, this.playerLateral).addScaledVector(_roadSample.tangent, .35).addScaledVector(_roadSample.normal, 1.32 + this.playerHeight);
 			this.road.sampleAtS(this.playerS + 16, _lookRoadSample);
@@ -136467,12 +136318,21 @@ var HighwayEngine = class {
 			const longitudinalAccel = this.nitroActive ? 1.15 : this.throttleInput * .7;
 			this.cockpit.updateInterior(dt, performance.now() * .001, lateralAccel, longitudinalAccel, rpmRatio, speedKmh);
 		} else if (this.cameraMode === "cine") {
-			const targetBackDist = this.nitroActive ? 5.15 : 4.45;
+			const targetBackDist = (this.nitroActive ? 5.65 : 4.95) + portraitFactor * 2.65;
 			this.road.sampleAtS(this.playerS + 16, _lookRoadSample);
-			const targetSwing = MathUtils.clamp(-_roadSample.curvature * this.speedMs * 1.15, -1.28, 1.28);
-			const targetCamLat = this.playerLateral * .72 + targetSwing * 1.15;
-			const targetCamHeight = 1.16 + this.playerHeight * .55;
-			const targetLookLat = this.playerLateral * .34;
+			const swingScale = MathUtils.lerp(.75, .24, portraitFactor);
+			const targetSwing = MathUtils.clamp(-_roadSample.curvature * this.speedMs * 1, -1.1, 1.1) * swingScale;
+			const baseCamFollow = MathUtils.lerp(.48, .6, portraitFactor);
+			const edgeCamFollow = MathUtils.lerp(.72, .88, portraitFactor);
+			const camLatFollow = MathUtils.lerp(baseCamFollow, edgeCamFollow, edgeWeight);
+			const baseLookFollow = MathUtils.lerp(.22, .44, portraitFactor);
+			const edgeLookFollow = MathUtils.lerp(.42, .74, portraitFactor);
+			const lookLatFollow = MathUtils.lerp(baseLookFollow, edgeLookFollow, edgeWeight);
+			const camLatDamp = MathUtils.lerp(4.4, 6, portraitFactor);
+			const lookLatDamp = MathUtils.lerp(3.8, 5.2, portraitFactor);
+			const targetCamLat = this.playerLateral * camLatFollow + targetSwing;
+			const targetCamHeight = 1.24 + portraitFactor * .44 + this.playerHeight * .55;
+			const targetLookLat = this.playerLateral * lookLatFollow;
 			if (snap) {
 				this.camCurveSwing = targetSwing;
 				this.camBackDistCurrent = targetBackDist;
@@ -136480,23 +136340,57 @@ var HighwayEngine = class {
 				this.camHeightCurrent = targetCamHeight;
 				this.camLookLateralCurrent = targetLookLat;
 			} else {
-				this.camCurveSwing = MathUtils.damp(this.camCurveSwing, targetSwing, 13, dt);
-				this.camBackDistCurrent = MathUtils.damp(this.camBackDistCurrent, targetBackDist, 9, dt);
-				this.camLateralCurrent = MathUtils.damp(this.camLateralCurrent, targetCamLat, 18, dt);
-				this.camHeightCurrent = MathUtils.damp(this.camHeightCurrent, targetCamHeight, 16, dt);
-				this.camLookLateralCurrent = MathUtils.damp(this.camLookLateralCurrent, targetLookLat, 18, dt);
+				this.camCurveSwing = MathUtils.damp(this.camCurveSwing, targetSwing, 7.5, dt);
+				this.camBackDistCurrent = MathUtils.damp(this.camBackDistCurrent, targetBackDist, 8.5, dt);
+				this.camLateralCurrent = MathUtils.damp(this.camLateralCurrent, targetCamLat, camLatDamp, dt);
+				this.camHeightCurrent = MathUtils.damp(this.camHeightCurrent, targetCamHeight, 14, dt);
+				this.camLookLateralCurrent = MathUtils.damp(this.camLookLateralCurrent, targetLookLat, lookLatDamp, dt);
+			}
+			const dxLook = _lookRoadSample.pos.x - _roadSample.pos.x;
+			const dyLook = _lookRoadSample.pos.y - _roadSample.pos.y;
+			const dzLook = _lookRoadSample.pos.z - _roadSample.pos.z;
+			const lookRoadLateralOffset = dxLook * _roadSample.right.x + dyLook * _roadSample.right.y + dzLook * _roadSample.right.z;
+			const lookRoadForwardOffset = Math.max(6, dxLook * _roadSample.tangent.x + dyLook * _roadSample.tangent.y + dzLook * _roadSample.tangent.z);
+			const activeFovRad = MathUtils.degToRad(this.camera.fov);
+			const frustumHalfW = this.camBackDistCurrent * Math.tan(activeFovRad * .5) * aspect;
+			const maxCarOffset = Math.max(.45, frustumHalfW - 1.55);
+			const tCar = this.camBackDistCurrent / (this.camBackDistCurrent + lookRoadForwardOffset);
+			const sightLatAtCar = this.camLateralCurrent + (lookRoadLateralOffset + this.camLookLateralCurrent - this.camLateralCurrent) * tCar - this.camBackDistCurrent * laneRatio * yawFactor;
+			const carOffset = this.playerLateral - sightLatAtCar;
+			const absCarOffset = Math.abs(carOffset);
+			if (absCarOffset > maxCarOffset) {
+				const hardExcess = carOffset - Math.sign(carOffset) * maxCarOffset;
+				this.camLateralCurrent += hardExcess;
+				this.camLookLateralCurrent += hardExcess;
+			} else if (!snap && absCarOffset > maxCarOffset * .72) {
+				const cushionSpan = Math.max(.01, maxCarOffset * .28);
+				const tSoft = (absCarOffset - maxCarOffset * .72) / cushionSpan;
+				const softShift = Math.sign(carOffset) * tSoft * tSoft * cushionSpan * .35;
+				const nextCamLat = MathUtils.damp(this.camLateralCurrent, this.camLateralCurrent + softShift, 12, dt);
+				const appliedDelta = nextCamLat - this.camLateralCurrent;
+				this.camLateralCurrent = nextCamLat;
+				this.camLookLateralCurrent += appliedDelta;
 			}
 			_vecA.copy(_roadSample.pos).addScaledVector(_roadSample.right, this.camLateralCurrent).addScaledVector(_roadSample.tangent, -this.camBackDistCurrent).addScaledVector(_roadSample.normal, this.camHeightCurrent);
 			_vecB.copy(_lookRoadSample.pos).addScaledVector(_lookRoadSample.right, this.camLookLateralCurrent).addScaledVector(_lookRoadSample.normal, .94 + this.playerHeight * .45);
 			this.camPosCurrent.copy(_vecA);
 			this.camLookCurrent.copy(_vecB);
 		} else {
-			const targetBackDist = this.nitroActive ? 7.1 : 6.2;
+			const targetBackDist = (this.nitroActive ? 7.75 : 6.85) + portraitFactor * 2.95;
 			this.road.sampleAtS(this.playerS + 16, _lookRoadSample);
-			const targetSwing = MathUtils.clamp(-_roadSample.curvature * this.speedMs * .95, -1.05, 1.05);
-			const targetCamLat = this.playerLateral * .7 + targetSwing;
-			const targetCamHeight = 2.42 + this.playerHeight * .6;
-			const targetLookLat = this.playerLateral * .26;
+			const swingScale = MathUtils.lerp(.75, .24, portraitFactor);
+			const targetSwing = MathUtils.clamp(-_roadSample.curvature * this.speedMs * .85, -.95, .95) * swingScale;
+			const baseCamFollow = MathUtils.lerp(.44, .56, portraitFactor);
+			const edgeCamFollow = MathUtils.lerp(.68, .86, portraitFactor);
+			const camLatFollow = MathUtils.lerp(baseCamFollow, edgeCamFollow, edgeWeight);
+			const baseLookFollow = MathUtils.lerp(.18, .38, portraitFactor);
+			const edgeLookFollow = MathUtils.lerp(.36, .7, portraitFactor);
+			const lookLatFollow = MathUtils.lerp(baseLookFollow, edgeLookFollow, edgeWeight);
+			const camLatDamp = MathUtils.lerp(4.2, 5.8, portraitFactor);
+			const lookLatDamp = MathUtils.lerp(3.6, 5, portraitFactor);
+			const targetCamLat = this.playerLateral * camLatFollow + targetSwing;
+			const targetCamHeight = 2.58 + portraitFactor * .68 + this.playerHeight * .6;
+			const targetLookLat = this.playerLateral * lookLatFollow;
 			if (snap) {
 				this.camCurveSwing = targetSwing;
 				this.camBackDistCurrent = targetBackDist;
@@ -136504,11 +136398,36 @@ var HighwayEngine = class {
 				this.camHeightCurrent = targetCamHeight;
 				this.camLookLateralCurrent = targetLookLat;
 			} else {
-				this.camCurveSwing = MathUtils.damp(this.camCurveSwing, targetSwing, 14, dt);
-				this.camBackDistCurrent = MathUtils.damp(this.camBackDistCurrent, targetBackDist, 9, dt);
-				this.camLateralCurrent = MathUtils.damp(this.camLateralCurrent, targetCamLat, 18, dt);
-				this.camHeightCurrent = MathUtils.damp(this.camHeightCurrent, targetCamHeight, 16, dt);
-				this.camLookLateralCurrent = MathUtils.damp(this.camLookLateralCurrent, targetLookLat, 18, dt);
+				this.camCurveSwing = MathUtils.damp(this.camCurveSwing, targetSwing, 7.5, dt);
+				this.camBackDistCurrent = MathUtils.damp(this.camBackDistCurrent, targetBackDist, 8.5, dt);
+				this.camLateralCurrent = MathUtils.damp(this.camLateralCurrent, targetCamLat, camLatDamp, dt);
+				this.camHeightCurrent = MathUtils.damp(this.camHeightCurrent, targetCamHeight, 14, dt);
+				this.camLookLateralCurrent = MathUtils.damp(this.camLookLateralCurrent, targetLookLat, lookLatDamp, dt);
+			}
+			const dxLook = _lookRoadSample.pos.x - _roadSample.pos.x;
+			const dyLook = _lookRoadSample.pos.y - _roadSample.pos.y;
+			const dzLook = _lookRoadSample.pos.z - _roadSample.pos.z;
+			const lookRoadLateralOffset = dxLook * _roadSample.right.x + dyLook * _roadSample.right.y + dzLook * _roadSample.right.z;
+			const lookRoadForwardOffset = Math.max(6, dxLook * _roadSample.tangent.x + dyLook * _roadSample.tangent.y + dzLook * _roadSample.tangent.z);
+			const activeFovRad = MathUtils.degToRad(this.camera.fov);
+			const frustumHalfW = this.camBackDistCurrent * Math.tan(activeFovRad * .5) * aspect;
+			const maxCarOffset = Math.max(.45, frustumHalfW - 1.55);
+			const tCar = this.camBackDistCurrent / (this.camBackDistCurrent + lookRoadForwardOffset);
+			const sightLatAtCar = this.camLateralCurrent + (lookRoadLateralOffset + this.camLookLateralCurrent - this.camLateralCurrent) * tCar - this.camBackDistCurrent * laneRatio * yawFactor;
+			const carOffset = this.playerLateral - sightLatAtCar;
+			const absCarOffset = Math.abs(carOffset);
+			if (absCarOffset > maxCarOffset) {
+				const hardExcess = carOffset - Math.sign(carOffset) * maxCarOffset;
+				this.camLateralCurrent += hardExcess;
+				this.camLookLateralCurrent += hardExcess;
+			} else if (!snap && absCarOffset > maxCarOffset * .72) {
+				const cushionSpan = Math.max(.01, maxCarOffset * .28);
+				const tSoft = (absCarOffset - maxCarOffset * .72) / cushionSpan;
+				const softShift = Math.sign(carOffset) * tSoft * tSoft * cushionSpan * .35;
+				const nextCamLat = MathUtils.damp(this.camLateralCurrent, this.camLateralCurrent + softShift, 12, dt);
+				const appliedDelta = nextCamLat - this.camLateralCurrent;
+				this.camLateralCurrent = nextCamLat;
+				this.camLookLateralCurrent += appliedDelta;
 			}
 			_vecA.copy(_roadSample.pos).addScaledVector(_roadSample.right, this.camLateralCurrent).addScaledVector(_roadSample.tangent, -this.camBackDistCurrent).addScaledVector(_roadSample.normal, this.camHeightCurrent);
 			_vecB.copy(_lookRoadSample.pos).addScaledVector(_lookRoadSample.right, this.camLookLateralCurrent).addScaledVector(_lookRoadSample.normal, 1.12 + this.playerHeight * .45);
@@ -136523,14 +136442,15 @@ var HighwayEngine = class {
 		}
 		this.camera.lookAt(this.camLookCurrent);
 		const bankRoll = _roadSample.bank * .52;
-		const targetCamRoll = laneRatio * .092 + steerNorm * .022 + bankRoll;
-		this.cameraRoll = snap ? targetCamRoll : MathUtils.damp(this.cameraRoll, targetCamRoll, 16, dt);
+		const targetCamRoll = laneRatio * .064 + steerNorm * .014 + bankRoll;
+		this.cameraRoll = snap ? targetCamRoll : MathUtils.damp(this.cameraRoll, targetCamRoll, 8.5, dt);
 		const shakeRoll = this.cameraShake > .002 ? (Math.random() - .5) * this.cameraShake * .095 : 0;
 		this.camera.rotateZ(this.cameraRoll + shakeRoll);
-		this.camera.rotateY(laneRatio * .048);
+		this.camera.rotateY(laneRatio * yawFactor);
 		const speedRatio = MathUtils.clamp((this.speedMs - 22) / 48, 0, 1);
 		const rampageFovBoost = this.rampageTimer > 0 ? 10 : 0;
-		const targetFov = this.cameraMode === "cine" ? 65 + speedRatio * 17 + (this.nitroActive ? 9 : 0) + rampageFovBoost : this.cameraMode === "cockpit" ? 62 + speedRatio * 12 + (this.nitroActive ? 6 : 0) + rampageFovBoost * .7 : 59 + speedRatio * 15 + (this.nitroActive ? 8 : 0) + rampageFovBoost;
+		const portraitFovBoost = this.cameraMode === "chase" || this.cameraMode === "cine" ? portraitFactor * 10 : portraitFactor * 6;
+		const targetFov = this.cameraMode === "cine" ? 65 + portraitFovBoost + speedRatio * 17 + (this.nitroActive ? 9 : 0) + rampageFovBoost : this.cameraMode === "cockpit" ? 62 + portraitFovBoost + speedRatio * 12 + (this.nitroActive ? 6 : 0) + rampageFovBoost * .7 : 59 + portraitFovBoost + speedRatio * 15 + (this.nitroActive ? 8 : 0) + rampageFovBoost;
 		if (Math.abs(this.camera.fov - targetFov) > .05) {
 			this.camera.fov = MathUtils.damp(this.camera.fov, targetFov, 7, dt);
 			this.camera.updateProjectionMatrix();
@@ -137939,7 +137859,7 @@ var NativeAdPluginEvents;
 	NativeAdPluginEvents["Closed"] = "nativeAdClosed";
 	NativeAdPluginEvents["AdPaid"] = "nativeAdPaid";
 })(NativeAdPluginEvents || (NativeAdPluginEvents = {}));
-var AdMob = registerPlugin("AdMob", { web: () => __vitePreload(() => import("./web-Diu93Bo1.js").then((m) => new m.AdMobWeb()), []) });
+var AdMob = registerPlugin("AdMob", { web: () => __vitePreload(() => import("./web-DgcexFEL.js").then((m) => new m.AdMobWeb()), []) });
 // src/services/googleAdsBridge.ts
 var DEFAULT_ADMOB_REWARDED_ID = "ca-app-pub-6050401092680348/4424510794";
 var DEFAULT_ADMOB_INTERSTITIAL_ID = "ca-app-pub-6050401092680348/1243813688";
@@ -138056,33 +137976,144 @@ async function triggerNativeRewardedAd(onAudioPause, onAudioResume) {
 		outcome: "unavailable",
 		provider: "fallback_required"
 	};
-	let rewarded = false;
-	const handles = [];
-	try {
-		const rewardHandle = await AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
-			rewarded = true;
-		});
-		handles.push(rewardHandle);
-		await AdMob.prepareRewardVideoAd({
-			adId: ADMOB_REWARDED_ID,
-			isTesting: TEST_MODE
-		});
-		onAudioPause();
-		await AdMob.showRewardVideoAd();
-		onAudioResume();
-		return {
-			outcome: rewarded ? "viewed" : "dismissed",
-			provider: "google"
+	return new Promise((resolve) => {
+		const handles = [];
+		let settled = false;
+		let rewarded = false;
+		let adShowed = false;
+		let sawHiddenDuringAd = false;
+		let prepareTimer = null;
+		let showStartTimer = null;
+		let resumeFallbackTimer = null;
+		const cleanup = () => {
+			if (prepareTimer !== null) {
+				window.clearTimeout(prepareTimer);
+				prepareTimer = null;
+			}
+			if (showStartTimer !== null) {
+				window.clearTimeout(showStartTimer);
+				showStartTimer = null;
+			}
+			if (resumeFallbackTimer !== null) {
+				window.clearTimeout(resumeFallbackTimer);
+				resumeFallbackTimer = null;
+			}
+			document.removeEventListener("visibilitychange", onVisibilityChange);
+			for (const h of handles) h.remove();
+			handles.length = 0;
 		};
-	} catch {
-		onAudioResume();
-		return {
-			outcome: "unavailable",
-			provider: "fallback_required"
+		const finish = (result) => {
+			if (settled) return;
+			settled = true;
+			cleanup();
+			onAudioResume();
+			resolve(result);
 		};
-	} finally {
-		for (const h of handles) h.remove();
-	}
+		const onVisibilityChange = () => {
+			if (settled) return;
+			if (document.hidden) {
+				sawHiddenDuringAd = true;
+				if (showStartTimer !== null) {
+					window.clearTimeout(showStartTimer);
+					showStartTimer = null;
+				}
+				if (resumeFallbackTimer !== null) {
+					window.clearTimeout(resumeFallbackTimer);
+					resumeFallbackTimer = null;
+				}
+			} else if (adShowed || sawHiddenDuringAd || rewarded) {
+				if (resumeFallbackTimer !== null) window.clearTimeout(resumeFallbackTimer);
+				resumeFallbackTimer = window.setTimeout(() => {
+					finish({
+						outcome: rewarded ? "viewed" : "dismissed",
+						provider: "google"
+					});
+				}, 1200);
+			}
+		};
+		document.addEventListener("visibilitychange", onVisibilityChange);
+		(async () => {
+			try {
+				const showedHandle = await AdMob.addListener(RewardAdPluginEvents.Showed, () => {
+					adShowed = true;
+					if (showStartTimer !== null) {
+						window.clearTimeout(showStartTimer);
+						showStartTimer = null;
+					}
+				});
+				handles.push(showedHandle);
+				const rewardHandle = await AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
+					rewarded = true;
+				});
+				handles.push(rewardHandle);
+				const dismissHandle = await AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
+					finish({
+						outcome: rewarded ? "viewed" : "dismissed",
+						provider: "google"
+					});
+				});
+				handles.push(dismissHandle);
+				const failedShowHandle = await AdMob.addListener(RewardAdPluginEvents.FailedToShow, () => {
+					finish({
+						outcome: "unavailable",
+						provider: "fallback_required"
+					});
+				});
+				handles.push(failedShowHandle);
+				prepareTimer = window.setTimeout(() => {
+					finish({
+						outcome: "unavailable",
+						provider: "fallback_required"
+					});
+				}, 7e3);
+				await AdMob.prepareRewardVideoAd({
+					adId: ADMOB_REWARDED_ID,
+					isTesting: TEST_MODE
+				});
+				if (settled) return;
+				if (prepareTimer !== null) {
+					window.clearTimeout(prepareTimer);
+					prepareTimer = null;
+				}
+				onAudioPause();
+				showStartTimer = window.setTimeout(() => {
+					if (!adShowed && !document.hidden) finish({
+						outcome: "unavailable",
+						provider: "fallback_required"
+					});
+				}, 5e3);
+				try {
+					const rewardItem = await AdMob.showRewardVideoAd();
+					if (rewardItem && (rewardItem.amount > 0 || rewardItem.type)) rewarded = true;
+					if (!settled && !document.hidden) {
+						if (resumeFallbackTimer !== null) window.clearTimeout(resumeFallbackTimer);
+						resumeFallbackTimer = window.setTimeout(() => {
+							finish({
+								outcome: rewarded ? "viewed" : "dismissed",
+								provider: "google"
+							});
+						}, 1200);
+					}
+				} catch (err) {
+					const errCode = typeof err === "object" && err !== null && "code" in err ? String(err.code) : "";
+					const errMsg = typeof err === "object" && err !== null && "message" in err ? String(err.message) : "";
+					if (errCode === "REWARDED_AD_CANCELLED" || errMsg.includes("dismissed before earning") || adShowed) finish({
+						outcome: rewarded ? "viewed" : "dismissed",
+						provider: "google"
+					});
+					else finish({
+						outcome: "unavailable",
+						provider: "fallback_required"
+					});
+				}
+			} catch {
+				finish({
+					outcome: "unavailable",
+					provider: "fallback_required"
+				});
+			}
+		})();
+	});
 }
 async function triggerNativeInterstitialAd(onAudioPause, onAudioResume) {
 	if (!isAdMobUnitValid(ADMOB_INTERSTITIAL_ID)) return {
@@ -138093,33 +138124,116 @@ async function triggerNativeInterstitialAd(onAudioPause, onAudioResume) {
 		outcome: "unavailable",
 		provider: "fallback_required"
 	};
-	const handles = [];
-	let dismissed = false;
-	try {
-		const dismissHandle = await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
-			dismissed = true;
-		});
-		handles.push(dismissHandle);
-		await AdMob.prepareInterstitial({
-			adId: ADMOB_INTERSTITIAL_ID,
-			isTesting: TEST_MODE
-		});
-		onAudioPause();
-		await AdMob.showInterstitial();
-		onAudioResume();
-		return {
-			outcome: dismissed ? "shown" : "shown",
-			provider: "google"
+	return new Promise((resolve) => {
+		const handles = [];
+		let settled = false;
+		let adShowed = false;
+		let sawHiddenDuringAd = false;
+		let prepareTimer = null;
+		let showStartTimer = null;
+		let resumeFallbackTimer = null;
+		const cleanup = () => {
+			if (prepareTimer !== null) {
+				window.clearTimeout(prepareTimer);
+				prepareTimer = null;
+			}
+			if (showStartTimer !== null) {
+				window.clearTimeout(showStartTimer);
+				showStartTimer = null;
+			}
+			if (resumeFallbackTimer !== null) {
+				window.clearTimeout(resumeFallbackTimer);
+				resumeFallbackTimer = null;
+			}
+			document.removeEventListener("visibilitychange", onVisibilityChange);
+			for (const h of handles) h.remove();
+			handles.length = 0;
 		};
-	} catch {
-		onAudioResume();
-		return {
-			outcome: "unavailable",
-			provider: "fallback_required"
+		const finish = (result) => {
+			if (settled) return;
+			settled = true;
+			cleanup();
+			onAudioResume();
+			resolve(result);
 		};
-	} finally {
-		for (const h of handles) h.remove();
-	}
+		const onVisibilityChange = () => {
+			if (settled) return;
+			if (document.hidden) {
+				sawHiddenDuringAd = true;
+				if (showStartTimer !== null) {
+					window.clearTimeout(showStartTimer);
+					showStartTimer = null;
+				}
+				if (resumeFallbackTimer !== null) {
+					window.clearTimeout(resumeFallbackTimer);
+					resumeFallbackTimer = null;
+				}
+			} else if (adShowed || sawHiddenDuringAd) {
+				if (resumeFallbackTimer !== null) window.clearTimeout(resumeFallbackTimer);
+				resumeFallbackTimer = window.setTimeout(() => {
+					finish({
+						outcome: "shown",
+						provider: "google"
+					});
+				}, 1200);
+			}
+		};
+		document.addEventListener("visibilitychange", onVisibilityChange);
+		(async () => {
+			try {
+				const showedHandle = await AdMob.addListener(InterstitialAdPluginEvents.Showed, () => {
+					adShowed = true;
+					if (showStartTimer !== null) {
+						window.clearTimeout(showStartTimer);
+						showStartTimer = null;
+					}
+				});
+				handles.push(showedHandle);
+				const dismissHandle = await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+					finish({
+						outcome: "shown",
+						provider: "google"
+					});
+				});
+				handles.push(dismissHandle);
+				const failedShowHandle = await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => {
+					finish({
+						outcome: "unavailable",
+						provider: "fallback_required"
+					});
+				});
+				handles.push(failedShowHandle);
+				prepareTimer = window.setTimeout(() => {
+					finish({
+						outcome: "unavailable",
+						provider: "fallback_required"
+					});
+				}, 6e3);
+				await AdMob.prepareInterstitial({
+					adId: ADMOB_INTERSTITIAL_ID,
+					isTesting: TEST_MODE
+				});
+				if (settled) return;
+				if (prepareTimer !== null) {
+					window.clearTimeout(prepareTimer);
+					prepareTimer = null;
+				}
+				onAudioPause();
+				showStartTimer = window.setTimeout(() => {
+					if (!adShowed && !document.hidden) finish({
+						outcome: "unavailable",
+						provider: "fallback_required"
+					});
+				}, 5e3);
+				await AdMob.showInterstitial();
+			} catch {
+				finish({
+					outcome: "unavailable",
+					provider: "fallback_required"
+				});
+			}
+		})();
+	});
 }
 async function triggerGoogleRewardedAd(placement, onAudioPause, onAudioResume) {
 	if (Capacitor.isNativePlatform()) return triggerNativeRewardedAd(onAudioPause, onAudioResume);
@@ -138920,7 +139034,7 @@ function App() {
 					setStoreOpen(false);
 					return true;
 				}
-				if (m.hasActiveAd) return true;
+				if (m.hasActiveAd || adRequestBusyRef.current) return true;
 				if (m.careerMapOpen) {
 					setCareerMapOpen(false);
 					return true;
@@ -138950,7 +139064,7 @@ function App() {
 				if (phaseRef.current === "playing") engine.togglePause();
 			},
 			onForeground: () => {
-				engine.audio.setMuted(mutedRef.current, false);
+				if (!adRequestBusyRef.current && !modalsOpenRef.current.hasActiveAd) engine.audio.setMuted(mutedRef.current, false);
 				setMissions(engine.getMissionsSnapshot());
 			}
 		});
@@ -139013,6 +139127,7 @@ function App() {
 				if (activeAdSession || leaderboardOpen || dailyWheelOpen || storeOpen || careerMapOpen || levelRoadOpen || levelRoadCrateSession || activeLevelUp && phase !== "playing") return;
 				e.preventDefault();
 				if (phase === "gameover") {
+					if (adRequestBusyRef.current) return;
 					const outcome = lastCareerOutcomeRef.current;
 					const proceed = () => {
 						setRevivedThisRun(false);
@@ -139026,18 +139141,18 @@ function App() {
 							engineRef.current?.startGame();
 						}
 					};
-					if (!adRequestBusyRef.current && adManager.shouldShowInterstitial()) {
+					if (adManager.shouldShowInterstitial()) {
 						setAdState(adManager.markInterstitialShown());
 						const actionLabel = outcome ? "Kariyer Bölümü" : "Yeni Sürüş";
 						if (isGoogleAdsConfigured()) {
 							adRequestBusyRef.current = true;
-							triggerGoogleInterstitialAd(actionLabel, () => engineRef.current?.audio.setMuted(true), () => engineRef.current?.audio.setMuted(mutedRef.current)).then((res) => {
+							triggerGoogleInterstitialAd(actionLabel, () => engineRef.current?.audio.setMuted(true, false), () => engineRef.current?.audio.setMuted(mutedRef.current, false)).then((res) => {
 								adRequestBusyRef.current = false;
 								if (res.outcome === "shown" || res.outcome === "skipped") {
 									proceed();
 									return;
 								}
-								engineRef.current?.audio.setMuted(true);
+								engineRef.current?.audio.setMuted(true, false);
 								pendingInterstitialActionRef.current = proceed;
 								setActiveAdSession({
 									type: "interstitial",
@@ -139046,7 +139161,7 @@ function App() {
 							});
 							return;
 						}
-						engineRef.current?.audio.setMuted(true);
+						engineRef.current?.audio.setMuted(true, false);
 						pendingInterstitialActionRef.current = proceed;
 						setActiveAdSession({
 							type: "interstitial",
@@ -139222,13 +139337,13 @@ function App() {
 			setAdState(adManager.markInterstitialShown());
 			if (isGoogleAdsConfigured()) {
 				adRequestBusyRef.current = true;
-				triggerGoogleInterstitialAd(actionLabel, () => engineRef.current?.audio.setMuted(true), () => engineRef.current?.audio.setMuted(mutedRef.current)).then((res) => {
+				triggerGoogleInterstitialAd(actionLabel, () => engineRef.current?.audio.setMuted(true, false), () => engineRef.current?.audio.setMuted(mutedRef.current, false)).then((res) => {
 					adRequestBusyRef.current = false;
 					if (res.outcome === "shown" || res.outcome === "skipped") {
 						proceed();
 						return;
 					}
-					engineRef.current?.audio.setMuted(true);
+					engineRef.current?.audio.setMuted(true, false);
 					pendingInterstitialActionRef.current = proceed;
 					setActiveAdSession({
 						type: "interstitial",
@@ -139237,7 +139352,7 @@ function App() {
 				});
 				return;
 			}
-			engineRef.current?.audio.setMuted(true);
+			engineRef.current?.audio.setMuted(true, false);
 			pendingInterstitialActionRef.current = proceed;
 			setActiveAdSession({
 				type: "interstitial",
@@ -139326,12 +139441,12 @@ function App() {
 		if (adRequestBusyRef.current) return;
 		if (isGoogleAdsConfigured()) {
 			adRequestBusyRef.current = true;
-			triggerGoogleRewardedAd(placement, () => engineRef.current?.audio.setMuted(true), () => engineRef.current?.audio.setMuted(mutedRef.current)).then((res) => {
+			triggerGoogleRewardedAd(placement, () => engineRef.current?.audio.setMuted(true, false), () => engineRef.current?.audio.setMuted(mutedRef.current, false)).then((res) => {
 				adRequestBusyRef.current = false;
 				if (res.outcome === "viewed") grantRewardForPlacement(placement);
 				else if (res.outcome === "dismissed") pendingExtraSpinCbRef.current = null;
 				else {
-					engineRef.current?.audio.setMuted(true);
+					engineRef.current?.audio.setMuted(true, false);
 					setActiveAdSession({
 						type: "rewarded",
 						placement
@@ -139340,24 +139455,24 @@ function App() {
 			});
 			return;
 		}
-		engineRef.current?.audio.setMuted(true);
+		engineRef.current?.audio.setMuted(true, false);
 		setActiveAdSession({
 			type: "rewarded",
 			placement
 		});
 	}, [grantRewardForPlacement]);
 	const handleCompleteRewardedAd = (0, import_react.useCallback)((placement) => {
-		engineRef.current?.audio.setMuted(mutedRef.current);
+		engineRef.current?.audio.setMuted(mutedRef.current, false);
 		setActiveAdSession(null);
 		grantRewardForPlacement(placement);
 	}, [grantRewardForPlacement]);
 	const handleCancelRewardedAd = (0, import_react.useCallback)(() => {
-		engineRef.current?.audio.setMuted(mutedRef.current);
+		engineRef.current?.audio.setMuted(mutedRef.current, false);
 		pendingExtraSpinCbRef.current = null;
 		setActiveAdSession(null);
 	}, []);
 	const handleCloseInterstitial = (0, import_react.useCallback)(() => {
-		engineRef.current?.audio.setMuted(mutedRef.current);
+		engineRef.current?.audio.setMuted(mutedRef.current, false);
 		setActiveAdSession(null);
 		const next = pendingInterstitialActionRef.current;
 		pendingInterstitialActionRef.current = null;

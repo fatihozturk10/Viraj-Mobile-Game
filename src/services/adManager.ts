@@ -10,7 +10,7 @@ const ADS_STATE_KEY = 'viraj_ads_state_v1';
 export const INTERSTITIAL_INITIAL_FREE_RUNS = 3;
 export const INTERSTITIAL_RUN_INTERVAL = 3;
 export const INTERSTITIAL_COOLDOWN_MS = 75_000;
-export const AD_FREE_PRICE_LABEL = '49,99 ₺';
+export const AD_FREE_PRICE_LABEL = '9,99 ₺';
 
 export interface WheelSlice {
   id: string;

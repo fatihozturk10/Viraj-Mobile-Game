@@ -83,95 +83,112 @@ interface FocusCameraPlan {
   startElevation: number;
   endElevation: number;
   steerFrontWheelRad: number;
+  fov: number;
 }
 
 function buildFocusCameraPlan(
   item: RolledLootItem,
   modelId: CarModelId,
+  aspect: number,
 ): FocusCameraPlan {
   const bp = getCarBlueprint(modelId);
+  const safeAspect = Math.max(0.4, aspect || 1);
+  const portraitFactor = THREE.MathUtils.clamp((1.05 - safeAspect) / 0.58, 0, 1);
+  // Extra pullback for ultra-tall phones (e.g. 9:20 / 9:21) so wide parts stay unclipped
+  const extraNarrow = Math.max(1, 0.5 / safeAspect);
+  // Slight downward look offset on portrait lifts the subject cleanly above the bottom dock
+  const portraitYOffset = -0.12 * portraitFactor;
 
   if (item.kind === 'wheel') {
-    // Car arrives wide, then camera sweeps circularly around the flank and zooms straight onto the front-right wheel!
+    // Car arrives wide, then camera sweeps circularly around the flank and zooms cleanly onto the front-right wheel
     return {
-      target: new THREE.Vector3(bp.trackHalf + 0.04, bp.wheelRadius, -bp.wheelBaseHalf),
+      target: new THREE.Vector3(
+        bp.trackHalf + 0.04,
+        bp.wheelRadius + portraitYOffset * 0.5,
+        -bp.wheelBaseHalf,
+      ),
       startAzimuth: 2.38,
       endAzimuth: 1.62,
       orbitSweepAmp: 0.42,
       orbitSweepSpeed: 0.58,
       continuousSpin: false,
-      startRadius: 5.5,
-      endRadius: 1.48,
+      startRadius: THREE.MathUtils.lerp(5.8, 8.4 * extraNarrow, portraitFactor),
+      endRadius: THREE.MathUtils.lerp(1.95, 3.25 * extraNarrow, portraitFactor),
       startElevation: 0.25,
-      endElevation: 0.14,
+      endElevation: THREE.MathUtils.lerp(0.14, 0.18, portraitFactor),
       steerFrontWheelRad: -0.26,
+      fov: THREE.MathUtils.lerp(42, 46, portraitFactor),
     };
   }
 
   if (item.kind === 'spoiler') {
-    // Sweeps circularly from front-right 3/4 around the flank to rear-3/4 and zooms cleanly onto the rear wing
+    // Sweeps circularly from front-right 3/4 around the flank to rear-3/4 and frames the entire rear wing
     return {
-      target: new THREE.Vector3(0, bp.wingY + 0.06, bp.wingZ),
+      target: new THREE.Vector3(0, bp.wingY + 0.04 + portraitYOffset * 0.6, bp.wingZ),
       startAzimuth: 2.35,
       endAzimuth: 0.54,
       orbitSweepAmp: 0.55,
       orbitSweepSpeed: 0.52,
       continuousSpin: false,
-      startRadius: 5.4,
-      endRadius: 2.25,
+      startRadius: THREE.MathUtils.lerp(5.8, 8.5 * extraNarrow, portraitFactor),
+      endRadius: THREE.MathUtils.lerp(2.85, 4.95 * extraNarrow, portraitFactor),
       startElevation: 0.24,
-      endElevation: 0.28,
+      endElevation: THREE.MathUtils.lerp(0.28, 0.3, portraitFactor),
       steerFrontWheelRad: 0.12,
+      fov: THREE.MathUtils.lerp(43, 48, portraitFactor),
     };
   }
 
   if (item.kind === 'bodyKit') {
     // Low aggressive circular sweep around front splitter, wide fenders & side aero
     return {
-      target: new THREE.Vector3(0, 0.52, -0.35),
+      target: new THREE.Vector3(0, 0.52 + portraitYOffset, -0.25),
       startAzimuth: 2.55,
       endAzimuth: 1.92,
       orbitSweepAmp: 0.72,
       orbitSweepSpeed: 0.46,
       continuousSpin: true,
-      startRadius: 5.7,
-      endRadius: 3.55,
+      startRadius: THREE.MathUtils.lerp(6.0, 9.4 * extraNarrow, portraitFactor),
+      endRadius: THREE.MathUtils.lerp(4.25, 7.35 * extraNarrow, portraitFactor),
       startElevation: 0.24,
-      endElevation: 0.16,
+      endElevation: THREE.MathUtils.lerp(0.16, 0.2, portraitFactor),
       steerFrontWheelRad: -0.18,
+      fov: THREE.MathUtils.lerp(44, 49, portraitFactor),
     };
   }
 
   if (item.kind === 'livery') {
     // Elevated 360° circular orbit showcasing the full wrap across hood, roof & flanks
     return {
-      target: new THREE.Vector3(0, 0.72, 0),
+      target: new THREE.Vector3(0, 0.68 + portraitYOffset, 0),
       startAzimuth: 2.38,
       endAzimuth: 1.85,
       orbitSweepAmp: 0,
       orbitSweepSpeed: 0.45,
       continuousSpin: true,
-      startRadius: 5.8,
-      endRadius: 4.3,
+      startRadius: THREE.MathUtils.lerp(6.2, 10.2 * extraNarrow, portraitFactor),
+      endRadius: THREE.MathUtils.lerp(4.95, 8.45 * extraNarrow, portraitFactor),
       startElevation: 0.26,
-      endElevation: 0.42,
+      endElevation: THREE.MathUtils.lerp(0.42, 0.38, portraitFactor),
       steerFrontWheelRad: -0.12,
+      fov: THREE.MathUtils.lerp(44, 50, portraitFactor),
     };
   }
 
-  // Full Car Unlock: iconic Rocket League hero showroom turntable 360° reveal!
+  // Full Car Unlock: hero showroom turntable 360° reveal!
   return {
-    target: new THREE.Vector3(0, 0.68, 0),
+    target: new THREE.Vector3(0, 0.62 + portraitYOffset, 0),
     startAzimuth: 2.48,
     endAzimuth: 1.95,
     orbitSweepAmp: 0,
     orbitSweepSpeed: 0.42,
     continuousSpin: true,
-    startRadius: 6.1,
-    endRadius: 4.55,
+    startRadius: THREE.MathUtils.lerp(6.5, 10.6 * extraNarrow, portraitFactor),
+    endRadius: THREE.MathUtils.lerp(5.25, 8.85 * extraNarrow, portraitFactor),
     startElevation: 0.28,
-    endElevation: 0.22,
+    endElevation: THREE.MathUtils.lerp(0.22, 0.25, portraitFactor),
     steerFrontWheelRad: -0.2,
+    fov: THREE.MathUtils.lerp(44, 50, portraitFactor),
   };
 }
 
@@ -222,14 +239,15 @@ export const CrateCarShowcase3D: React.FC<CrateCarShowcase3DProps> = ({
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x070910);
-    scene.fog = new THREE.FogExp2(0x070910, 0.038);
+    scene.fog = new THREE.FogExp2(0x070910, 0.024);
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     const envTarget = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
     scene.environment = envTarget.texture;
     pmremGenerator.dispose();
 
-    const camera = new THREE.PerspectiveCamera(42, initialW / initialH, 0.1, 100);
+    const initialAspect = initialW / initialH;
+    const camera = new THREE.PerspectiveCamera(44, initialAspect, 0.1, 120);
 
     // 3-point automotive studio lighting + rarity-tinted rim light
     const hemiLight = new THREE.HemisphereLight(0xa6c8ff, 0x151924, 0.95);
@@ -356,10 +374,18 @@ export const CrateCarShowcase3D: React.FC<CrateCarShowcase3DProps> = ({
     let carRig: PlayerCarRig | null = null;
 
     // Choreography & Camera State
+    let activeModelId: CarModelId =
+      activePropsRef.current.lootItem.kind === 'car' &&
+      activePropsRef.current.lootItem.carId
+        ? activePropsRef.current.lootItem.carId
+        : activePropsRef.current.baseCar.modelId;
     let plan: FocusCameraPlan = buildFocusCameraPlan(
       activePropsRef.current.lootItem,
-      activePropsRef.current.baseCar.modelId,
+      activeModelId,
+      initialAspect,
     );
+    camera.fov = plan.fov;
+    camera.updateProjectionMatrix();
     let showcaseElapsed = 0;
     let carRollZ = 3.4;
     let wheelSpinAngle = 0;
@@ -443,8 +469,11 @@ export const CrateCarShowcase3D: React.FC<CrateCarShowcase3DProps> = ({
       outerRingMat.color.set(acc);
       innerRingMat.color.set(sec);
 
-      // Reset Rocket League entrance & circular zoom choreography
-      plan = buildFocusCameraPlan(item, targetModelId);
+      // Reset entrance & circular zoom choreography with current viewport aspect
+      activeModelId = targetModelId;
+      plan = buildFocusCameraPlan(item, targetModelId, camera.aspect);
+      camera.fov = plan.fov;
+      camera.updateProjectionMatrix();
       showcaseElapsed = 0;
       carRollZ = 3.4;
       userTookControl = false;
@@ -453,7 +482,7 @@ export const CrateCarShowcase3D: React.FC<CrateCarShowcase3DProps> = ({
       currentRadius = plan.startRadius;
       manualAzimuth = plan.endAzimuth;
       manualElevation = plan.endElevation;
-      _camTarget.set(0, 0.72, 0);
+      _camTarget.set(0, 0.68, 0);
     };
 
     rebuildCarFnRef.current = rebuildShowcaseCar;
@@ -497,7 +526,14 @@ export const CrateCarShowcase3D: React.FC<CrateCarShowcase3DProps> = ({
       if (!container) return;
       const w = Math.max(1, container.clientWidth);
       const h = Math.max(1, container.clientHeight);
-      camera.aspect = w / h;
+      const nextAspect = w / h;
+      camera.aspect = nextAspect;
+      plan = buildFocusCameraPlan(
+        activePropsRef.current.lootItem,
+        activeModelId,
+        nextAspect,
+      );
+      camera.fov = plan.fov;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };

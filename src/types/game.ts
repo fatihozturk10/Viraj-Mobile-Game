@@ -37,38 +37,6 @@ export const GAME_MODES: GameModeSpec[] = [
     rewardMultiplier: 1.0,
     accentHex: '#f59e0b',
   },
-  {
-    id: 'pursuit',
-    label: 'Polis Takibi',
-    shortLabel: 'Polis',
-    tagline: '1★-5★ aranma, polis barikatları ve kaçış bonusu',
-    rewardMultiplier: 1.45,
-    accentHex: '#3b82f6',
-  },
-  {
-    id: 'twoway',
-    label: 'Çift Yön',
-    shortLabel: 'Çift Yön',
-    tagline: 'Sol şeritte karşıdan gelen trafik, ters şerit ×2 puan',
-    rewardMultiplier: 1.5,
-    accentHex: '#ef4444',
-  },
-  {
-    id: 'timeattack',
-    label: 'Zamana Karşı',
-    shortLabel: 'Zaman',
-    tagline: '45 sn ile başla, her 750 m kontrol noktasında +14 sn kazan',
-    rewardMultiplier: 1.3,
-    accentHex: '#10b981',
-  },
-  {
-    id: 'bomb',
-    label: 'Hız Bombası',
-    shortLabel: 'Bomba',
-    tagline: 'Minimum hızın altına düşersen 5 sn fitil patlar',
-    rewardMultiplier: 1.45,
-    accentHex: '#f97316',
-  },
 ];
 
 export type AtmosphereId = 'golden' | 'night' | 'mist' | 'rainy' | 'cycle';
@@ -287,8 +255,8 @@ export const UPGRADE_SPECS: UpgradeSpec[] = [
   {
     key: 'nitroTank',
     label: 'Nitro Deposu',
-    description: 'Depo kapasitesini ve turbo süresini uzatır',
-    bonusPerLevel: '+25 Kapasite',
+    description: 'Turbo yanma süresini ve verimliliğini artırır',
+    bonusPerLevel: '+1 sn Süre',
   },
   {
     key: 'nitroPower',
@@ -298,8 +266,16 @@ export const UPGRADE_SPECS: UpgradeSpec[] = [
   },
 ];
 
-export function getMaxNitroCapacity(nitroTankLevel: number): number {
-  return 100 + Math.max(0, nitroTankLevel) * 25;
+export function getMaxNitroCapacity(_nitroTankLevel = 0): number {
+  return 100;
+}
+
+export function getNitroDurationSec(nitroTankLevel: number): number {
+  return 4 + Math.max(0, Math.min(MAX_UPGRADE_LEVEL, nitroTankLevel));
+}
+
+export function getNitroDrainRatePerSec(nitroTankLevel: number): number {
+  return 100 / getNitroDurationSec(nitroTankLevel);
 }
 
 export type PowerUpId = 'nitro' | 'repair' | 'magnet' | 'rampage';
@@ -3874,8 +3850,8 @@ export interface HudStats {
   laneRatio: number;
   curvature: number;
   integrity: number;
-  nitro: number; // 0 - nitroMax
-  nitroMax: number; // 100 - 200
+  nitro: number; // 0 - 100
+  nitroMax: number; // always 100
   nitroPercent: number; // 0 - 100
   nitroActive: boolean;
   combo: number; // 1 - 5

@@ -1,4 +1,4 @@
-import { i as WebPlugin, n as ImpactStyle, r as NotificationType } from "./index-DkdtuGLC.js";
+import { i as WebPlugin, n as ImpactStyle, r as NotificationType } from "./index-DtatVIR5.js";
 // node_modules/@capacitor/haptics/dist/esm/web.js
 var HapticsWeb = class extends WebPlugin {
 	constructor() {

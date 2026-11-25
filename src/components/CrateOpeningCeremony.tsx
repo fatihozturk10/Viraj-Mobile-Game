@@ -2,9 +2,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   CarFront,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Coins,
   Crown,
   Eye,
+  EyeOff,
   LayoutGrid,
   RotateCw,
   SkipForward,
@@ -283,10 +286,30 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
   const [tapRecoilKey, setTapRecoilKey] = useState(0);
   const [upgradeBannerText, setUpgradeBannerText] = useState<string | null>(null);
   const [activeShowcaseIdx, setActiveShowcaseIdx] = useState(0);
+  const [showcaseHudHidden, setShowcaseHudHidden] = useState(false);
 
   const burstTriggeredRef = useRef(false);
   const beatStageRef = useRef(0);
   const chargeFloorRef = useRef(0);
+  const chipStripRef = useRef<HTMLDivElement | null>(null);
+  const chipButtonsRef = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    if (phase !== 'showcase' || showcaseHudHidden) return;
+    const strip = chipStripRef.current;
+    const btn = chipButtonsRef.current[activeShowcaseIdx];
+    if (!strip || !btn) return;
+    const stripRect = strip.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const targetLeft =
+      strip.scrollLeft +
+      (btnRect.left - stripRect.left) -
+      (stripRect.width - btnRect.width) / 2;
+    strip.scrollTo({
+      left: Math.max(0, targetLeft),
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    });
+  }, [activeShowcaseIdx, phase, showcaseHudHidden, prefersReducedMotion]);
 
   const highestRarity: LootRarity = useMemo(() => {
     if (!lootItems || lootItems.length === 0) {
@@ -721,137 +744,203 @@ export const CrateOpeningCeremony: React.FC<CrateOpeningCeremonyProps> = ({
             secondaryHex={activePalette.secondaryHex}
           />
 
-          {/* Top Floating Item Header (Zero Center Occlusion, No backdrop-blur) */}
+          {/* Top Floating Item Header (Compact, Zero Center Occlusion, No backdrop-blur) */}
           <div
-            className="pointer-events-none absolute inset-x-4 top-4 z-30 flex items-start justify-between gap-3"
+            className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-start justify-between gap-2 sm:inset-x-4 sm:top-4"
             style={{ marginTop: 'env(safe-area-inset-top)' }}
           >
-            <div
-              className="pointer-events-auto animate-crate-callout-slam max-w-md rounded-2xl border bg-zinc-950/92 px-4 py-3 shadow-2xl"
-              style={{
-                borderColor: activePalette.accentHex,
-                boxShadow: `0 12px 34px rgba(0,0,0,0.75), 0 0 24px ${activePalette.glowHex}`,
-              }}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${activePalette.badgeBgClass}`}
-                >
-                  {activeShowcaseItem.rarity === 'legendary' ? (
-                    <Crown className="h-3 w-3 text-amber-300" />
-                  ) : (
-                    <Sparkles className="h-3 w-3" />
+            {!showcaseHudHidden ? (
+              <div
+                className="pointer-events-auto animate-crate-callout-slam min-w-0 max-w-[calc(100%-6.25rem)] sm:max-w-md rounded-2xl border bg-zinc-950/90 px-3 py-2 sm:px-4 sm:py-2.5 shadow-2xl"
+                style={{
+                  borderColor: activePalette.accentHex,
+                  boxShadow: `0 10px 28px rgba(0,0,0,0.72), 0 0 20px ${activePalette.glowHex}`,
+                }}
+              >
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${activePalette.badgeBgClass}`}
+                  >
+                    {activeShowcaseItem.rarity === 'legendary' ? (
+                      <Crown className="h-3 w-3 text-amber-300" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    <span>{activePalette.label}</span>
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">
+                    {getShowcaseFocusLabel(activeShowcaseItem)}
+                  </span>
+                  {visualDrops.length > 1 && (
+                    <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono-num text-[10px] font-bold text-zinc-200">
+                      {activeShowcaseIdx + 1}/{visualDrops.length}
+                    </span>
                   )}
-                  <span>{activePalette.label}</span>
-                </span>
-                <span className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400">
-                  {getShowcaseFocusLabel(activeShowcaseItem)}
-                </span>
+                  {bonusSummaryText && (
+                    <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 font-mono-num text-[10px] font-extrabold text-amber-300">
+                      <Coins className="h-3 w-3" />
+                      <span>{bonusSummaryText}</span>
+                    </span>
+                  )}
+                </div>
+                <h3 className="mt-0.5 truncate font-display text-base font-black text-white sm:text-xl">
+                  {activeShowcaseItem.title}
+                </h3>
+                <p className="truncate text-[11px] font-medium text-zinc-300 sm:text-xs">
+                  {activeShowcaseItem.duplicateConvertedGold
+                    ? `+${activeShowcaseItem.duplicateConvertedGold.toLocaleString('tr-TR')} Altın telafisi`
+                    : activeShowcaseItem.subtitle}
+                </p>
               </div>
-              <h3 className="mt-1 font-display text-xl font-black text-white sm:text-2xl">
-                {activeShowcaseItem.title}
-              </h3>
-              <p className="mt-0.5 text-xs font-medium text-zinc-300">
-                {activeShowcaseItem.duplicateConvertedGold
-                  ? `+${activeShowcaseItem.duplicateConvertedGold.toLocaleString('tr-TR')} Altın telafisi`
-                  : activeShowcaseItem.subtitle}
-              </p>
-            </div>
+            ) : (
+              <div />
+            )}
 
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Kapat"
-              className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-zinc-950/90 text-zinc-200 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setShowcaseHudHidden((prev) => !prev)}
+                aria-label={showcaseHudHidden ? 'Arayüzü Göster' : 'Arayüzü Gizle'}
+                title={showcaseHudHidden ? 'Arayüzü Göster' : 'Arayüzü Gizle'}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-zinc-950/90 text-zinc-200 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
+              >
+                {showcaseHudHidden ? (
+                  <Eye className="h-4.5 w-4.5 text-amber-400" />
+                ) : (
+                  <EyeOff className="h-4.5 w-4.5" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Kapat"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-zinc-950/90 text-zinc-200 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Unified Compact Bottom Rocket League Dock (Zero Side Panels) */}
-          <div
-            className="pointer-events-none absolute inset-x-4 bottom-4 z-30 flex justify-center"
-            style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
-          >
-            <div className="pointer-events-auto flex w-full max-w-2xl flex-col gap-2.5 rounded-2xl border border-white/12 bg-zinc-950/92 p-3.5 shadow-2xl">
-              {/* Item Switcher Chips when multiple visual items dropped + Bonus Gold/XP summary */}
-              <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Unified Ultra-Compact Single-Row Bottom Dock (Never Stacks Over Car on Mobile) */}
+          {!showcaseHudHidden && (
+            <div
+              className="pointer-events-none absolute inset-x-3 bottom-3 z-30 flex justify-center sm:inset-x-4 sm:bottom-4"
+              style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+            >
+              <div className="pointer-events-auto flex w-full max-w-2xl flex-col gap-2 rounded-2xl border border-white/12 bg-zinc-950/90 p-2.5 sm:p-3 shadow-2xl">
+                {/* Single-Row Horizontally Scrollable Item Strip (never wraps into tall multi-row stacks) */}
                 {visualDrops.length > 1 ? (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {visualDrops.map((drop, idx) => {
-                      const isActive = idx === activeShowcaseIdx;
-                      const dropPalette = RARITY_THEMES[drop.rarity];
-                      return (
-                        <button
-                          key={drop.id}
-                          type="button"
-                          onClick={() => {
-                            setActiveShowcaseIdx(idx);
-                            playLootCardTickSfx(drop.rarity, idx);
-                          }}
-                          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
-                            isActive
-                              ? 'bg-zinc-800 text-white'
-                              : 'border-white/10 bg-zinc-900/90 text-zinc-400 hover:text-white'
-                          }`}
-                          style={
-                            isActive
-                              ? { borderColor: dropPalette.accentHex }
-                              : undefined
-                          }
-                        >
-                          {renderLootIcon(drop)}
-                          <span className="max-w-[130px] truncate">{drop.title}</span>
-                        </button>
-                      );
-                    })}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextIdx =
+                          (activeShowcaseIdx - 1 + visualDrops.length) %
+                          visualDrops.length;
+                        setActiveShowcaseIdx(nextIdx);
+                        playLootCardTickSfx(visualDrops[nextIdx].rarity, nextIdx);
+                      }}
+                      aria-label="Önceki parça"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/12 bg-zinc-900 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+
+                    <div
+                      ref={chipStripRef}
+                      className="no-scrollbar flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto"
+                    >
+                      {visualDrops.map((drop, idx) => {
+                        const isActive = idx === activeShowcaseIdx;
+                        const dropPalette = RARITY_THEMES[drop.rarity];
+                        return (
+                          <button
+                            key={drop.id}
+                            ref={(el) => {
+                              chipButtonsRef.current[idx] = el;
+                            }}
+                            type="button"
+                            onClick={() => {
+                              setActiveShowcaseIdx(idx);
+                              playLootCardTickSfx(drop.rarity, idx);
+                            }}
+                            className={`flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-bold transition-colors cursor-pointer ${
+                              isActive
+                                ? 'bg-zinc-800 text-white'
+                                : 'border-white/10 bg-zinc-900/90 text-zinc-400 hover:text-white'
+                            }`}
+                            style={
+                              isActive
+                                ? { borderColor: dropPalette.accentHex }
+                                : undefined
+                            }
+                          >
+                            {renderLootIcon(drop)}
+                            <span className="max-w-[110px] truncate sm:max-w-[140px]">
+                              {drop.title}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextIdx =
+                          (activeShowcaseIdx + 1) % visualDrops.length;
+                        setActiveShowcaseIdx(nextIdx);
+                        playLootCardTickSfx(visualDrops[nextIdx].rarity, nextIdx);
+                      }}
+                      aria-label="Sonraki parça"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/12 bg-zinc-900 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400">
-                    <RotateCw className="h-3.5 w-3.5 text-zinc-400" />
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-zinc-400">
+                    <RotateCw className="h-3 w-3 text-zinc-400" />
                     <span>İncelemek için sürükle</span>
                   </div>
                 )}
 
-                {bonusSummaryText && (
-                  <div className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/12 px-2.5 py-1 text-xs font-extrabold text-amber-300">
-                    <Coins className="h-3.5 w-3.5" />
-                    <span>{bonusSummaryText}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Row */}
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => setPhase('revealed')}
-                  className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-zinc-900 px-4 font-display text-sm font-bold text-white transition-colors hover:bg-zinc-800 cursor-pointer"
-                >
-                  <LayoutGrid className="h-4 w-4 text-sky-400" />
-                  <span>Tüm Ödüller ({sortedLootItems.length})</span>
-                </button>
-                {unlockedCarNames.length > 0 && onOpenGarage && (
+                {/* Compact Single-Row Action Bar (Always Horizontal on Mobile & Desktop) */}
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={onOpenGarage}
-                    className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-zinc-900 px-4 font-display text-sm font-bold text-white transition-colors hover:bg-zinc-800 cursor-pointer"
+                    onClick={() => setPhase('revealed')}
+                    className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-zinc-900 px-2.5 font-display text-xs font-bold text-white transition-colors hover:bg-zinc-800 sm:px-4 sm:text-sm cursor-pointer whitespace-nowrap"
                   >
-                    <CarFront className="h-4 w-4 text-amber-400" />
-                    <span>Garajda Gör</span>
+                    <LayoutGrid className="h-4 w-4 shrink-0 text-sky-400" />
+                    <span className="sm:hidden">Ödüller ({sortedLootItems.length})</span>
+                    <span className="hidden sm:inline">
+                      Tüm Ödüller ({sortedLootItems.length})
+                    </span>
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 font-display text-sm font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 cursor-pointer"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>{ctaLabel}</span>
-                </button>
+                  {unlockedCarNames.length > 0 && onOpenGarage && (
+                    <button
+                      type="button"
+                      onClick={onOpenGarage}
+                      className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-zinc-900 px-2.5 font-display text-xs font-bold text-white transition-colors hover:bg-zinc-800 sm:px-4 sm:text-sm cursor-pointer whitespace-nowrap"
+                    >
+                      <CarFront className="h-4 w-4 shrink-0 text-amber-400" />
+                      <span className="sm:hidden">Garaj</span>
+                      <span className="hidden sm:inline">Garajda Gör</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-3 font-display text-xs font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 sm:px-5 sm:text-sm cursor-pointer whitespace-nowrap"
+                  >
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    <span>{ctaLabel}</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       ) : (
         /* ============ STAGE 4: CELEBRATORY HERO SPOTLIGHT & FULL LOOT SUMMARY ============ */

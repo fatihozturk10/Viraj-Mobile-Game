@@ -705,7 +705,7 @@ export default function App() {
           setStoreOpen(false);
           return true;
         }
-        if (m.hasActiveAd) {
+        if (m.hasActiveAd || adRequestBusyRef.current) {
           return true;
         }
         if (m.careerMapOpen) {
@@ -739,7 +739,9 @@ export default function App() {
         }
       },
       onForeground: () => {
-        engine.audio.setMuted(mutedRef.current, false);
+        if (!adRequestBusyRef.current && !modalsOpenRef.current.hasActiveAd) {
+          engine.audio.setMuted(mutedRef.current, false);
+        }
         setMissions(engine.getMissionsSnapshot());
       },
     });
@@ -844,6 +846,7 @@ export default function App() {
         }
         e.preventDefault();
         if (phase === 'gameover') {
+          if (adRequestBusyRef.current) return;
           const outcome = lastCareerOutcomeRef.current;
           const proceed = () => {
             setRevivedThisRun(false);
@@ -860,28 +863,28 @@ export default function App() {
               engineRef.current?.startGame();
             }
           };
-          if (!adRequestBusyRef.current && adManager.shouldShowInterstitial()) {
+          if (adManager.shouldShowInterstitial()) {
             setAdState(adManager.markInterstitialShown());
             const actionLabel = outcome ? 'Kariyer Bölümü' : 'Yeni Sürüş';
             if (isGoogleAdsConfigured()) {
               adRequestBusyRef.current = true;
               void triggerGoogleInterstitialAd(
                 actionLabel,
-                () => engineRef.current?.audio.setMuted(true),
-                () => engineRef.current?.audio.setMuted(mutedRef.current),
+                () => engineRef.current?.audio.setMuted(true, false),
+                () => engineRef.current?.audio.setMuted(mutedRef.current, false),
               ).then((res) => {
                 adRequestBusyRef.current = false;
                 if (res.outcome === 'shown' || res.outcome === 'skipped') {
                   proceed();
                   return;
                 }
-                engineRef.current?.audio.setMuted(true);
+                engineRef.current?.audio.setMuted(true, false);
                 pendingInterstitialActionRef.current = proceed;
                 setActiveAdSession({ type: 'interstitial', actionLabel });
               });
               return;
             }
-            engineRef.current?.audio.setMuted(true);
+            engineRef.current?.audio.setMuted(true, false);
             pendingInterstitialActionRef.current = proceed;
             setActiveAdSession({ type: 'interstitial', actionLabel });
             return;
@@ -1110,22 +1113,22 @@ export default function App() {
           adRequestBusyRef.current = true;
           void triggerGoogleInterstitialAd(
             actionLabel,
-            () => engineRef.current?.audio.setMuted(true),
-            () => engineRef.current?.audio.setMuted(mutedRef.current),
+            () => engineRef.current?.audio.setMuted(true, false),
+            () => engineRef.current?.audio.setMuted(mutedRef.current, false),
           ).then((res) => {
             adRequestBusyRef.current = false;
             if (res.outcome === 'shown' || res.outcome === 'skipped') {
               proceed();
               return;
             }
-            engineRef.current?.audio.setMuted(true);
+            engineRef.current?.audio.setMuted(true, false);
             pendingInterstitialActionRef.current = proceed;
             setActiveAdSession({ type: 'interstitial', actionLabel });
           });
           return;
         }
 
-        engineRef.current?.audio.setMuted(true);
+        engineRef.current?.audio.setMuted(true, false);
         pendingInterstitialActionRef.current = proceed;
         setActiveAdSession({ type: 'interstitial', actionLabel });
         return;
@@ -1246,8 +1249,8 @@ export default function App() {
         adRequestBusyRef.current = true;
         void triggerGoogleRewardedAd(
           placement,
-          () => engineRef.current?.audio.setMuted(true),
-          () => engineRef.current?.audio.setMuted(mutedRef.current),
+          () => engineRef.current?.audio.setMuted(true, false),
+          () => engineRef.current?.audio.setMuted(mutedRef.current, false),
         ).then((res) => {
           adRequestBusyRef.current = false;
           if (res.outcome === 'viewed') {
@@ -1255,14 +1258,14 @@ export default function App() {
           } else if (res.outcome === 'dismissed') {
             pendingExtraSpinCbRef.current = null;
           } else {
-            engineRef.current?.audio.setMuted(true);
+            engineRef.current?.audio.setMuted(true, false);
             setActiveAdSession({ type: 'rewarded', placement });
           }
         });
         return;
       }
 
-      engineRef.current?.audio.setMuted(true);
+      engineRef.current?.audio.setMuted(true, false);
       setActiveAdSession({ type: 'rewarded', placement });
     },
     [grantRewardForPlacement],
@@ -1270,7 +1273,7 @@ export default function App() {
 
   const handleCompleteRewardedAd = useCallback(
     (placement: RewardedAdPlacement) => {
-      engineRef.current?.audio.setMuted(mutedRef.current);
+      engineRef.current?.audio.setMuted(mutedRef.current, false);
       setActiveAdSession(null);
       grantRewardForPlacement(placement);
     },
@@ -1278,13 +1281,13 @@ export default function App() {
   );
 
   const handleCancelRewardedAd = useCallback(() => {
-    engineRef.current?.audio.setMuted(mutedRef.current);
+    engineRef.current?.audio.setMuted(mutedRef.current, false);
     pendingExtraSpinCbRef.current = null;
     setActiveAdSession(null);
   }, []);
 
   const handleCloseInterstitial = useCallback(() => {
-    engineRef.current?.audio.setMuted(mutedRef.current);
+    engineRef.current?.audio.setMuted(mutedRef.current, false);
     setActiveAdSession(null);
     const next = pendingInterstitialActionRef.current;
     pendingInterstitialActionRef.current = null;

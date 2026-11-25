@@ -40,6 +40,7 @@ import {
   getMagnetDurationSec,
   getMagnetRangeMeters,
   getMaxNitroCapacity,
+  getNitroDrainRatePerSec,
   getNitroPickupFreeBurnSec,
   getNitroPickupSpeedBonusKmh,
   getPowerUpSpec,
@@ -1977,6 +1978,9 @@ export class HighwayEngine {
       const savedMode = localStorage.getItem(GAME_MODE_KEY) as GameModeId | null;
       if (savedMode && GAME_MODES.some((m) => m.id === savedMode)) {
         this.gameMode = savedMode;
+      } else {
+        this.gameMode = 'endless';
+        localStorage.setItem(GAME_MODE_KEY, 'endless');
       }
     } catch {
       // ignore storage errors
@@ -3993,6 +3997,7 @@ export class HighwayEngine {
 
   public startGame(keepRental = false): void {
     this.clearCareerModeIfActive();
+    this.gameMode = 'endless';
     this.launchRunInternal(keepRental);
   }
 
@@ -6902,9 +6907,12 @@ export class HighwayEngine {
       this.carUpgrades[this.carModelId] || DEFAULT_CAR_UPGRADES();
     const nitroMax = getMaxNitroCapacity(upgrades.nitroTank);
 
-    // Nitro Boost handling: drains to 0, then forces deactivation until re-triggered
-    // Higher Nitro Tank capacity extends burn duration linearly; Nitro Level boosts power & recharge
-    const nitroDrainRate = this.nitroFreeBurnTimer > 0 ? 0 : 25;
+    // Nitro Boost handling: strictly 0-100% tank; drains to 0, then forces deactivation.
+    // Higher Nitro Tank levels slow drain rate (4s -> 8s full burn); Nitro Level boosts power & recharge.
+    const nitroDrainRate =
+      this.nitroFreeBurnTimer > 0
+        ? 0
+        : getNitroDrainRatePerSec(upgrades.nitroTank);
     if (this.nitroRequested) {
       if (this.nitro > 0) {
         this.nitroActive = true;
@@ -7128,7 +7136,7 @@ export class HighwayEngine {
             this.missions.recordDelta('driftPoints', banked),
           );
           if (banked >= 150) {
-            this.boostCombo(bankedMult >= 3 ? 2 : 1);
+            this.boostCombo(bankedMult >= 6 ? 3 : bankedMult >= 3 ? 2 : 1);
             this.emitCallout(
               bankedMult > 1 ? `DRİFT ×${bankedMult}` : 'DRİFT',
               `+${banked.toLocaleString('tr-TR')}`,
@@ -7703,6 +7711,12 @@ export class HighwayEngine {
     this.playerCar.root.visible =
       !inDrive || this.cameraMode === 'chase' || this.cameraMode === 'cine';
 
+    const aspect = Math.max(0.38, this.camera.aspect || 1);
+    const portraitFactor = THREE.MathUtils.clamp((1.0 - aspect) / 0.54, 0, 1);
+    const yawFactor = THREE.MathUtils.lerp(0.032, 0.005, portraitFactor);
+    const absLane = Math.abs(laneRatio);
+    const edgeWeight = absLane * absLane;
+
     if (this.cameraMode === 'hood') {
       // Low Hood / Bumper Camera anchored directly in car road frame
       _vecA
@@ -7774,18 +7788,38 @@ export class HighwayEngine {
         speedKmh,
       );
     } else if (this.cameraMode === 'cine') {
-      // Low Rear Bumper / Exhaust Cine-Cam (longitudinally anchored to car sample for zero FPS jitter)
-      const targetBackDist = this.nitroActive ? 5.15 : 4.45;
+      // Low Rear Bumper / Exhaust Cine-Cam with calm lateral follow + frustum edge-guard
+      const targetBackDist =
+        (this.nitroActive ? 5.65 : 4.95) + portraitFactor * 2.65;
       this.road.sampleAtS(this.playerS + 16, _lookRoadSample);
 
-      const targetSwing = THREE.MathUtils.clamp(
-        -_roadSample.curvature * this.speedMs * 1.15,
-        -1.28,
-        1.28,
+      const swingScale = THREE.MathUtils.lerp(0.75, 0.24, portraitFactor);
+      const targetSwing =
+        THREE.MathUtils.clamp(
+          -_roadSample.curvature * this.speedMs * 1.0,
+          -1.1,
+          1.1,
+        ) * swingScale;
+      const baseCamFollow = THREE.MathUtils.lerp(0.48, 0.6, portraitFactor);
+      const edgeCamFollow = THREE.MathUtils.lerp(0.72, 0.88, portraitFactor);
+      const camLatFollow = THREE.MathUtils.lerp(
+        baseCamFollow,
+        edgeCamFollow,
+        edgeWeight,
       );
-      const targetCamLat = this.playerLateral * 0.72 + targetSwing * 1.15;
-      const targetCamHeight = 1.16 + this.playerHeight * 0.55;
-      const targetLookLat = this.playerLateral * 0.34;
+      const baseLookFollow = THREE.MathUtils.lerp(0.22, 0.44, portraitFactor);
+      const edgeLookFollow = THREE.MathUtils.lerp(0.42, 0.74, portraitFactor);
+      const lookLatFollow = THREE.MathUtils.lerp(
+        baseLookFollow,
+        edgeLookFollow,
+        edgeWeight,
+      );
+      const camLatDamp = THREE.MathUtils.lerp(4.4, 6.0, portraitFactor);
+      const lookLatDamp = THREE.MathUtils.lerp(3.8, 5.2, portraitFactor);
+      const targetCamLat = this.playerLateral * camLatFollow + targetSwing;
+      const targetCamHeight =
+        1.24 + portraitFactor * 0.44 + this.playerHeight * 0.55;
+      const targetLookLat = this.playerLateral * lookLatFollow;
 
       if (snap) {
         this.camCurveSwing = targetSwing;
@@ -7797,33 +7831,83 @@ export class HighwayEngine {
         this.camCurveSwing = THREE.MathUtils.damp(
           this.camCurveSwing,
           targetSwing,
-          13,
+          7.5,
           dt,
         );
         this.camBackDistCurrent = THREE.MathUtils.damp(
           this.camBackDistCurrent,
           targetBackDist,
-          9,
+          8.5,
           dt,
         );
         this.camLateralCurrent = THREE.MathUtils.damp(
           this.camLateralCurrent,
           targetCamLat,
-          18,
+          camLatDamp,
           dt,
         );
         this.camHeightCurrent = THREE.MathUtils.damp(
           this.camHeightCurrent,
           targetCamHeight,
-          16,
+          14,
           dt,
         );
         this.camLookLateralCurrent = THREE.MathUtils.damp(
           this.camLookLateralCurrent,
           targetLookLat,
-          18,
+          lookLatDamp,
           dt,
         );
+      }
+
+      // Frustum edge-guard: keep the car inside the horizontal viewport on fast swerves & outer lanes
+      const dxLook = _lookRoadSample.pos.x - _roadSample.pos.x;
+      const dyLook = _lookRoadSample.pos.y - _roadSample.pos.y;
+      const dzLook = _lookRoadSample.pos.z - _roadSample.pos.z;
+      const lookRoadLateralOffset =
+        dxLook * _roadSample.right.x +
+        dyLook * _roadSample.right.y +
+        dzLook * _roadSample.right.z;
+      const lookRoadForwardOffset = Math.max(
+        6,
+        dxLook * _roadSample.tangent.x +
+          dyLook * _roadSample.tangent.y +
+          dzLook * _roadSample.tangent.z,
+      );
+      const activeFovRad = THREE.MathUtils.degToRad(this.camera.fov);
+      const frustumHalfW =
+        this.camBackDistCurrent * Math.tan(activeFovRad * 0.5) * aspect;
+      const maxCarOffset = Math.max(0.45, frustumHalfW - 1.55);
+      const tCar =
+        this.camBackDistCurrent /
+        (this.camBackDistCurrent + lookRoadForwardOffset);
+      const sightLatAtCar =
+        this.camLateralCurrent +
+        (lookRoadLateralOffset +
+          this.camLookLateralCurrent -
+          this.camLateralCurrent) *
+          tCar -
+        this.camBackDistCurrent * laneRatio * yawFactor;
+      const carOffset = this.playerLateral - sightLatAtCar;
+      const absCarOffset = Math.abs(carOffset);
+      if (absCarOffset > maxCarOffset) {
+        const hardExcess = carOffset - Math.sign(carOffset) * maxCarOffset;
+        this.camLateralCurrent += hardExcess;
+        this.camLookLateralCurrent += hardExcess;
+      } else if (!snap && absCarOffset > maxCarOffset * 0.72) {
+        const cushionSpan = Math.max(0.01, maxCarOffset * 0.28);
+        const tSoft = (absCarOffset - maxCarOffset * 0.72) / cushionSpan;
+        const softShift =
+          Math.sign(carOffset) * tSoft * tSoft * cushionSpan * 0.35;
+        const nextCamLat = THREE.MathUtils.damp(
+          this.camLateralCurrent,
+          this.camLateralCurrent + softShift,
+          12,
+          dt,
+        );
+        const appliedDelta = nextCamLat - this.camLateralCurrent;
+        this.camLateralCurrent = nextCamLat;
+        this.camLookLateralCurrent += appliedDelta;
       }
 
       _vecA
@@ -7841,18 +7925,38 @@ export class HighwayEngine {
       this.camLookCurrent.copy(_vecB);
     } else {
       // Chase Camera anchored longitudinally to exact car road sample (_roadSample.pos)
-      // while damping lateral/height/pull-back offsets so the car NEVER jitters on uneven mobile FPS!
-      const targetBackDist = this.nitroActive ? 7.1 : 6.2;
+      // with low-sensitivity horizontal follow near center + frustum edge-guard so the car never exits frame.
+      const targetBackDist =
+        (this.nitroActive ? 7.75 : 6.85) + portraitFactor * 2.95;
       this.road.sampleAtS(this.playerS + 16, _lookRoadSample);
 
-      const targetSwing = THREE.MathUtils.clamp(
-        -_roadSample.curvature * this.speedMs * 0.95,
-        -1.05,
-        1.05,
+      const swingScale = THREE.MathUtils.lerp(0.75, 0.24, portraitFactor);
+      const targetSwing =
+        THREE.MathUtils.clamp(
+          -_roadSample.curvature * this.speedMs * 0.85,
+          -0.95,
+          0.95,
+        ) * swingScale;
+      const baseCamFollow = THREE.MathUtils.lerp(0.44, 0.56, portraitFactor);
+      const edgeCamFollow = THREE.MathUtils.lerp(0.68, 0.86, portraitFactor);
+      const camLatFollow = THREE.MathUtils.lerp(
+        baseCamFollow,
+        edgeCamFollow,
+        edgeWeight,
       );
-      const targetCamLat = this.playerLateral * 0.7 + targetSwing;
-      const targetCamHeight = 2.42 + this.playerHeight * 0.6;
-      const targetLookLat = this.playerLateral * 0.26;
+      const baseLookFollow = THREE.MathUtils.lerp(0.18, 0.38, portraitFactor);
+      const edgeLookFollow = THREE.MathUtils.lerp(0.36, 0.7, portraitFactor);
+      const lookLatFollow = THREE.MathUtils.lerp(
+        baseLookFollow,
+        edgeLookFollow,
+        edgeWeight,
+      );
+      const camLatDamp = THREE.MathUtils.lerp(4.2, 5.8, portraitFactor);
+      const lookLatDamp = THREE.MathUtils.lerp(3.6, 5.0, portraitFactor);
+      const targetCamLat = this.playerLateral * camLatFollow + targetSwing;
+      const targetCamHeight =
+        2.58 + portraitFactor * 0.68 + this.playerHeight * 0.6;
+      const targetLookLat = this.playerLateral * lookLatFollow;
 
       if (snap) {
         this.camCurveSwing = targetSwing;
@@ -7864,33 +7968,83 @@ export class HighwayEngine {
         this.camCurveSwing = THREE.MathUtils.damp(
           this.camCurveSwing,
           targetSwing,
-          14,
+          7.5,
           dt,
         );
         this.camBackDistCurrent = THREE.MathUtils.damp(
           this.camBackDistCurrent,
           targetBackDist,
-          9,
+          8.5,
           dt,
         );
         this.camLateralCurrent = THREE.MathUtils.damp(
           this.camLateralCurrent,
           targetCamLat,
-          18,
+          camLatDamp,
           dt,
         );
         this.camHeightCurrent = THREE.MathUtils.damp(
           this.camHeightCurrent,
           targetCamHeight,
-          16,
+          14,
           dt,
         );
         this.camLookLateralCurrent = THREE.MathUtils.damp(
           this.camLookLateralCurrent,
           targetLookLat,
-          18,
+          lookLatDamp,
           dt,
         );
+      }
+
+      // Frustum edge-guard: keep the car inside the horizontal viewport on fast swerves & outer lanes
+      const dxLook = _lookRoadSample.pos.x - _roadSample.pos.x;
+      const dyLook = _lookRoadSample.pos.y - _roadSample.pos.y;
+      const dzLook = _lookRoadSample.pos.z - _roadSample.pos.z;
+      const lookRoadLateralOffset =
+        dxLook * _roadSample.right.x +
+        dyLook * _roadSample.right.y +
+        dzLook * _roadSample.right.z;
+      const lookRoadForwardOffset = Math.max(
+        6,
+        dxLook * _roadSample.tangent.x +
+          dyLook * _roadSample.tangent.y +
+          dzLook * _roadSample.tangent.z,
+      );
+      const activeFovRad = THREE.MathUtils.degToRad(this.camera.fov);
+      const frustumHalfW =
+        this.camBackDistCurrent * Math.tan(activeFovRad * 0.5) * aspect;
+      const maxCarOffset = Math.max(0.45, frustumHalfW - 1.55);
+      const tCar =
+        this.camBackDistCurrent /
+        (this.camBackDistCurrent + lookRoadForwardOffset);
+      const sightLatAtCar =
+        this.camLateralCurrent +
+        (lookRoadLateralOffset +
+          this.camLookLateralCurrent -
+          this.camLateralCurrent) *
+          tCar -
+        this.camBackDistCurrent * laneRatio * yawFactor;
+      const carOffset = this.playerLateral - sightLatAtCar;
+      const absCarOffset = Math.abs(carOffset);
+      if (absCarOffset > maxCarOffset) {
+        const hardExcess = carOffset - Math.sign(carOffset) * maxCarOffset;
+        this.camLateralCurrent += hardExcess;
+        this.camLookLateralCurrent += hardExcess;
+      } else if (!snap && absCarOffset > maxCarOffset * 0.72) {
+        const cushionSpan = Math.max(0.01, maxCarOffset * 0.28);
+        const tSoft = (absCarOffset - maxCarOffset * 0.72) / cushionSpan;
+        const softShift =
+          Math.sign(carOffset) * tSoft * tSoft * cushionSpan * 0.35;
+        const nextCamLat = THREE.MathUtils.damp(
+          this.camLateralCurrent,
+          this.camLateralCurrent + softShift,
+          12,
+          dt,
+        );
+        const appliedDelta = nextCamLat - this.camLateralCurrent;
+        this.camLateralCurrent = nextCamLat;
+        this.camLookLateralCurrent += appliedDelta;
       }
 
       _vecA
@@ -7919,29 +8073,45 @@ export class HighwayEngine {
     this.camera.lookAt(this.camLookCurrent);
 
     // Combined Camera Roll & Yaw:
-    // - Moving LEFT (laneRatio < 0) -> negative rotateZ (screen turns/tilts RIGHT) + negative rotateY (yaw RIGHT)
+    // - Moving LEFT (laneRatio < 0) -> negative rotateZ (screen turns/tilts RIGHT) + subtle yaw
     // - Road banking (_roadSample.bank) blends naturally into the camera horizon
     const bankRoll = _roadSample.bank * 0.52;
-    const targetCamRoll = laneRatio * 0.092 + steerNorm * 0.022 + bankRoll;
+    const targetCamRoll = laneRatio * 0.064 + steerNorm * 0.014 + bankRoll;
     this.cameraRoll = snap
       ? targetCamRoll
-      : THREE.MathUtils.damp(this.cameraRoll, targetCamRoll, 16, dt);
+      : THREE.MathUtils.damp(this.cameraRoll, targetCamRoll, 8.5, dt);
     const shakeRoll =
       this.cameraShake > 0.002
         ? (Math.random() - 0.5) * this.cameraShake * 0.095
         : 0;
     this.camera.rotateZ(this.cameraRoll + shakeRoll);
-    this.camera.rotateY(laneRatio * 0.048);
+    this.camera.rotateY(laneRatio * yawFactor);
 
-    // Dynamic FOV widening with speed + Nitro / Rampage surge per camera mode
+    // Dynamic FOV widening with speed + Nitro / Rampage surge + narrow-screen horizontal framing boost
     const speedRatio = THREE.MathUtils.clamp((this.speedMs - 22) / 48, 0, 1);
     const rampageFovBoost = this.rampageTimer > 0 ? 10 : 0;
+    const portraitFovBoost =
+      this.cameraMode === 'chase' || this.cameraMode === 'cine'
+        ? portraitFactor * 10
+        : portraitFactor * 6;
     const targetFov =
       this.cameraMode === 'cine'
-        ? 65 + speedRatio * 17 + (this.nitroActive ? 9 : 0) + rampageFovBoost
+        ? 65 +
+          portraitFovBoost +
+          speedRatio * 17 +
+          (this.nitroActive ? 9 : 0) +
+          rampageFovBoost
         : this.cameraMode === 'cockpit'
-          ? 62 + speedRatio * 12 + (this.nitroActive ? 6 : 0) + rampageFovBoost * 0.7
-          : 59 + speedRatio * 15 + (this.nitroActive ? 8 : 0) + rampageFovBoost;
+          ? 62 +
+            portraitFovBoost +
+            speedRatio * 12 +
+            (this.nitroActive ? 6 : 0) +
+            rampageFovBoost * 0.7
+          : 59 +
+            portraitFovBoost +
+            speedRatio * 15 +
+            (this.nitroActive ? 8 : 0) +
+            rampageFovBoost;
     if (Math.abs(this.camera.fov - targetFov) > 0.05) {
       this.camera.fov = THREE.MathUtils.damp(this.camera.fov, targetFov, 7, dt);
       this.camera.updateProjectionMatrix();
@@ -9314,13 +9484,16 @@ export class HighwayEngine {
 
   private getDriftMultiplierState(): { mult: number; progress: number } {
     const t = this.driftDuration;
-    const thresholds = [0, 0.85, 1.9, 3.3, 4.8];
+    // Max x10 multiplier; each level-up requires exactly 2x more drift time than the previous step:
+    // x1->x2: 0.5s, x2->x3: 1.0s, x3->x4: 2.0s, x4->x5: 4.0s, x5->x6: 8.0s,
+    // x6->x7: 16.0s, x7->x8: 32.0s, x8->x9: 64.0s, x9->x10: 128.0s
+    const thresholds = [0, 0.5, 1.5, 3.5, 7.5, 15.5, 31.5, 63.5, 127.5, 255.5];
     let mult = 1;
     for (let i = 1; i < thresholds.length; i++) {
       if (t >= thresholds[i]) mult = i + 1;
     }
-    if (mult >= 5) {
-      return { mult: 5, progress: 1 };
+    if (mult >= 10) {
+      return { mult: 10, progress: 1 };
     }
     const low = thresholds[mult - 1];
     const high = thresholds[mult];
@@ -9361,9 +9534,12 @@ export class HighwayEngine {
       ),
       curvature: _roadSample.curvature,
       integrity: Math.round((this.integrity / maxInt) * 100),
-      nitro: Math.round(clampedNitro),
-      nitroMax,
-      nitroPercent: Math.round((clampedNitro / Math.max(1, nitroMax)) * 100),
+      nitro: Math.min(100, Math.max(0, Math.round(clampedNitro))),
+      nitroMax: 100,
+      nitroPercent: Math.min(
+        100,
+        Math.max(0, (clampedNitro / Math.max(1, nitroMax)) * 100),
+      ),
       nitroActive: this.nitroActive,
       combo: this.combo,
       comboTimerRatio: this.combo > 1 ? this.comboTimer / this.comboDuration : 0,

@@ -272,7 +272,7 @@ export const HoldThrottleIndicator = React.memo(
                 {labelText}
                 {isNitroHold ? (
                   <span className="ml-1.5 font-mono-num text-cyan-200">
-                    {nitroPercent}%
+                    %{Math.min(100, Math.max(0, Math.round(nitroPercent)))}
                   </span>
                 ) : (
                   (isAccelerating || isBraking) && (

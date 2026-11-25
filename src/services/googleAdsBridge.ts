@@ -253,39 +253,181 @@ async function triggerNativeRewardedAd(
     return { outcome: 'unavailable', provider: 'fallback_required' };
   }
 
-  let rewarded = false;
-  const handles: PluginListenerHandle[] = [];
+  return new Promise<RewardedAdResult>((resolve) => {
+    const handles: PluginListenerHandle[] = [];
+    let settled = false;
+    let rewarded = false;
+    let adShowed = false;
+    let sawHiddenDuringAd = false;
+    let prepareTimer: number | null = null;
+    let showStartTimer: number | null = null;
+    let resumeFallbackTimer: number | null = null;
 
-  try {
-    const rewardHandle = await AdMob.addListener(
-      RewardAdPluginEvents.Rewarded,
-      () => {
-        rewarded = true;
-      },
-    );
-    handles.push(rewardHandle);
-
-    await AdMob.prepareRewardVideoAd({
-      adId: ADMOB_REWARDED_ID,
-      isTesting: TEST_MODE,
-    });
-
-    onAudioPause();
-    await AdMob.showRewardVideoAd();
-    onAudioResume();
-
-    return {
-      outcome: rewarded ? 'viewed' : 'dismissed',
-      provider: 'google',
+    const cleanup = () => {
+      if (prepareTimer !== null) {
+        window.clearTimeout(prepareTimer);
+        prepareTimer = null;
+      }
+      if (showStartTimer !== null) {
+        window.clearTimeout(showStartTimer);
+        showStartTimer = null;
+      }
+      if (resumeFallbackTimer !== null) {
+        window.clearTimeout(resumeFallbackTimer);
+        resumeFallbackTimer = null;
+      }
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      for (const h of handles) {
+        void h.remove();
+      }
+      handles.length = 0;
     };
-  } catch {
-    onAudioResume();
-    return { outcome: 'unavailable', provider: 'fallback_required' };
-  } finally {
-    for (const h of handles) {
-      void h.remove();
-    }
-  }
+
+    const finish = (result: RewardedAdResult) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      onAudioResume();
+      resolve(result);
+    };
+
+    const onVisibilityChange = () => {
+      if (settled) return;
+      if (document.hidden) {
+        sawHiddenDuringAd = true;
+        if (showStartTimer !== null) {
+          window.clearTimeout(showStartTimer);
+          showStartTimer = null;
+        }
+        if (resumeFallbackTimer !== null) {
+          window.clearTimeout(resumeFallbackTimer);
+          resumeFallbackTimer = null;
+        }
+      } else if (adShowed || sawHiddenDuringAd || rewarded) {
+        if (resumeFallbackTimer !== null) {
+          window.clearTimeout(resumeFallbackTimer);
+        }
+        resumeFallbackTimer = window.setTimeout(() => {
+          finish({
+            outcome: rewarded ? 'viewed' : 'dismissed',
+            provider: 'google',
+          });
+        }, 1200);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    void (async () => {
+      try {
+        const showedHandle = await AdMob.addListener(
+          RewardAdPluginEvents.Showed,
+          () => {
+            adShowed = true;
+            if (showStartTimer !== null) {
+              window.clearTimeout(showStartTimer);
+              showStartTimer = null;
+            }
+          },
+        );
+        handles.push(showedHandle);
+
+        const rewardHandle = await AdMob.addListener(
+          RewardAdPluginEvents.Rewarded,
+          () => {
+            rewarded = true;
+          },
+        );
+        handles.push(rewardHandle);
+
+        const dismissHandle = await AdMob.addListener(
+          RewardAdPluginEvents.Dismissed,
+          () => {
+            finish({
+              outcome: rewarded ? 'viewed' : 'dismissed',
+              provider: 'google',
+            });
+          },
+        );
+        handles.push(dismissHandle);
+
+        const failedShowHandle = await AdMob.addListener(
+          RewardAdPluginEvents.FailedToShow,
+          () => {
+            finish({ outcome: 'unavailable', provider: 'fallback_required' });
+          },
+        );
+        handles.push(failedShowHandle);
+
+        prepareTimer = window.setTimeout(() => {
+          finish({ outcome: 'unavailable', provider: 'fallback_required' });
+        }, 7000);
+
+        await AdMob.prepareRewardVideoAd({
+          adId: ADMOB_REWARDED_ID,
+          isTesting: TEST_MODE,
+        });
+
+        if (settled) return;
+        if (prepareTimer !== null) {
+          window.clearTimeout(prepareTimer);
+          prepareTimer = null;
+        }
+
+        onAudioPause();
+
+        showStartTimer = window.setTimeout(() => {
+          if (!adShowed && !document.hidden) {
+            finish({ outcome: 'unavailable', provider: 'fallback_required' });
+          }
+        }, 5000);
+
+        // On Android, showRewardVideoAd() resolves when onUserEarnedReward fires
+        // (while the ad end-card is still open) or rejects with REWARDED_AD_CANCELLED.
+        // Wait for RewardAdPluginEvents.Dismissed before returning to gameplay.
+        try {
+          const rewardItem = await AdMob.showRewardVideoAd();
+          if (rewardItem && (rewardItem.amount > 0 || rewardItem.type)) {
+            rewarded = true;
+          }
+          if (!settled && !document.hidden) {
+            if (resumeFallbackTimer !== null) {
+              window.clearTimeout(resumeFallbackTimer);
+            }
+            resumeFallbackTimer = window.setTimeout(() => {
+              finish({
+                outcome: rewarded ? 'viewed' : 'dismissed',
+                provider: 'google',
+              });
+            }, 1200);
+          }
+        } catch (err: unknown) {
+          const errCode =
+            typeof err === 'object' && err !== null && 'code' in err
+              ? String((err as { code?: unknown }).code)
+              : '';
+          const errMsg =
+            typeof err === 'object' && err !== null && 'message' in err
+              ? String((err as { message?: unknown }).message)
+              : '';
+          if (
+            errCode === 'REWARDED_AD_CANCELLED' ||
+            errMsg.includes('dismissed before earning') ||
+            adShowed
+          ) {
+            finish({
+              outcome: rewarded ? 'viewed' : 'dismissed',
+              provider: 'google',
+            });
+          } else {
+            finish({ outcome: 'unavailable', provider: 'fallback_required' });
+          }
+        }
+      } catch {
+        finish({ outcome: 'unavailable', provider: 'fallback_required' });
+      }
+    })();
+  });
 }
 
 async function triggerNativeInterstitialAd(
@@ -300,39 +442,128 @@ async function triggerNativeInterstitialAd(
     return { outcome: 'unavailable', provider: 'fallback_required' };
   }
 
-  const handles: PluginListenerHandle[] = [];
-  let dismissed = false;
+  return new Promise<InterstitialAdResult>((resolve) => {
+    const handles: PluginListenerHandle[] = [];
+    let settled = false;
+    let adShowed = false;
+    let sawHiddenDuringAd = false;
+    let prepareTimer: number | null = null;
+    let showStartTimer: number | null = null;
+    let resumeFallbackTimer: number | null = null;
 
-  try {
-    const dismissHandle = await AdMob.addListener(
-      InterstitialAdPluginEvents.Dismissed,
-      () => {
-        dismissed = true;
-      },
-    );
-    handles.push(dismissHandle);
-
-    await AdMob.prepareInterstitial({
-      adId: ADMOB_INTERSTITIAL_ID,
-      isTesting: TEST_MODE,
-    });
-
-    onAudioPause();
-    await AdMob.showInterstitial();
-    onAudioResume();
-
-    return {
-      outcome: dismissed ? 'shown' : 'shown',
-      provider: 'google',
+    const cleanup = () => {
+      if (prepareTimer !== null) {
+        window.clearTimeout(prepareTimer);
+        prepareTimer = null;
+      }
+      if (showStartTimer !== null) {
+        window.clearTimeout(showStartTimer);
+        showStartTimer = null;
+      }
+      if (resumeFallbackTimer !== null) {
+        window.clearTimeout(resumeFallbackTimer);
+        resumeFallbackTimer = null;
+      }
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      for (const h of handles) {
+        void h.remove();
+      }
+      handles.length = 0;
     };
-  } catch {
-    onAudioResume();
-    return { outcome: 'unavailable', provider: 'fallback_required' };
-  } finally {
-    for (const h of handles) {
-      void h.remove();
-    }
-  }
+
+    const finish = (result: InterstitialAdResult) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      onAudioResume();
+      resolve(result);
+    };
+
+    const onVisibilityChange = () => {
+      if (settled) return;
+      if (document.hidden) {
+        sawHiddenDuringAd = true;
+        if (showStartTimer !== null) {
+          window.clearTimeout(showStartTimer);
+          showStartTimer = null;
+        }
+        if (resumeFallbackTimer !== null) {
+          window.clearTimeout(resumeFallbackTimer);
+          resumeFallbackTimer = null;
+        }
+      } else if (adShowed || sawHiddenDuringAd) {
+        if (resumeFallbackTimer !== null) {
+          window.clearTimeout(resumeFallbackTimer);
+        }
+        resumeFallbackTimer = window.setTimeout(() => {
+          finish({ outcome: 'shown', provider: 'google' });
+        }, 1200);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    void (async () => {
+      try {
+        const showedHandle = await AdMob.addListener(
+          InterstitialAdPluginEvents.Showed,
+          () => {
+            adShowed = true;
+            if (showStartTimer !== null) {
+              window.clearTimeout(showStartTimer);
+              showStartTimer = null;
+            }
+          },
+        );
+        handles.push(showedHandle);
+
+        const dismissHandle = await AdMob.addListener(
+          InterstitialAdPluginEvents.Dismissed,
+          () => {
+            finish({ outcome: 'shown', provider: 'google' });
+          },
+        );
+        handles.push(dismissHandle);
+
+        const failedShowHandle = await AdMob.addListener(
+          InterstitialAdPluginEvents.FailedToShow,
+          () => {
+            finish({ outcome: 'unavailable', provider: 'fallback_required' });
+          },
+        );
+        handles.push(failedShowHandle);
+
+        prepareTimer = window.setTimeout(() => {
+          finish({ outcome: 'unavailable', provider: 'fallback_required' });
+        }, 6000);
+
+        await AdMob.prepareInterstitial({
+          adId: ADMOB_INTERSTITIAL_ID,
+          isTesting: TEST_MODE,
+        });
+
+        if (settled) return;
+        if (prepareTimer !== null) {
+          window.clearTimeout(prepareTimer);
+          prepareTimer = null;
+        }
+
+        onAudioPause();
+
+        showStartTimer = window.setTimeout(() => {
+          if (!adShowed && !document.hidden) {
+            finish({ outcome: 'unavailable', provider: 'fallback_required' });
+          }
+        }, 5000);
+
+        // On Android, AdMob.showInterstitial() resolves as soon as the AdActivity launches!
+        // Keep awaiting InterstitialAdPluginEvents.Dismissed so the game never starts behind the ad.
+        await AdMob.showInterstitial();
+      } catch {
+        finish({ outcome: 'unavailable', provider: 'fallback_required' });
+      }
+    })();
+  });
 }
 
 export async function triggerGoogleRewardedAd(

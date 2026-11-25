@@ -21,14 +21,12 @@ import {
   Gift,
   HeartPulse,
   Home,
-  Infinity as InfinityIcon,
   Layers,
   Lock,
   Magnet,
   Map,
   Medal,
   MoveHorizontal,
-  Music,
   Palette,
   Pause,
   Play,
@@ -44,8 +42,6 @@ import {
   Timer,
   Trophy,
   Unlock,
-  Volume2,
-  VolumeX,
   Wrench,
   X,
   XCircle,
@@ -67,6 +63,8 @@ import {
   SegmentedXpBar,
   UpgradeLevelMeter,
 } from './DriverLevelEmblem';
+import { NitroWingBar } from './NitroWingBar';
+import { DriftTelemetryHud } from './DriftTelemetryHud';
 import {
   AchievementCategory,
   BODY_KITS,
@@ -91,7 +89,7 @@ import {
   getDefaultCustomForCar,
   getDefaultWheelForCar,
   getDriverRankTier,
-  getMaxNitroCapacity,
+  getNitroDurationSec,
   getTuningClassForUpgrades,
   HEADLIGHTS,
   HudStats,
@@ -692,7 +690,6 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
   unlockedCarColors,
   onOpenLevelRoad,
 }) => {
-  const nitroBtnTapRef = useRef(0);
   const [garageTab, setGarageTab] = useState<
     'models' | 'upgrades' | 'powerups' | 'body' | 'wheels' | 'style'
   >('models');
@@ -825,7 +822,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
     WHEEL_STYLES.find((w) => w.id === inspectedWheelStyle) || WHEEL_STYLES[0];
   const activeWheelColorOpt =
     WHEEL_COLORS.find((c) => c.id === equippedWheel.color) || WHEEL_COLORS[0];
-  const activeNitroCapacity = getMaxNitroCapacity(activeUpgrades.nitroTank);
+  const activeNitroDurationSec = getNitroDurationSec(activeUpgrades.nitroTank);
   const activeTuningClass = getTuningClassForUpgrades(activeUpgrades);
   const playerRankTier = getDriverRankTier(playerLevel.level);
   const unlockedAchCount = missions.achievements.filter((a) => a.unlocked).length;
@@ -836,12 +833,16 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
     CAR_COLORS.find((c) => c.id === carColor) || CAR_COLORS[0];
   const activeColorSwatch = activeColorOpt.swatch;
 
-  const integrityColor =
-    stats.integrity > 60
-      ? 'bg-emerald-400'
-      : stats.integrity > 30
-        ? 'bg-amber-400'
-        : 'bg-rose-500';
+  const clampedIntegrity = Math.min(
+    100,
+    Math.max(0, Math.round(stats.integrity)),
+  );
+  const integrityTier =
+    clampedIntegrity > 60
+      ? 'healthy'
+      : clampedIntegrity > 30
+        ? 'warn'
+        : 'critical';
 
   const activeGameModeSpec =
     GAME_MODES.find((m) => m.id === (isPlaying ? stats.gameMode : gameMode)) ||
@@ -1002,11 +1003,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
       {/* Slim Unified Top Bar + Dedicated Non-Overlapping Telemetry Stack */}
       <div className="flex flex-col">
         <header
-          className={`relative bg-gradient-to-b from-black/80 via-black/35 to-transparent px-3 pb-3 sm:px-6 sm:pb-4 ${
-            phase === 'menu'
-              ? 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 sm:items-start sm:gap-x-3'
-              : 'flex items-start justify-between gap-2 sm:gap-3'
-          }`}
+          className="relative flex items-start justify-between gap-2 bg-gradient-to-b from-black/80 via-black/35 to-transparent px-3 pb-3 sm:gap-3 sm:px-6 sm:pb-4"
           style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
         >
           {/* Left Zone */}
@@ -1086,37 +1083,61 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
               </div>
             </div>
           ) : (
-            <div className="col-start-1 row-start-1 pointer-events-auto flex min-w-0 items-baseline gap-x-2">
-              <span className="font-display text-xl font-extrabold tracking-tight text-white whitespace-nowrap drop-shadow sm:text-2xl">
-                Viraj
-              </span>
-              <span className="text-xs text-zinc-400 hidden sm:inline">
-                Sonsuz Otoyol
-              </span>
+            <div className="pointer-events-auto flex min-w-0 flex-1 flex-col items-start gap-1.5 sm:flex-initial sm:flex-row sm:items-center sm:gap-2.5">
+              <button
+                type="button"
+                onClick={() => onOpenLevelRoad()}
+                onPointerDown={(e) => e.stopPropagation()}
+                title="Seviye Yolu (1–100) ve Ödüller"
+                className={`group flex min-w-0 w-full sm:w-fit max-w-full items-center gap-2 sm:gap-2.5 overflow-hidden rounded-xl border ${
+                  unclaimedLevelRewardsCount > 0
+                    ? 'border-amber-400/75 shadow-[0_0_18px_rgba(245,158,11,0.28)]'
+                    : playerRankTier.borderClass
+                } bg-zinc-950/90 px-2 py-1.5 sm:px-2.5 sm:py-2 text-left transition-colors hover:bg-zinc-900/95 cursor-pointer shadow-lg`}
+              >
+                <DriverLevelEmblem level={playerLevel.level} size="sm" />
+                <div className="flex min-w-0 flex-1 flex-col gap-1 sm:min-w-[154px]">
+                  <div className="flex items-baseline justify-between gap-2 min-w-0">
+                    <span
+                      className={`truncate font-display text-xs font-extrabold ${playerRankTier.textClass}`}
+                    >
+                      {playerLevel.rankTitle}
+                    </span>
+                    <span className="font-mono-num text-[11px] font-bold text-zinc-300 whitespace-nowrap shrink-0">
+                      Sv.{playerLevel.level}
+                    </span>
+                  </div>
+                  <SegmentedXpBar
+                    level={playerLevel.level}
+                    progressRatio={playerLevel.progressRatio}
+                    segments={8}
+                    heightClass="h-1.5"
+                  />
+                </div>
+                {unclaimedLevelRewardsCount > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-amber-400 px-1.5 py-0.5 text-[10px] font-extrabold text-zinc-950 font-mono-num shrink-0 shadow-sm sm:px-2 sm:text-[10.5px]">
+                    <Gift className="h-3 w-3 shrink-0" />
+                    <span>{unclaimedLevelRewardsCount}</span>
+                  </span>
+                )}
+                <ChevronRight className="h-4 w-4 text-zinc-400 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-200 shrink-0" />
+              </button>
+
               {stats.bestScore > 0 && (
-                <>
-                  <span
-                    aria-hidden="true"
-                    className="hidden sm:inline text-zinc-500"
-                  >
-                    ·
+                <div className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-400/25 bg-zinc-950/90 px-2.5 py-1 shadow-lg sm:rounded-xl sm:px-3 sm:py-2">
+                  <span className="text-[10px] font-semibold leading-none text-zinc-400">
+                    Rekor
                   </span>
-                  <span className="hidden sm:inline font-mono-num text-xs font-bold text-amber-300 whitespace-nowrap drop-shadow">
-                    Rekor {stats.bestScore.toLocaleString('tr-TR')}
+                  <span className="font-mono-num text-xs font-extrabold leading-none text-amber-300">
+                    {stats.bestScore.toLocaleString('tr-TR')}
                   </span>
-                </>
+                </div>
               )}
             </div>
           )}
 
           {/* Right Zone: Clean Single-Row Action Strip */}
-          <div
-            className={`pointer-events-auto relative flex items-center gap-1.5 sm:gap-2 shrink-0 ${
-              phase === 'menu'
-                ? 'col-start-2 row-start-1 justify-self-end sm:row-span-2'
-                : ''
-            }`}
-          >
+          <div className="pointer-events-auto relative flex items-center gap-1.5 sm:gap-2 shrink-0">
             {(phase === 'menu' || phase === 'garage') && (
               <button
                 type="button"
@@ -1151,54 +1172,18 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
             )}
 
             {(isPlaying || phase === 'paused') && (
-              <>
-                <button
-                  type="button"
-                  onClick={onToggleCamera}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  aria-label="Kamera Açısını Değiştir"
-                  title="Kamera Açısı (C)"
-                  className="flex h-11 w-11 sm:w-auto items-center justify-center gap-1.5 rounded-xl border border-white/14 bg-zinc-950/90 sm:px-3.5 text-xs font-bold text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer whitespace-nowrap shadow-lg"
-                >
-                  <Camera className="h-5 w-5 sm:h-4 sm:w-4 text-amber-400 shrink-0" />
-                  <span className="hidden sm:inline">{activeCameraLabel}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onToggleMusic}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  aria-label={
-                    musicState.playing ? 'Müziği Duraklat' : 'Müziği Çal'
-                  }
-                  title={
-                    musicState.playing
-                      ? `${musicState.track.title} — Duraklat`
-                      : `${musicState.track.title} — Çal`
-                  }
-                  className={`flex h-11 w-11 items-center justify-center rounded-xl border transition-colors cursor-pointer shadow-lg ${
-                    musicState.playing && !muted
-                      ? 'border-amber-400/45 bg-zinc-950/92 text-amber-300'
-                      : 'border-white/14 bg-zinc-950/90 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                  }`}
-                >
-                  <Music className="h-5 w-5 sm:h-4.5 sm:w-4.5" />
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={onToggleCamera}
+                onPointerDown={(e) => e.stopPropagation()}
+                aria-label="Kamera Açısını Değiştir"
+                title="Kamera Açısı (C)"
+                className="flex h-11 w-11 sm:w-auto items-center justify-center gap-1.5 rounded-xl border border-white/14 bg-zinc-950/90 sm:px-3.5 text-xs font-bold text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer whitespace-nowrap shadow-lg"
+              >
+                <Camera className="h-5 w-5 sm:h-4 sm:w-4 text-amber-400 shrink-0" />
+                <span className="hidden sm:inline">{activeCameraLabel}</span>
+              </button>
             )}
-
-            <button
-              type="button"
-              onClick={onToggleMute}
-              aria-label={muted ? 'Sesi Aç' : 'Sesi Kapat'}
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/14 bg-zinc-950/90 text-zinc-100 transition-colors hover:bg-zinc-900 cursor-pointer shadow-lg"
-            >
-              {muted ? (
-                <VolumeX className="h-5 w-5 sm:h-4.5 sm:w-4.5" />
-              ) : (
-                <Volume2 className="h-5 w-5 sm:h-4.5 sm:w-4.5" />
-              )}
-            </button>
 
             {!isPlaying && (
               <button
@@ -1228,61 +1213,6 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
               </button>
             )}
           </div>
-
-          {/* Menu Row 2 on Mobile (Full Width, Zero Overflow) / Under Brand on Desktop */}
-          {phase === 'menu' && (
-            <div className="col-span-2 row-start-2 pointer-events-auto flex min-w-0 items-stretch gap-2 sm:col-span-1 sm:col-start-1 sm:row-start-2">
-              <button
-                type="button"
-                onClick={() => onOpenLevelRoad()}
-                onPointerDown={(e) => e.stopPropagation()}
-                title="Seviye Yolu (1–100) ve Ödüller"
-                className={`group flex min-w-0 flex-1 sm:flex-initial sm:w-fit max-w-full items-center gap-2.5 overflow-hidden rounded-xl border ${
-                  unclaimedLevelRewardsCount > 0
-                    ? 'border-amber-400/75 shadow-[0_0_18px_rgba(245,158,11,0.28)]'
-                    : playerRankTier.borderClass
-                } bg-zinc-950/90 px-2.5 py-2 text-left transition-colors hover:bg-zinc-900/95 cursor-pointer shadow-lg`}
-              >
-                <DriverLevelEmblem level={playerLevel.level} size="sm" />
-                <div className="flex min-w-0 flex-1 flex-col gap-1 sm:min-w-[154px]">
-                  <div className="flex items-baseline justify-between gap-2 min-w-0">
-                    <span
-                      className={`truncate font-display text-xs font-extrabold ${playerRankTier.textClass}`}
-                    >
-                      {playerLevel.rankTitle}
-                    </span>
-                    <span className="font-mono-num text-[11px] font-bold text-zinc-300 whitespace-nowrap shrink-0">
-                      Sv.{playerLevel.level}
-                    </span>
-                  </div>
-                  <SegmentedXpBar
-                    level={playerLevel.level}
-                    progressRatio={playerLevel.progressRatio}
-                    segments={8}
-                    heightClass="h-1.5"
-                  />
-                </div>
-                {unclaimedLevelRewardsCount > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-lg bg-amber-400 px-2 py-0.5 text-[10.5px] font-extrabold text-zinc-950 font-mono-num shrink-0 shadow-sm">
-                    <Gift className="h-3 w-3 shrink-0" />
-                    <span>{unclaimedLevelRewardsCount}</span>
-                  </span>
-                )}
-                <ChevronRight className="h-4 w-4 text-zinc-400 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-200 shrink-0" />
-              </button>
-
-              {stats.bestScore > 0 && (
-                <div className="flex sm:hidden shrink-0 flex-col items-end justify-center rounded-xl border border-amber-400/25 bg-zinc-950/90 px-3 py-1.5 shadow-lg">
-                  <span className="text-[10px] font-semibold leading-none text-zinc-400">
-                    Rekor
-                  </span>
-                  <span className="mt-1 font-mono-num text-xs font-extrabold leading-none text-amber-300">
-                    {stats.bestScore.toLocaleString('tr-TR')}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
         </header>
 
         {/* Dedicated Non-Overlapping Live Mode Telemetry + Road/Curve Banner + Bonus Callout */}
@@ -1507,6 +1437,18 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
               </div>
             )}
 
+            {/* TOP DRIFT TELEMETRY INSTRUMENT (Frameless motorsport gauge, x1..x10) */}
+            {(stats.drifting || stats.driftScore >= 10) && (
+              <DriftTelemetryHud
+                drifting={stats.drifting}
+                driftScore={stats.driftScore}
+                driftMultiplier={stats.driftMultiplier}
+                driftProgress={stats.driftProgress}
+                driftGraceRatio={stats.driftGraceRatio}
+                driftAngleDeg={stats.driftAngleDeg}
+              />
+            )}
+
             {/* Floating Bonus Callout — Stacked cleanly below active telemetry so it never overlaps */}
             {callout && (
               <div
@@ -1579,66 +1521,6 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                   </div>
                   <ChevronRight className="h-4 w-4 text-zinc-500 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-300 shrink-0" />
                 </button>
-              </div>
-
-              {/* Row 1.5: Game Mode Selector (Scrollable spacious cards on mobile, 5-col grid on sm+) */}
-              <div className="flex flex-col gap-1.5">
-                <div
-                  role="radiogroup"
-                  aria-label="Oyun Modu"
-                  className="flex gap-1.5 overflow-x-auto no-scrollbar snap-x rounded-xl bg-zinc-900/90 p-1.5 sm:grid sm:grid-cols-5 sm:gap-1 sm:overflow-visible sm:p-1"
-                >
-                  {GAME_MODES.map((m) => {
-                    const active = m.id === gameMode;
-                    const ModeIcon =
-                      m.id === 'pursuit'
-                        ? Siren
-                        : m.id === 'twoway'
-                          ? ArrowLeftRight
-                          : m.id === 'timeattack'
-                            ? Timer
-                            : m.id === 'bomb'
-                              ? Bomb
-                              : InfinityIcon;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        onClick={() => onSelectGameMode(m.id)}
-                        className={`snap-start min-w-[86px] shrink-0 sm:min-w-0 flex min-h-[58px] sm:min-h-0 flex-col items-center justify-center gap-1 rounded-lg px-2.5 py-2 sm:px-1 sm:py-1.5 text-center transition-colors cursor-pointer ${
-                          active
-                            ? 'bg-zinc-100 text-zinc-950 shadow-sm'
-                            : 'text-zinc-300 hover:bg-white/6 hover:text-white'
-                        }`}
-                      >
-                        <ModeIcon
-                          className="h-4 w-4 sm:h-3.5 sm:w-3.5 shrink-0"
-                          style={active ? undefined : { color: m.accentHex }}
-                        />
-                        <span className="text-xs sm:text-[10.5px] font-bold leading-tight whitespace-nowrap">
-                          {m.shortLabel}
-                        </span>
-                        <span
-                          className={`font-mono-num text-[11px] sm:text-[9.5px] font-bold leading-none ${
-                            active ? 'text-zinc-700' : 'text-zinc-400'
-                          }`}
-                        >
-                          ×{m.rewardMultiplier.toFixed(m.rewardMultiplier % 1 === 0 ? 0 : 2).replace(/0$/, '')}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center justify-between gap-2 px-0.5 text-xs text-zinc-400">
-                  <span className="truncate">
-                    <strong className="font-bold text-zinc-200">
-                      {activeGameModeSpec.label}:
-                    </strong>{' '}
-                    {activeGameModeSpec.tagline}
-                  </span>
-                </div>
               </div>
 
               {/* Featured Career Mode Entry Strip (100 Levels, 300 Stars) */}
@@ -1714,11 +1596,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                   className="flex min-h-[54px] sm:min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 sm:px-6 font-display text-base font-extrabold text-zinc-950 shadow-[0_6px_24px_rgba(245,158,11,0.28)] transition-colors hover:bg-amber-400 active:scale-[0.99] cursor-pointer"
                 >
                   <Play className="h-5 w-5 sm:h-4 sm:w-4 fill-current shrink-0" />
-                  <span className="truncate">
-                    {gameMode === 'endless'
-                      ? 'Sürüşe Başla'
-                      : `${activeGameModeSpec.label} Başlat`}
-                  </span>
+                  <span className="truncate">Sonsuz Sürüşe Başla</span>
                 </button>
               </div>
 
@@ -1986,9 +1864,9 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex justify-between text-[11px] font-semibold text-zinc-400">
-                    <span>Nitro</span>
+                    <span>Nitro Süresi</span>
                     <span className="font-mono-num text-cyan-300">
-                      {activeNitroCapacity}
+                      {activeNitroDurationSec} sn
                     </span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-white/12">
@@ -6206,162 +6084,226 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
           </div>
         )}
 
-      {/* IN-GAME BOTTOM TELEMETRY BAR */}
+      {/* IN-GAME BOTTOM TELEMETRY BAR — Full-Width Edge-to-Edge Nitro (Plasma) + Gövde (Armored Segments) */}
       {isPlaying && (
         <footer
-          className="flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 via-black/25 to-transparent px-3.5 pt-4 sm:gap-4 sm:px-6 sm:pt-6"
-          style={{ paddingBottom: 'max(0.95rem, env(safe-area-inset-bottom))' }}
+          className="flex w-full flex-col gap-1.5 bg-gradient-to-t from-black/85 via-black/35 to-transparent px-2.5 pt-3 sm:gap-2 sm:px-5 sm:pt-4"
+          style={{ paddingBottom: 'max(0.65rem, env(safe-area-inset-bottom))' }}
         >
-          {/* Left: Rampage & Magnet Timers + Nitro Button + Integrity Bar */}
-          <div className="pointer-events-auto flex w-44 flex-col gap-2 sm:w-48">
-            {stats.rampageTimer > 0 && (
-              <div className="flex flex-col gap-1.5 rounded-2xl border border-orange-400/65 bg-zinc-950/92 px-3 py-2 shadow-[0_0_18px_rgba(249,115,22,0.35)]">
-                <div className="flex items-center justify-between text-xs font-extrabold text-orange-300">
-                  <span className="inline-flex items-center gap-1">
-                    <Zap className="h-4 w-4 fill-orange-400 text-orange-300" />
-                    <span>
-                      YIKIM · {formatSpeedMultiplier(stats.rampageSpeedMult)}
-                    </span>
-                  </span>
-                  <span className="font-mono-num">
-                    {Math.ceil(stats.rampageTimer)} sn
-                  </span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-                  <div
-                    className={`h-full transition-[width] duration-75 ${
-                      stats.rampageTimer <= 3 ? 'bg-rose-500' : 'bg-orange-400'
-                    }`}
-                    style={{
-                      width: `${Math.min(100, Math.round((stats.rampageTimer / Math.max(1, stats.rampageDuration)) * 100))}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
+          {/* Active Power-Up Timers & Desktop Gesture Hint above the full-width bars */}
+          {(stats.rampageTimer > 0 || stats.magnetTimer > 0 || showSteerHint) && (
+            <div className="flex w-full items-end justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {stats.rampageTimer > 0 && (
+                  <div className="flex w-40 flex-col gap-1 rounded-xl border border-orange-400/65 bg-zinc-950/92 px-2.5 py-1.5 shadow-[0_0_18px_rgba(249,115,22,0.35)] sm:w-44">
+                    <div className="flex items-center justify-between text-[11px] font-extrabold text-orange-300 leading-none">
+                      <span className="inline-flex items-center gap-1">
+                        <Zap className="h-3.5 w-3.5 fill-orange-400 text-orange-300" />
+                        <span>
+                          YIKIM · {formatSpeedMultiplier(stats.rampageSpeedMult)}
+                        </span>
+                      </span>
+                      <span className="font-mono-num">
+                        {Math.ceil(stats.rampageTimer)} sn
+                      </span>
+                    </div>
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-white/15">
+                      <div
+                        className={`h-full transition-[width] duration-75 ${
+                          stats.rampageTimer <= 3 ? 'bg-rose-500' : 'bg-orange-400'
+                        }`}
+                        style={{
+                          width: `${Math.min(100, Math.round((stats.rampageTimer / Math.max(1, stats.rampageDuration)) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
 
-            {stats.magnetTimer > 0 && (
-              <div className="flex flex-col gap-1.5 rounded-2xl border border-rose-400/40 bg-zinc-950/90 px-3 py-2">
-                <div className="flex items-center justify-between text-xs font-bold text-rose-300">
-                  <span className="inline-flex items-center gap-1">
-                    <Magnet className="h-4 w-4" />
-                    <span>Mıknatıs</span>
-                  </span>
-                  <span className="font-mono-num">
-                    {Math.ceil(stats.magnetTimer)} sn
-                  </span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/12">
-                  <div
-                    className="h-full bg-rose-400 transition-[width] duration-75"
-                    style={{
-                      width: `${Math.min(100, Math.round((stats.magnetTimer / Math.max(1, stats.magnetDuration)) * 100))}%`,
-                    }}
-                  />
-                </div>
+                {stats.magnetTimer > 0 && (
+                  <div className="flex w-36 flex-col gap-1 rounded-xl border border-rose-400/45 bg-zinc-950/90 px-2.5 py-1.5 sm:w-40">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-rose-300 leading-none">
+                      <span className="inline-flex items-center gap-1">
+                        <Magnet className="h-3.5 w-3.5" />
+                        <span>Mıknatıs</span>
+                      </span>
+                      <span className="font-mono-num">
+                        {Math.ceil(stats.magnetTimer)} sn
+                      </span>
+                    </div>
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-white/12">
+                      <div
+                        className="h-full bg-rose-400 transition-[width] duration-75"
+                        style={{
+                          width: `${Math.min(100, Math.round((stats.magnetTimer / Math.max(1, stats.magnetDuration)) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
 
-            <button
-              type="button"
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                const now = performance.now();
-                if (now - nitroBtnTapRef.current < 360) {
-                  nitroBtnTapRef.current = 0;
-                  onNitroToggle(e.clientX, e.clientY);
-                } else {
-                  nitroBtnTapRef.current = now;
-                }
-              }}
-              disabled={stats.nitro < 5 && !stats.nitroActive}
-              className={`relative overflow-hidden flex min-h-[50px] sm:min-h-[48px] items-center justify-between gap-2 rounded-2xl border px-3.5 py-2.5 text-sm font-extrabold transition-colors cursor-pointer select-none shadow-lg ${
-                stats.nitroActive
-                  ? 'border-sky-300 bg-sky-500 text-zinc-950 shadow-[0_0_20px_rgba(56,189,248,0.45)]'
-                  : stats.nitro >= 14
-                    ? 'border-sky-400/50 bg-zinc-950/92 text-sky-300 hover:bg-zinc-900'
-                    : 'border-white/12 bg-zinc-950/80 text-zinc-500'
-              }`}
-            >
-              {!stats.nitroActive && (
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-y-0 left-0 bg-sky-400/18 transition-[width] duration-100"
-                  style={{ width: `${stats.nitroPercent}%` }}
-                />
-              )}
-              <span className="relative flex items-center gap-1.5 whitespace-nowrap">
-                <Flame className="h-4 w-4 shrink-0" />
-                <span>{stats.nitroActive ? 'NİTRO' : 'NİTRO · 2×'}</span>
-              </span>
-              <span className="relative font-mono-num">
-                {stats.nitroPercent}%
-              </span>
-            </button>
-
-            <div className="flex flex-col gap-1 px-0.5">
-              <div className="flex items-center justify-between text-xs font-bold text-zinc-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                <span>Gövde</span>
-                <span className="font-mono-num">{stats.integrity}%</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/15 shadow-inner">
-                <div
-                  className={`h-full transition-all duration-150 ${integrityColor}`}
-                  style={{ width: `${stats.integrity}%` }}
-                />
+              <div
+                className={`hidden sm:flex items-center gap-2 text-xs text-zinc-300 transition-opacity duration-300 ${
+                  showSteerHint ? 'opacity-85' : 'opacity-0'
+                }`}
+              >
+                <MoveHorizontal className="h-4 w-4 text-amber-400" />
+                <span>Kaydırarak yönlendir · Çift tıkla: Nitro</span>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Center Gesture Hint (Fades automatically after first seconds) */}
-          <div
-            className={`hidden sm:flex items-center gap-2 text-xs text-zinc-300 transition-opacity duration-300 ${
-              showSteerHint ? 'opacity-85' : 'opacity-0'
-            }`}
-          >
-            <MoveHorizontal className="h-4 w-4 text-amber-400" />
-            <span>Kaydırarak yönlendir · Çift tıkla: Nitro</span>
-          </div>
+          {/* BAR 1 (UPPER FULL-WIDTH): NİTRO — Silky 60/120fps Afterburner Turbo-Wing Ribbon */}
+          <NitroWingBar
+            nitroPercent={stats.nitroPercent}
+            nitroActive={stats.nitroActive}
+            onNitroToggle={onNitroToggle}
+          />
 
-          {/* Right: Drift Popup Only (Speedometer Removed for Clean Viewport) */}
-          <div className="flex flex-col items-end gap-1">
-            {(stats.drifting || stats.driftScore >= 10) && (
-              <div className="flex w-44 flex-col gap-1.5 rounded-2xl border border-amber-400/55 bg-zinc-950/92 px-3.5 py-2.5 shadow-xl sm:w-48">
-                <div className="flex items-center justify-between gap-2 text-xs font-bold">
-                  <span className="font-display text-amber-400">
-                    DRİFT{' '}
-                    {stats.driftAngleDeg > 0 ? `${stats.driftAngleDeg}°` : ''}
-                  </span>
-                  <span className="font-display text-amber-300 font-mono-num">
-                    ×{stats.driftMultiplier}
-                  </span>
-                </div>
-                <div className="font-display text-lg font-extrabold leading-none text-white font-mono-num">
-                  +{stats.driftScore.toLocaleString('tr-TR')}
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/12">
-                  <div
-                    className={`h-full transition-[width] duration-75 ${
-                      stats.drifting ? 'bg-amber-400' : 'bg-sky-400'
-                    }`}
-                    style={{
-                      width: `${Math.round(
-                        (stats.drifting
-                          ? stats.driftProgress
-                          : stats.driftGraceRatio) * 100,
-                      )}%`,
-                    }}
-                  />
-                </div>
+          {/* BAR 2 (LOWERMOST FULL-WIDTH): GÖVDE — Frameless Symmetric Twin-Wing Armored Spine */}
+          <div className="relative flex h-6 sm:h-7 w-full items-center gap-0">
+            {/* LEFT WING (Retracts symmetrically inward toward the center shield) */}
+            <div
+              className="relative h-2 sm:h-2.5 flex-1 overflow-hidden bg-zinc-950/80 shadow-[0_2px_10px_rgba(0,0,0,0.75)]"
+              style={{
+                clipPath:
+                  'polygon(0% 50%, 9px 0%, 100% 0%, 100% 100%, 9px 100%)',
+              }}
+            >
+              {/* Subtle top/bottom metallic rail */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-white/15"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-[1px] bg-white/10"
+              />
+              {/* Active Armored Core (anchored right, expanding toward far-left edge) */}
+              <div
+                className={`absolute inset-y-0 right-0 transition-[width] duration-150 ${
+                  integrityTier === 'healthy'
+                    ? 'bg-gradient-to-l from-emerald-300 via-emerald-400 to-teal-500 shadow-[0_0_12px_rgba(16,185,129,0.65)]'
+                    : integrityTier === 'warn'
+                      ? 'bg-gradient-to-l from-amber-200 via-amber-400 to-orange-500 shadow-[0_0_12px_rgba(245,158,11,0.65)]'
+                      : 'animate-hud-critical-pulse bg-gradient-to-l from-rose-300 via-rose-500 to-red-700 shadow-[0_0_14px_rgba(244,63,94,0.85)]'
+                }`}
+                style={{ width: `${clampedIntegrity}%` }}
+              >
+                <div className="absolute inset-x-0 top-0 h-[40%] bg-white/35" />
               </div>
-            )}
+              {/* Fine articulated armor seam cuts */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 grid grid-cols-5"
+              >
+                {[0, 1, 2, 3, 4].map((idx) => (
+                  <div
+                    key={idx}
+                    className="border-r border-zinc-950/65 last:border-r-0"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* CENTER CHAMFERED ARMOR SHIELD CORE */}
+            <div
+              className={`relative z-10 -mx-1 flex h-6 sm:h-7 shrink-0 items-center justify-center px-3.5 sm:px-4 shadow-[0_4px_16px_rgba(0,0,0,0.85)] transition-colors ${
+                integrityTier === 'healthy'
+                  ? 'bg-emerald-400/90'
+                  : integrityTier === 'warn'
+                    ? 'bg-amber-400/95'
+                    : 'animate-hud-critical-pulse bg-rose-500'
+              }`}
+              style={{
+                clipPath:
+                  'polygon(9px 0%, calc(100% - 9px) 0%, 100% 50%, calc(100% - 9px) 100%, 9px 100%, 0% 50%)',
+              }}
+            >
+              {/* Inner dark obsidian core nested by 1.5px to create crisp razor neon bevel */}
+              <div
+                className="flex h-[calc(100%-3px)] w-[calc(100%-3px)] items-center justify-center gap-1.5 bg-zinc-950 px-2.5 sm:px-3"
+                style={{
+                  clipPath:
+                    'polygon(8px 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0% 50%)',
+                }}
+              >
+                <ShieldCheck
+                  className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${
+                    integrityTier === 'healthy'
+                      ? 'text-emerald-400'
+                      : integrityTier === 'warn'
+                        ? 'text-amber-400'
+                        : 'text-rose-400'
+                  }`}
+                />
+                <span
+                  className={`font-display text-[10px] sm:text-[11px] font-black tracking-[0.14em] whitespace-nowrap ${
+                    integrityTier === 'healthy'
+                      ? 'text-emerald-300'
+                      : integrityTier === 'warn'
+                        ? 'text-amber-300'
+                        : 'text-rose-400'
+                  }`}
+                >
+                  {integrityTier === 'critical' ? 'KRİTİK' : 'GÖVDE'}
+                </span>
+                <span className="font-mono-num text-[11px] sm:text-xs font-black text-white whitespace-nowrap">
+                  %{clampedIntegrity}
+                </span>
+              </div>
+            </div>
+
+            {/* RIGHT WING (Exact symmetric mirror expanding toward far-right edge) */}
+            <div
+              className="relative h-2 sm:h-2.5 flex-1 overflow-hidden bg-zinc-950/80 shadow-[0_2px_10px_rgba(0,0,0,0.75)]"
+              style={{
+                clipPath:
+                  'polygon(0% 0%, calc(100% - 9px) 0%, 100% 50%, calc(100% - 9px) 100%, 0% 100%)',
+              }}
+            >
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-white/15"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-[1px] bg-white/10"
+              />
+              {/* Active Armored Core (anchored left, expanding toward far-right edge) */}
+              <div
+                className={`absolute inset-y-0 left-0 transition-[width] duration-150 ${
+                  integrityTier === 'healthy'
+                    ? 'bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-500 shadow-[0_0_12px_rgba(16,185,129,0.65)]'
+                    : integrityTier === 'warn'
+                      ? 'bg-gradient-to-r from-amber-200 via-amber-400 to-orange-500 shadow-[0_0_12px_rgba(245,158,11,0.65)]'
+                      : 'animate-hud-critical-pulse bg-gradient-to-r from-rose-300 via-rose-500 to-red-700 shadow-[0_0_14px_rgba(244,63,94,0.85)]'
+                }`}
+                style={{ width: `${clampedIntegrity}%` }}
+              >
+                <div className="absolute inset-x-0 top-0 h-[40%] bg-white/35" />
+              </div>
+              {/* Fine articulated armor seam cuts */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 grid grid-cols-5"
+              >
+                {[0, 1, 2, 3, 4].map((idx) => (
+                  <div
+                    key={idx}
+                    className="border-r border-zinc-950/65 last:border-r-0"
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </footer>
       )}
 
-      {/* Mobile initial gesture hint — Placed cleanly above bottom telemetry bar */}
+      {/* Mobile initial gesture hint — Placed cleanly above frameless bottom dual instruments */}
       {isPlaying && showSteerHint && (
-        <div className="pointer-events-none fixed bottom-32 left-1/2 -translate-x-1/2 max-w-[calc(100vw-2rem)] sm:hidden">
+        <div className="pointer-events-none fixed bottom-24 left-1/2 -translate-x-1/2 max-w-[calc(100vw-2rem)] sm:hidden">
           <div className="flex items-center gap-2 rounded-2xl border border-white/14 bg-zinc-950/92 px-3.5 py-2 text-xs font-medium text-zinc-200 whitespace-nowrap shadow-xl">
             <MoveHorizontal className="h-4 w-4 text-amber-400 shrink-0" />
             <span>Kaydırarak sür · Çift tıkla: Nitro</span>
