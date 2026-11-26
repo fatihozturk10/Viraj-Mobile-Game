@@ -13,6 +13,7 @@ import {
   Flame,
   Fuel,
   Gauge,
+  Gem,
   Gift,
   HeartPulse,
   Lock,
@@ -78,6 +79,7 @@ import {
 
 export interface GarageViewProps {
   goldCoins: number;
+  diamonds: number;
   unlockedCars: CarModelId[];
   carUpgrades: Record<CarModelId, CarUpgrades>;
   powerUpUpgrades: PowerUpUpgrades;
@@ -904,6 +906,7 @@ const getPaintFinishThumbnailStyle = (
 
 export const GarageView: React.FC<GarageViewProps> = ({
   goldCoins,
+  diamonds,
   unlockedCars,
   carUpgrades,
   powerUpUpgrades,
@@ -1561,22 +1564,37 @@ export const GarageView: React.FC<GarageViewProps> = ({
           <ChevronLeft className="h-5 w-5" />
         </button>
 
-        {/* Top-Right: Gold Capsule + Right Vertical Showroom Controls */}
+        {/* Top-Right: Diamond + Gold Capsules & Right Vertical Showroom Controls */}
         <div className="flex flex-col items-end gap-3">
-          <button
-            type="button"
-            onClick={() => onOpenStore('gold')}
-            onPointerDown={(e) => e.stopPropagation()}
-            title="Altın Marketini Aç"
-            className="pointer-events-auto group flex h-11 items-center gap-2.5 rounded-2xl border border-white/[0.09] bg-[#141720]/90 pl-3.5 pr-1.5 shadow-lg transition-colors hover:border-amber-400/40 cursor-pointer"
-          >
-            <span className="font-mono-num text-sm font-extrabold tracking-tight text-[#f59e0b]">
-              {goldCoins.toLocaleString('tr-TR')}
-            </span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f59e0b] text-zinc-950 transition-colors group-hover:bg-[#fbbf24]">
-              <Plus className="h-4 w-4 stroke-[3]" />
-            </span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onOpenStore('gold')}
+              onPointerDown={(e) => e.stopPropagation()}
+              title="Elmas ile Altın Al"
+              className="pointer-events-auto flex h-11 items-center gap-1.5 rounded-2xl border border-cyan-400/30 bg-[#0d1822]/90 px-3 shadow-lg transition-colors hover:border-cyan-400/60 cursor-pointer"
+            >
+              <Gem className="h-4 w-4 text-cyan-400 shrink-0" />
+              <span className="font-mono-num text-sm font-extrabold tracking-tight text-cyan-200">
+                {diamonds.toLocaleString('tr-TR')}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onOpenStore('gold')}
+              onPointerDown={(e) => e.stopPropagation()}
+              title="Altın Marketini Aç"
+              className="pointer-events-auto group flex h-11 items-center gap-2.5 rounded-2xl border border-white/[0.09] bg-[#141720]/90 pl-3.5 pr-1.5 shadow-lg transition-colors hover:border-amber-400/40 cursor-pointer"
+            >
+              <span className="font-mono-num text-sm font-extrabold tracking-tight text-[#f59e0b]">
+                {goldCoins.toLocaleString('tr-TR')}
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f59e0b] text-zinc-950 transition-colors group-hover:bg-[#fbbf24]">
+                <Plus className="h-4 w-4 stroke-[3]" />
+              </span>
+            </button>
+          </div>
 
           {/* Right Vertical Floating Showroom Controls */}
           <div className="pointer-events-auto flex flex-col gap-2.5">

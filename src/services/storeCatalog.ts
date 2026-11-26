@@ -53,6 +53,67 @@ export interface GoldPackSpec {
   featured?: boolean;
 }
 
+export interface DiamondGoldExchangeSpec {
+  id: string;
+  title: string;
+  subtitle: string;
+  diamondCost: number;
+  goldAmount: number;
+  bonusLabel?: string;
+  featured?: boolean;
+}
+
+export const DIAMOND_GOLD_EXCHANGE_PACKS: DiamondGoldExchangeSpec[] = [
+  {
+    id: 'dia_gold_150',
+    title: 'Hızlı Takas',
+    subtitle: 'Tek elmasla anında altın takviyesi',
+    diamondCost: 1,
+    goldAmount: 150,
+  },
+  {
+    id: 'dia_gold_500',
+    title: 'Garaj Desteği',
+    subtitle: 'Yükseltme ve jantlar için ideal',
+    diamondCost: 3,
+    goldAmount: 500,
+    bonusLabel: '+%11 Bonus',
+  },
+  {
+    id: 'dia_gold_950',
+    title: 'Kristal Kasa',
+    subtitle: 'En popüler elmas takası',
+    diamondCost: 5,
+    goldAmount: 950,
+    bonusLabel: '+%26 Bonus',
+    featured: true,
+  },
+  {
+    id: 'dia_gold_2200',
+    title: 'Yarış Hazinesi',
+    subtitle: 'Yeni araçlar için güçlü altın paketi',
+    diamondCost: 10,
+    goldAmount: 2200,
+    bonusLabel: '+%46 Bonus',
+  },
+  {
+    id: 'dia_gold_6500',
+    title: 'Hiper Takas',
+    subtitle: 'Süper spor araç ve tam modifiye',
+    diamondCost: 25,
+    goldAmount: 6500,
+    bonusLabel: '+%73 Bonus',
+  },
+  {
+    id: 'dia_gold_15000',
+    title: 'Efsanevi Zirve',
+    subtitle: '2× değerle maksimum altın dönüşümü',
+    diamondCost: 50,
+    goldAmount: 15000,
+    bonusLabel: '+%100 Bonus',
+  },
+];
+
 export interface CrateDropRate {
   label: string;
   chanceLabel: string;

@@ -5875,6 +5875,8 @@ export interface HudStats {
   driftTotalRun: number;
   goldCoins: number;
   runGold: number;
+  diamonds: number;
+  runDiamonds: number;
   magnetTimer: number; // remaining seconds
   magnetDuration: number;
   rampageTimer: number; // remaining seconds for invincible rampage mode

@@ -9,6 +9,7 @@ import {
   Coins,
   CreditCard,
   Crown,
+  Gem,
   History,
   Info,
   Loader2,
@@ -35,6 +36,8 @@ import {
   CRATE_PRODUCTS,
   CrateProductSpec,
   CrateTierId,
+  DIAMOND_GOLD_EXCHANGE_PACKS,
+  DiamondGoldExchangeSpec,
   formatPriceTry,
   GOLD_PACKS,
   GoldPackSpec,
@@ -65,6 +68,7 @@ interface StoreModalProps {
   open: boolean;
   initialTab: StoreTabId;
   goldCoins: number;
+  diamonds: number;
   adFreePurchased: boolean;
   entitlements: StoreEntitlementState;
   currentUser: User | null;
@@ -76,6 +80,10 @@ interface StoreModalProps {
     error?: string;
     outcome?: StoreFulfillmentOutcome;
   }>;
+  onExchangeDiamondsForGold: (
+    diamondCost: number,
+    goldAmount: number,
+  ) => { ok: boolean; diamonds: number; goldCoins: number };
   onRedeemPromoCode: (rawCode: string) => Promise<{
     success: boolean;
     error?: string;
@@ -195,10 +203,12 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
     open,
     initialTab,
     goldCoins,
+    diamonds,
     adFreePurchased,
     entitlements,
     currentUser,
     onFulfillPurchase,
+    onExchangeDiamondsForGold,
     onRedeemPromoCode,
     onRestorePurchases,
     showcaseCar,
@@ -206,6 +216,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
     onClose,
   }) => {
     const [activeTab, setActiveTab] = useState<StoreTabId>(initialTab);
+    const [exchangeNotice, setExchangeNotice] = useState<string | null>(null);
     const [checkoutItem, setCheckoutItem] = useState<StoreCheckoutItem | null>(
       null,
     );
@@ -236,6 +247,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
         setCheckoutError(null);
         setRestoreNotice(null);
         setPromoError(null);
+        setExchangeNotice(null);
       } else {
         setCheckoutItem(null);
         setRevealOutcome(null);
@@ -243,10 +255,21 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
         setPromoInput('');
         setPromoError(null);
         setRedeemingPromo(false);
+        setExchangeNotice(null);
       }
     }, [open, initialTab]);
 
     if (!open) return null;
+
+    const handleExchangeDiamondPack = (pack: DiamondGoldExchangeSpec) => {
+      if (diamonds < pack.diamondCost) return;
+      const res = onExchangeDiamondsForGold(pack.diamondCost, pack.goldAmount);
+      if (res.ok) {
+        setExchangeNotice(
+          `${pack.diamondCost} Elmas karşılığında +${pack.goldAmount.toLocaleString('tr-TR')} Altın hesabına eklendi!`,
+        );
+      }
+    };
 
     const startBundleCheckout = (bundle: BundleProductSpec) => {
       if (
@@ -404,8 +427,15 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="flex h-11 items-center gap-1.5 rounded-xl border border-amber-400/30 bg-zinc-900 px-3 text-sm font-bold text-amber-300 font-mono-num">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <div
+                title="Elmas Bakiyesi"
+                className="flex h-11 items-center gap-1.5 rounded-xl border border-cyan-400/35 bg-cyan-950/50 px-2.5 sm:px-3 text-sm font-bold text-cyan-200 font-mono-num"
+              >
+                <Gem className="h-4 w-4 text-cyan-400 shrink-0" />
+                <span>{diamonds.toLocaleString('tr-TR')}</span>
+              </div>
+              <div className="flex h-11 items-center gap-1.5 rounded-xl border border-amber-400/30 bg-zinc-900 px-2.5 sm:px-3 text-sm font-bold text-amber-300 font-mono-num">
                 <Coins className="h-4 w-4 text-amber-400 shrink-0" />
                 <span>{goldCoins.toLocaleString('tr-TR')}</span>
               </div>
@@ -764,9 +794,89 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
               </div>
             )}
 
-            {/* TAB 3: GOLD PACKS */}
+            {/* TAB 3: GOLD PACKS & DIAMOND EXCHANGE */}
             {activeTab === 'gold' && (
               <div className="flex flex-col gap-5">
+                {/* DIAMOND -> GOLD EXCHANGE SECTION */}
+                <div className="rounded-2xl border border-cyan-400/35 bg-gradient-to-br from-cyan-950/45 via-zinc-900/90 to-zinc-950 p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+                        <Gem className="h-4 w-4 text-cyan-400 shrink-0" />
+                        <span>ELMAS TAKASI · ÜCRETSİZ ALTIN</span>
+                      </div>
+                      <h3 className="mt-1 font-display text-lg font-extrabold text-white sm:text-xl">
+                        Elmas ile Altın Al
+                      </h3>
+                      <p className="mt-0.5 text-xs text-zinc-300">
+                        Yolda sürerken nadir çıkan Elmasları anında Altına çevir.
+                      </p>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-400/40 bg-zinc-950/90 px-3 py-2 font-mono-num text-sm font-extrabold text-cyan-200 shrink-0">
+                      <Gem className="h-4 w-4 text-cyan-400" />
+                      <span>{diamonds.toLocaleString('tr-TR')} Elmas</span>
+                    </div>
+                  </div>
+
+                  {exchangeNotice && (
+                    <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-400/45 bg-emerald-500/15 px-3.5 py-2.5 text-xs font-bold text-emerald-200">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      <span>{exchangeNotice}</span>
+                    </div>
+                  )}
+
+                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {DIAMOND_GOLD_EXCHANGE_PACKS.map((pack) => {
+                      const canAfford = diamonds >= pack.diamondCost;
+                      return (
+                        <div
+                          key={pack.id}
+                          className="flex flex-col justify-between gap-3.5 rounded-2xl border border-white/10 bg-zinc-950/75 p-3.5 transition-colors"
+                        >
+                          <div>
+                            <div className="flex items-baseline justify-between gap-2 text-xs">
+                              <span className="font-semibold text-zinc-200">
+                                {pack.title}
+                              </span>
+                              {pack.bonusLabel && (
+                                <span className="font-bold text-cyan-300">
+                                  {pack.bonusLabel}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <Coins className="h-5 w-5 text-amber-400 shrink-0" />
+                              <span className="font-display text-2xl font-extrabold text-white font-mono-num">
+                                {pack.goldAmount.toLocaleString('tr-TR')}
+                              </span>
+                              <span className="text-xs font-semibold text-zinc-400">
+                                Altın
+                              </span>
+                            </div>
+                            <p className="mt-1 text-[11px] text-zinc-400">
+                              {pack.subtitle}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={!canAfford}
+                            onClick={() => handleExchangeDiamondPack(pack)}
+                            className={`flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl px-3 font-display text-sm font-extrabold font-mono-num transition-colors ${
+                              canAfford
+                                ? 'border border-cyan-400/50 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-400 hover:text-zinc-950 cursor-pointer'
+                                : 'border border-white/8 bg-zinc-900 text-zinc-500 cursor-not-allowed'
+                            }`}
+                          >
+                            <Gem className="h-4 w-4 shrink-0" />
+                            <span>{pack.diamondCost} Elmas</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Vault Showcase Banner */}
                 <div className="relative overflow-hidden rounded-2xl border border-amber-400/30 bg-zinc-900">
                   <div className="grid grid-cols-1 items-stretch sm:grid-cols-5">
@@ -800,11 +910,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                   {GOLD_PACKS.map((pack) => (
                     <div
                       key={pack.sku}
-                      className={`flex flex-col justify-between gap-4 rounded-2xl border p-4 transition-colors ${
-                        pack.featured
-                          ? 'border-amber-400/55 bg-amber-500/8'
-                          : 'border-white/10 bg-zinc-900/75'
-                      }`}
+                      className="flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-zinc-900/75 p-4 transition-colors"
                     >
                       <div>
                         <div className="flex items-baseline justify-between gap-2 text-xs">
@@ -837,11 +943,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                       <button
                         type="button"
                         onClick={() => startGoldCheckout(pack)}
-                        className={`flex min-h-[48px] w-full items-center justify-center rounded-xl px-4 font-display text-base font-extrabold font-mono-num transition-colors cursor-pointer ${
-                          pack.featured
-                            ? 'bg-amber-500 text-zinc-950 hover:bg-amber-400'
-                            : 'border border-amber-400/35 bg-zinc-950 text-amber-300 hover:bg-amber-500 hover:text-zinc-950'
-                        }`}
+                        className="flex min-h-[48px] w-full items-center justify-center rounded-xl border border-amber-400/35 bg-zinc-950 px-4 font-display text-base font-extrabold text-amber-300 font-mono-num transition-colors hover:bg-amber-500 hover:text-zinc-950 cursor-pointer"
                       >
                         {formatPriceTry(pack.priceTry)}
                       </button>

@@ -166,6 +166,8 @@ const INITIAL_STATS: HudStats = {
   driftTotalRun: 0,
   goldCoins: 0,
   runGold: 0,
+  diamonds: 0,
+  runDiamonds: 0,
   magnetTimer: 0,
   magnetDuration: 10,
   rampageTimer: 0,
@@ -352,6 +354,7 @@ export default function App() {
   const [impactFlash, setImpactFlash] = useState(0);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
   const [goldCoins, setGoldCoins] = useState(0);
+  const [diamonds, setDiamonds] = useState(0);
   const [unlockedCars, setUnlockedCars] = useState<CarModelId[]>(['dogan']);
   const [carUpgrades, setCarUpgrades] =
     useState<Record<CarModelId, CarUpgrades>>(INITIAL_UPGRADES_MAP);
@@ -663,8 +666,10 @@ export default function App() {
               nextPowerUpUpgrades,
               nextClaimedLevelRewards,
               nextUnlockedCarColors,
+              nextDiamonds,
             ) => {
               setGoldCoins(nextGold);
+              setDiamonds(nextDiamonds);
               setUnlockedCars(nextUnlocked);
               setCarUpgrades(nextUpgrades);
               setPlayerLevel(nextLevel);
@@ -748,6 +753,7 @@ export default function App() {
       engineRef.current = createdEngine;
       const prog = createdEngine.getProgressionState();
       setGoldCoins(prog.goldCoins);
+      setDiamonds(prog.diamonds);
       setUnlockedCars(prog.unlockedCars);
       setCarModel(prog.equippedCar);
       setCarUpgrades(prog.carUpgrades);
@@ -2460,6 +2466,7 @@ export default function App() {
         showGameOverModal={showGameOverModal}
         stats={stats}
         goldCoins={goldCoins}
+        diamonds={diamonds}
         unlockedCars={unlockedCars}
         carUpgrades={carUpgrades}
         powerUpUpgrades={powerUpUpgrades}
@@ -2634,11 +2641,23 @@ export default function App() {
           open={storeOpen}
           initialTab={storeInitialTab}
           goldCoins={goldCoins}
+          diamonds={diamonds}
           adFreePurchased={adState.adFreePurchased}
           entitlements={storeEntitlements}
           currentUser={currentUser}
           showcaseCar={showcaseCarConfig}
           onFulfillPurchase={handleFulfillStorePurchase}
+          onExchangeDiamondsForGold={(diamondCost, goldAmount) => {
+            const res = engineRef.current?.exchangeDiamondsForGold(
+              diamondCost,
+              goldAmount,
+            );
+            if (res?.ok) {
+              triggerNativeHaptic('reward');
+              return res;
+            }
+            return { ok: false, diamonds, goldCoins };
+          }}
           onRedeemPromoCode={handleRedeemPromoCode}
           onRestorePurchases={handleRestorePurchases}
           onOpenGarageFromStore={launchGarage}

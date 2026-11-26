@@ -873,6 +873,28 @@ export class AudioEngine {
     });
   }
 
+  public playDiamondPickup(): void {
+    if (!this.initialized || !this.ctx || !this.sfxGain || this.muted) return;
+    const now = this.ctx.currentTime;
+    // Sparkling high crystalline diamond chime (E6 -> G#6 -> B6 -> E7)
+    const notes = [1318.5, 1661.2, 1975.5, 2637.0];
+    notes.forEach((freq, i) => {
+      if (!this.ctx || !this.sfxGain) return;
+      const t = now + i * 0.048;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(0.16, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0008, t + 0.28);
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.3);
+    });
+  }
+
   public playNitroPickup(): void {
     if (!this.initialized || !this.ctx || !this.sfxGain || this.muted) return;
     const now = this.ctx.currentTime;

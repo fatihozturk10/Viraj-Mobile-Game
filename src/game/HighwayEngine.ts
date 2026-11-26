@@ -246,6 +246,7 @@ export interface EngineCallbacks {
     powerUpUpgrades: PowerUpUpgrades,
     claimedLevelRewards: number[],
     unlockedCarColors: CarColorId[],
+    diamonds: number,
   ) => void;
   onLevelUp?: (event: LevelUpEvent) => void;
   onMissionsChange?: (snapshot: MissionsSnapshot) => void;
@@ -257,6 +258,7 @@ export interface EngineCallbacks {
 const BEST_SCORE_KEY = 'viraj_best_score_v1';
 const BEST_RECORD_DIST_KEY = 'viraj_best_record_dist_v1';
 const TOTAL_GOLD_KEY = 'viraj_total_gold_v1';
+const TOTAL_DIAMONDS_KEY = 'viraj_total_diamonds_v1';
 const UNLOCKED_CARS_KEY = 'viraj_unlocked_cars_v1';
 const EQUIPPED_CAR_KEY = 'viraj_equipped_car_v1';
 const CAR_UPGRADES_KEY = 'viraj_car_upgrades_v1';
@@ -638,6 +640,14 @@ export class HighwayEngine {
   private nextCoinSpawnS = 44;
   private coinSpin = 0;
 
+  // Road Rare Diamonds pool (sparkling cyan crystal + halo ring)
+  private diamondCoreMesh: THREE.InstancedMesh;
+  private diamondRingMesh: THREE.InstancedMesh;
+  private diamonds: RoadPickup[] = [];
+  private maxDiamonds = 6;
+  private nextDiamondSpawnS = 520;
+  private diamondSpin = 0;
+
   // Road Nitro Refill Pickups pool
   private nitroMesh: THREE.InstancedMesh;
   private nitros: RoadNitro[] = [];
@@ -867,6 +877,8 @@ export class HighwayEngine {
   // Gold, Upgrades, Player Level XP & Missions Progression
   private totalGold = 0;
   private runGold = 0;
+  private totalDiamonds = 0;
+  private runDiamonds = 0;
   private lifetimeXp = 0;
   private runCommittedXp = 0;
   private lastKnownLevel = 1;
@@ -1000,6 +1012,11 @@ export class HighwayEngine {
 
       const savedGold = localStorage.getItem(TOTAL_GOLD_KEY);
       if (savedGold) this.totalGold = Math.max(0, parseInt(savedGold, 10) || 0);
+
+      const savedDiamonds = localStorage.getItem(TOTAL_DIAMONDS_KEY);
+      if (savedDiamonds) {
+        this.totalDiamonds = Math.max(0, parseInt(savedDiamonds, 10) || 0);
+      }
 
       const savedXp = localStorage.getItem(PLAYER_XP_KEY);
       if (savedXp) {
@@ -1747,6 +1764,44 @@ export class HighwayEngine {
     this.coinsMesh.count = 0;
     this.scene.add(this.coinsMesh);
 
+    // Road Rare Diamonds InstancedMesh (Faceted Cyan Gem + Orbiting Halo Ring)
+    const diamondCoreGeo = new THREE.OctahedronGeometry(0.46, 0);
+    diamondCoreGeo.scale(0.84, 1.38, 0.84);
+    const diamondCoreMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 1.55,
+      metalness: 0.35,
+      roughness: 0.08,
+      flatShading: true,
+      envMapIntensity: 1.8,
+    });
+    this.diamondCoreMesh = new THREE.InstancedMesh(
+      diamondCoreGeo,
+      diamondCoreMat,
+      this.maxDiamonds,
+    );
+    this.diamondCoreMesh.frustumCulled = false;
+    this.diamondCoreMesh.count = 0;
+    this.scene.add(this.diamondCoreMesh);
+
+    const diamondRingGeo = new THREE.TorusGeometry(0.68, 0.045, 8, 24);
+    const diamondRingMat = new THREE.MeshStandardMaterial({
+      color: 0xe0f2fe,
+      emissive: 0x22d3ee,
+      emissiveIntensity: 1.45,
+      metalness: 0.5,
+      roughness: 0.14,
+    });
+    this.diamondRingMesh = new THREE.InstancedMesh(
+      diamondRingGeo,
+      diamondRingMat,
+      this.maxDiamonds,
+    );
+    this.diamondRingMesh.frustumCulled = false;
+    this.diamondRingMesh.count = 0;
+    this.scene.add(this.diamondRingMesh);
+
     // Road Nitro Refill Pickups InstancedMesh (NOS Bottle Silhouette)
     const nitroProfile = [
       new THREE.Vector2(0.0, 0.0),
@@ -2411,6 +2466,7 @@ export class HighwayEngine {
 
   public getProgressionState(): {
     goldCoins: number;
+    diamonds: number;
     unlockedCars: CarModelId[];
     equippedCar: CarModelId;
     carUpgrades: Record<CarModelId, CarUpgrades>;
@@ -2436,6 +2492,7 @@ export class HighwayEngine {
     }
     return {
       goldCoins: this.totalGold,
+      diamonds: this.totalDiamonds,
       unlockedCars: Array.from(this.unlockedCars),
       equippedCar: this.equippedCarModel,
       carUpgrades: upgradesCopy,
@@ -3303,9 +3360,36 @@ export class HighwayEngine {
     return spec ? spec.rewardMultiplier : 1.0;
   }
 
+  public exchangeDiamondsForGold(
+    diamondCost: number,
+    goldAmount: number,
+  ): { ok: boolean; diamonds: number; goldCoins: number } {
+    const cost = Math.max(1, Math.floor(diamondCost));
+    const reward = Math.max(1, Math.floor(goldAmount));
+    if (this.totalDiamonds < cost) {
+      return {
+        ok: false,
+        diamonds: this.totalDiamonds,
+        goldCoins: this.totalGold,
+      };
+    }
+    this.totalDiamonds -= cost;
+    this.totalGold += reward;
+    this.audio.playCarUnlock();
+    this.saveProgression();
+    this.notifyProgression();
+    this.pushHud(true);
+    return {
+      ok: true,
+      diamonds: this.totalDiamonds,
+      goldCoins: this.totalGold,
+    };
+  }
+
   private saveProgression(): void {
     try {
       localStorage.setItem(TOTAL_GOLD_KEY, String(this.totalGold));
+      localStorage.setItem(TOTAL_DIAMONDS_KEY, String(this.totalDiamonds));
       localStorage.setItem(PLAYER_XP_KEY, String(this.lifetimeXp));
       localStorage.setItem(
         UNLOCKED_CARS_KEY,
@@ -3363,6 +3447,7 @@ export class HighwayEngine {
       this.lastDeferredSaveMs = now;
       try {
         localStorage.setItem(TOTAL_GOLD_KEY, String(this.totalGold));
+        localStorage.setItem(TOTAL_DIAMONDS_KEY, String(this.totalDiamonds));
       } catch {
         // ignore storage failure
       }
@@ -3404,6 +3489,7 @@ export class HighwayEngine {
       this.getPowerUpUpgradesCopy(),
       Array.from(this.claimedLevelRewards).sort((a, b) => a - b),
       Array.from(this.unlockedCarColors),
+      this.totalDiamonds,
     );
   }
 
@@ -4501,6 +4587,7 @@ export class HighwayEngine {
     this.runCommittedXp = 0;
     this.lastKnownLevel = computePlayerLevel(this.lifetimeXp).level;
     this.runGold = 0;
+    this.runDiamonds = 0;
     this.distanceMeters = 0;
     this.nearMissCount = 0;
     this.cleanCurvesCount = 0;
@@ -4531,6 +4618,7 @@ export class HighwayEngine {
     this.exhaustFlameTimer = 0;
     this.prevExhaustGear = 1;
     this.coins = [];
+    this.diamonds = [];
     this.nitros = [];
     this.nitroPickupBoostTimer = 0;
     this.repairs = [];
@@ -4572,6 +4660,8 @@ export class HighwayEngine {
     this.exhaustFlamesMesh.count = 0;
     this.streaksMesh.count = 0;
     this.coinsMesh.count = 0;
+    this.diamondCoreMesh.count = 0;
+    this.diamondRingMesh.count = 0;
     this.nitroMesh.count = 0;
     this.repairMesh.count = 0;
     this.magnetMesh.count = 0;
@@ -4595,6 +4685,7 @@ export class HighwayEngine {
     this.traffic = [];
     this.nextSpawnS = 85;
     this.nextCoinSpawnS = 44;
+    this.nextDiamondSpawnS = 420 + Math.random() * 260;
     this.nextNitroSpawnS = 125;
     this.nextRepairSpawnS = 175;
     this.nextMagnetSpawnS = 145;
@@ -4607,6 +4698,7 @@ export class HighwayEngine {
     this.roadEvents.spawnAhead(360);
     this.spawnTrafficAhead(360);
     this.spawnCoinsAhead(360);
+    this.spawnDiamondsAhead(360);
     this.spawnNitrosAhead(360);
     this.spawnRepairsAhead(360);
     this.spawnMagnetsAhead(360);
@@ -4679,6 +4771,13 @@ export class HighwayEngine {
     ) {
       return false;
     }
+    if (
+      this.diamonds.some(
+        (d) => Math.abs(d.s - s) < 8.5 && Math.abs(d.lateral - lat) < 1.6,
+      )
+    ) {
+      return false;
+    }
     return true;
   }
 
@@ -4712,6 +4811,9 @@ export class HighwayEngine {
           ) ||
           this.rampages.some(
             (rm) => Math.abs(rm.s - cs) < 6.0 && Math.abs(rm.lateral - lat) < 1.6,
+          ) ||
+          this.diamonds.some(
+            (d) => Math.abs(d.s - cs) < 6.0 && Math.abs(d.lateral - lat) < 1.6,
           );
         if (!blockedByTraffic && !blockedByPowerup) {
           this.coins.push({
@@ -4823,6 +4925,27 @@ export class HighwayEngine {
         }
       }
       this.nextRampageSpawnS += 390 + Math.random() * 210;
+    }
+  }
+
+  private spawnDiamondsAhead(maxS: number): void {
+    while (this.nextDiamondSpawnS < maxS) {
+      if (this.diamonds.length < this.maxDiamonds && Math.random() < 0.35) {
+        const ds = this.nextDiamondSpawnS;
+        const laneOffset = Math.floor(Math.random() * LANE_CENTERS.length);
+        for (let attempt = 0; attempt < LANE_CENTERS.length; attempt++) {
+          const lat = LANE_CENTERS[(laneOffset + attempt) % LANE_CENTERS.length];
+          if (this.isPickupSlotFree(ds, lat)) {
+            this.diamonds.push({
+              s: ds,
+              lateral: lat,
+              phase: Math.random() * Math.PI * 2,
+            });
+            break;
+          }
+        }
+      }
+      this.nextDiamondSpawnS += 480 + Math.random() * 340;
     }
   }
 
@@ -5319,6 +5442,101 @@ export class HighwayEngine {
     this.coinsMesh.count = activeCount;
     if (activeCount > 0) {
       this.coinsMesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+
+  private updateDiamonds(dt: number, collect: boolean): void {
+    this.diamondSpin += dt * 2.6;
+    let activeCount = 0;
+
+    for (let i = this.diamonds.length - 1; i >= 0; i--) {
+      const item = this.diamonds[i];
+      if (item.s < this.playerS - 18) {
+        this.diamonds.splice(i, 1);
+        continue;
+      }
+
+      if (collect && this.magnetTimer > 0) {
+        const magRange = getMagnetRangeMeters(
+          this.powerUpUpgrades.magnet.secondary,
+        );
+        const dsAhead = item.s - this.playerS;
+        if (dsAhead > -4 && dsAhead < magRange) {
+          const pullLambda = 10 + this.powerUpUpgrades.magnet.secondary * 2.2;
+          const pullRate = 1 - Math.exp(-pullLambda * dt);
+          item.s = THREE.MathUtils.lerp(item.s, this.playerS, pullRate);
+          item.lateral = THREE.MathUtils.lerp(
+            item.lateral,
+            this.playerLateral,
+            pullRate,
+          );
+        }
+      }
+
+      if (
+        collect &&
+        Math.abs(item.s - this.playerS) < 2.55 &&
+        Math.abs(item.lateral - this.playerLateral) < 1.5
+      ) {
+        if (this.road.sampleAtS(item.s, _trafficSample)) {
+          _vecC
+            .copy(_trafficSample.pos)
+            .addScaledVector(_trafficSample.right, item.lateral)
+            .addScaledVector(_trafficSample.normal, 0.92);
+          this.emitSparks(_vecC, 0, 18);
+        }
+        this.diamonds.splice(i, 1);
+        this.runDiamonds += 1;
+        this.totalDiamonds += 1;
+        this.score += 250 * this.combo;
+        this.audio.playDiamondPickup();
+        this.markProgressionDirty();
+        this.notifyProgression();
+        this.emitCallout('ELMAS BULUNDU!', '+1 Elmas', 'cyan');
+        this.pushHud(true);
+        continue;
+      }
+
+      if (
+        activeCount < this.maxDiamonds &&
+        this.road.sampleAtS(item.s, _trafficSample)
+      ) {
+        const bob = Math.sin(this.diamondSpin * 1.45 + item.phase) * 0.16;
+        _vecC.copy(_trafficSample.tangent).negate();
+        _matBasis.makeBasis(
+          _trafficSample.right,
+          _trafficSample.normal,
+          _vecC,
+        );
+        _quatA.setFromRotationMatrix(_matBasis);
+
+        _dummy.position
+          .copy(_trafficSample.pos)
+          .addScaledVector(_trafficSample.right, item.lateral)
+          .addScaledVector(_trafficSample.normal, 0.96 + bob);
+        _dummy.quaternion.copy(_quatA);
+        _dummy.rotateY(this.diamondSpin + item.phase);
+        _dummy.scale.setScalar(1);
+        _dummy.updateMatrix();
+        this.diamondCoreMesh.setMatrixAt(activeCount, _dummy.matrix);
+
+        _dummy.quaternion.copy(_quatA);
+        _dummy.rotateX(0.55);
+        _dummy.rotateY(-this.diamondSpin * 1.4 + item.phase);
+        const pulse = 1 + Math.sin(this.diamondSpin * 2 + item.phase) * 0.06;
+        _dummy.scale.setScalar(pulse);
+        _dummy.updateMatrix();
+        this.diamondRingMesh.setMatrixAt(activeCount, _dummy.matrix);
+
+        activeCount++;
+      }
+    }
+
+    this.diamondCoreMesh.count = activeCount;
+    this.diamondRingMesh.count = activeCount;
+    if (activeCount > 0) {
+      this.diamondCoreMesh.instanceMatrix.needsUpdate = true;
+      this.diamondRingMesh.instanceMatrix.needsUpdate = true;
     }
   }
 
@@ -7144,11 +7362,13 @@ export class HighwayEngine {
       false,
     );
     this.spawnCoinsAhead(this.playerS + 320);
+    this.spawnDiamondsAhead(this.playerS + 320);
     this.spawnNitrosAhead(this.playerS + 320);
     this.spawnRepairsAhead(this.playerS + 320);
     this.spawnMagnetsAhead(this.playerS + 320);
     this.spawnRampagesAhead(this.playerS + 320);
     this.updateCoins(dt, false);
+    this.updateDiamonds(dt, false);
     this.updateNitros(dt, false);
     this.updateRepairs(false);
     this.updateMagnets(false);
@@ -7743,6 +7963,7 @@ export class HighwayEngine {
     this.roadEvents.spawnAhead(this.playerS + 380);
     this.spawnTrafficAhead(this.playerS + 380);
     this.spawnCoinsAhead(this.playerS + 380);
+    this.spawnDiamondsAhead(this.playerS + 380);
     this.spawnNitrosAhead(this.playerS + 380);
     this.spawnRepairsAhead(this.playerS + 380);
     this.spawnMagnetsAhead(this.playerS + 380);
@@ -7873,6 +8094,7 @@ export class HighwayEngine {
     }
 
     this.updateCoins(dt, true);
+    this.updateDiamonds(dt, true);
     this.updateNitros(dt, true);
     this.updateRepairs(true);
     this.updateMagnets(true);
@@ -9733,6 +9955,8 @@ export class HighwayEngine {
       driftTotalRun: Math.round(this.totalDriftScore),
       goldCoins: this.totalGold,
       runGold: this.runGold,
+      diamonds: this.totalDiamonds,
+      runDiamonds: this.runDiamonds,
       magnetTimer: this.magnetTimer,
       magnetDuration: getMagnetDurationSec(this.powerUpUpgrades.magnet.primary),
       rampageTimer: this.rampageTimer,
@@ -9824,6 +10048,10 @@ export class HighwayEngine {
     (this.rainSplashMesh.material as THREE.Material).dispose();
     this.coinsMesh.geometry.dispose();
     (this.coinsMesh.material as THREE.Material).dispose();
+    this.diamondCoreMesh.geometry.dispose();
+    (this.diamondCoreMesh.material as THREE.Material).dispose();
+    this.diamondRingMesh.geometry.dispose();
+    (this.diamondRingMesh.material as THREE.Material).dispose();
     this.nitroMesh.geometry.dispose();
     (this.nitroMesh.material as THREE.Material).dispose();
     this.repairMesh.geometry.dispose();

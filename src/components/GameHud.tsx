@@ -20,6 +20,7 @@ import {
   Flame,
   Fuel,
   Gauge,
+  Gem,
   Gift,
   HeartPulse,
   Home,
@@ -137,6 +138,7 @@ interface GameHudProps {
   showGameOverModal: boolean;
   stats: HudStats;
   goldCoins: number;
+  diamonds: number;
   unlockedCars: CarModelId[];
   carUpgrades: Record<CarModelId, CarUpgrades>;
   powerUpUpgrades: PowerUpUpgrades;
@@ -258,6 +260,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
   showGameOverModal,
   stats,
   goldCoins,
+  diamonds,
   unlockedCars,
   carUpgrades,
   powerUpUpgrades,
@@ -412,6 +415,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
     return (
       <GarageView
         goldCoins={goldCoins}
+        diamonds={diamonds}
         unlockedCars={unlockedCars}
         carUpgrades={carUpgrades}
         powerUpUpgrades={powerUpUpgrades}
@@ -676,7 +680,14 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                 </span>
                 <span className="inline-flex items-center gap-1 text-amber-300 font-bold whitespace-nowrap">
                   <Coins className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                  <span>{goldCoins.toLocaleString('tr-TR')}</span>
+                  <span>{stats.runGold.toLocaleString('tr-TR')}</span>
+                </span>
+                <span aria-hidden="true" className="text-zinc-500">
+                  ·
+                </span>
+                <span className="inline-flex items-center gap-1 text-cyan-300 font-bold whitespace-nowrap">
+                  <Gem className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                  <span>{stats.runDiamonds.toLocaleString('tr-TR')}</span>
                 </span>
               </div>
             </div>
@@ -737,19 +748,31 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
           {/* Right Zone: Clean Single-Row Action Strip */}
           <div className="pointer-events-auto relative flex items-center gap-1.5 sm:gap-2 shrink-0">
             {phase === 'menu' && (
-              <button
-                type="button"
-                onClick={() => onOpenStore('gold')}
-                onPointerDown={(e) => e.stopPropagation()}
-                title="Altın ve Kasa Marketini Aç"
-                className="group flex h-11 items-center gap-1.5 rounded-xl border border-amber-400/40 bg-zinc-950/90 pl-2.5 pr-1.5 sm:pl-3 sm:pr-2 text-xs sm:text-sm font-bold text-amber-300 font-mono-num transition-colors hover:border-amber-400/70 hover:bg-zinc-900 cursor-pointer shadow-lg"
-              >
-                <Coins className="h-4 w-4 text-amber-400 shrink-0" />
-                <span>{goldCoins.toLocaleString('tr-TR')}</span>
-                <span className="ml-0.5 flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500 text-zinc-950 transition-colors group-hover:bg-amber-400 shrink-0">
-                  <Plus className="h-3.5 w-3.5 stroke-[3]" />
-                </span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => onOpenStore('gold')}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  title="Elmas Bakiyesi · Altın Takas Et"
+                  className="flex h-11 items-center gap-1 rounded-xl border border-cyan-400/40 bg-zinc-950/90 px-2 sm:px-2.5 text-xs sm:text-sm font-bold text-cyan-200 font-mono-num transition-colors hover:border-cyan-400/75 hover:bg-zinc-900 cursor-pointer shadow-lg"
+                >
+                  <Gem className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-400 shrink-0" />
+                  <span>{diamonds.toLocaleString('tr-TR')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOpenStore('gold')}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  title="Altın ve Kasa Marketini Aç"
+                  className="group flex h-11 items-center gap-1.5 rounded-xl border border-amber-400/40 bg-zinc-950/90 pl-2.5 pr-1.5 sm:pl-3 sm:pr-2 text-xs sm:text-sm font-bold text-amber-300 font-mono-num transition-colors hover:border-amber-400/70 hover:bg-zinc-900 cursor-pointer shadow-lg"
+                >
+                  <Coins className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span>{goldCoins.toLocaleString('tr-TR')}</span>
+                  <span className="ml-0.5 flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500 text-zinc-950 transition-colors group-hover:bg-amber-400 shrink-0">
+                    <Plus className="h-3.5 w-3.5 stroke-[3]" />
+                  </span>
+                </button>
+              </>
             )}
 
             {(isPlaying || phase === 'paused') && (
@@ -1749,6 +1772,12 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                     <div className="mt-1 font-mono-num text-base font-bold text-amber-300">
                       +{stats.runGold}
                     </div>
+                    {stats.runDiamonds > 0 && (
+                      <div className="mt-0.5 inline-flex items-center gap-0.5 font-mono-num text-[11px] font-bold text-cyan-300">
+                        <Gem className="h-3 w-3 text-cyan-400" />
+                        <span>+{stats.runDiamonds}</span>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-zinc-400">
