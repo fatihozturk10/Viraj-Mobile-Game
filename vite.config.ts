@@ -31,7 +31,7 @@ export default defineConfig(() => {
           navigateFallbackDenylist: [/^\/\.well-known\//, /^\/api\//],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
           globPatterns: [
-            '**/*.{js,css,html,ico,png,svg,woff,woff2,webmanifest}',
+            '**/*.{js,css,html,ico,png,webp,svg,woff,woff2,webmanifest}',
           ],
           runtimeCaching: [
             {

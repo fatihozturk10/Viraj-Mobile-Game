@@ -2229,16 +2229,29 @@ export const GarageView: React.FC<GarageViewProps> = ({
                       priceGold: m.priceGold,
                       thumbnail: (
                         <div
-                          className="flex h-full w-full flex-col items-center justify-center gap-1 px-2"
+                          className="relative flex h-full w-full items-center justify-center overflow-hidden"
                           style={{
-                            background: `radial-gradient(circle at 50% 35%, ${r.pillBg}, #0d1018 85%)`,
+                            background: `radial-gradient(ellipse at 50% 62%, ${r.pillBg}, #0b0e16 82%)`,
                           }}
                         >
-                          <CarFront
-                            className="h-6 w-6"
-                            style={{ color: r.textHex }}
+                          <img
+                            src={`/cars/${m.id}.webp`}
+                            alt={m.name}
+                            loading="lazy"
+                            decoding="async"
+                            draggable={false}
+                            className={`pointer-events-none h-full w-full select-none object-contain p-0.5 transition-transform duration-200 ${
+                              isSelected
+                                ? 'scale-105'
+                                : 'group-hover:scale-105'
+                            } ${!isUnlocked ? 'opacity-90' : ''}`}
                           />
-                          <div className="flex items-center gap-2 font-mono-num text-[9.5px] font-bold text-zinc-300">
+                          {!isUnlocked && (
+                            <span className="pointer-events-none absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-md bg-zinc-950/80 text-amber-300 border border-white/10">
+                              <Lock className="h-2.5 w-2.5" />
+                            </span>
+                          )}
+                          <div className="pointer-events-none absolute inset-x-1.5 bottom-0.5 flex items-center justify-between font-mono-num text-[8.5px] font-bold text-zinc-200/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.95)]">
                             <span>H:{m.speedRating}</span>
                             <span>T:{m.handlingRating}</span>
                           </div>
