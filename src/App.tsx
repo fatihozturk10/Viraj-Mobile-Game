@@ -9,6 +9,7 @@ import {
   HoldThrottleIndicatorHandle,
   NitroBurstState,
 } from './components/HoldThrottleIndicator';
+import { IntroSplashVideo } from './components/IntroSplashVideo';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { LevelRoadModal } from './components/LevelRoadModal';
 import { LevelUpCelebrationOverlay } from './components/LevelUpCelebrationOverlay';
@@ -292,6 +293,34 @@ export default function App() {
   const canvasMountRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<HighwayEngine | null>(null);
 
+  const [showIntro, setShowIntro] = useState(true);
+  const [introFading, setIntroFading] = useState(false);
+  const [engineReady, setEngineReady] = useState(false);
+  const introFadingRef = useRef(false);
+  const startEngineInitRef = useRef<(() => void) | null>(null);
+  const playbackInitTimerRef = useRef<number | null>(null);
+
+  const handleIntroPlaybackStarted = useCallback(() => {
+    if (playbackInitTimerRef.current) return;
+    // Brief settle window so frame 1 of the intro video starts cleanly before 3D engine initialization
+    playbackInitTimerRef.current = window.setTimeout(() => {
+      playbackInitTimerRef.current = null;
+      startEngineInitRef.current?.();
+    }, 80);
+  }, []);
+
+  const handleIntroFadeStart = useCallback(() => {
+    introFadingRef.current = true;
+    setIntroFading(true);
+    if (playbackInitTimerRef.current) {
+      window.clearTimeout(playbackInitTimerRef.current);
+      playbackInitTimerRef.current = null;
+    }
+    startEngineInitRef.current?.();
+    engineRef.current?.setRenderSuspended(false);
+  }, []);
+
+  const handleIntroComplete = useCallback(() => setShowIntro(false), []);
   const [phase, setPhase] = useState<GamePhase>('menu');
   const [engineError, setEngineError] = useState<string | null>(null);
   const [stats, setStats] = useState<HudStats>(INITIAL_STATS);
@@ -495,9 +524,8 @@ export default function App() {
     const mountEl = canvasMountRef.current;
     if (!mountEl) return;
 
-    void initGoogleAds(!mutedRef.current, {
-      preloadInterstitial: !adManager.isAdFree(),
-    });
+    // Hide native splash screen immediately so the intro video starts right away while the app loads in the background
+    void initAndroidRuntime();
     void consumePendingRedirectAuth();
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -518,285 +546,322 @@ export default function App() {
       }
     });
 
-    let engine: HighwayEngine;
-    try {
-      engine = new HighwayEngine(mountEl, {
-      onHudUpdate: (nextStats) => {
-        statsRef.current = nextStats;
-        setStats(nextStats);
-      },
-      onPhaseChange: (nextPhase) => {
-        setPhase(nextPhase);
-        if (nextPhase === 'garage') {
-          setGarageMenuCollapsed(false);
-        }
-        if (nextPhase !== 'playing') {
-          holdIndicatorRef.current?.setHold(null);
-          setNitroBurst(null);
-        }
-        if (nextPhase === 'menu' || nextPhase === 'playing') {
-          setCarModel(engine.getActiveCarModel());
-        }
-        if (gameOverDelayRef.current) {
-          window.clearTimeout(gameOverDelayRef.current);
-          gameOverDelayRef.current = null;
-        }
-        if (nextPhase === 'gameover') {
-          setAdState(adManager.recordRunCompleted());
-          preloadGoogleAds({
-            includeInterstitial: !adManager.isAdFree(),
-            includeRewarded: true,
-          });
-          const latestStats = statsRef.current;
-          void submitRunToLeaderboard({
-            plate: licensePlateRef.current,
-            carModel: carModelRef.current,
-            score: latestStats.score,
-            distanceMeters: latestStats.distanceMeters,
-            driftTotal: latestStats.driftTotalRun,
-            playerLevel: latestStats.playerLevel.level,
-          }).catch((err) => {
-            console.error('Leaderboard submit failed:', err);
-          });
+    let engine: HighwayEngine | null = null;
+    let unsubAndroid: (() => void) | null = null;
+    let engineInitialized = false;
+    let unmounted = false;
 
-          setShowGameOverModal(false);
-          const modalDelayMs =
-            latestStats.gameOverReason === 'career_win' ? 480 : 1050;
-          gameOverDelayRef.current = window.setTimeout(() => {
-            setShowGameOverModal(true);
-            gameOverDelayRef.current = null;
-            if (pendingPostRunLevelUpRef.current) {
-              const pending = pendingPostRunLevelUpRef.current;
-              pendingPostRunLevelUpRef.current = null;
-              if (inDriveLevelUpTimerRef.current) {
-                window.clearTimeout(inDriveLevelUpTimerRef.current);
-                inDriveLevelUpTimerRef.current = null;
+    const initEngineNow = () => {
+      if (engineInitialized || unmounted) return;
+      engineInitialized = true;
+
+      let createdEngine: HighwayEngine;
+      try {
+        createdEngine = new HighwayEngine(
+          mountEl,
+          {
+            onHudUpdate: (nextStats) => {
+              statsRef.current = nextStats;
+              setStats(nextStats);
+            },
+            onPhaseChange: (nextPhase) => {
+              setPhase(nextPhase);
+              if (nextPhase === 'garage') {
+                setGarageMenuCollapsed(false);
               }
-              setActiveLevelUp(pending);
-            }
-          }, modalDelayMs);
-        } else {
-          setShowGameOverModal(false);
-          if (nextPhase === 'menu' && pendingPostRunLevelUpRef.current) {
-            const pending = pendingPostRunLevelUpRef.current;
-            pendingPostRunLevelUpRef.current = null;
-            if (inDriveLevelUpTimerRef.current) {
-              window.clearTimeout(inDriveLevelUpTimerRef.current);
-              inDriveLevelUpTimerRef.current = null;
-            }
-            setActiveLevelUp(pending);
-          }
-        }
-      },
-      onCallout: (nextCallout) => {
-        setCallout(nextCallout);
-        if (calloutTimeoutRef.current) {
-          window.clearTimeout(calloutTimeoutRef.current);
-        }
-        calloutTimeoutRef.current = window.setTimeout(() => {
-          setCallout(null);
-        }, 1350);
-      },
-      onMusicChange: (nextMusic) => setMusicState(nextMusic),
-      onImpact: (strength) => {
-        triggerNativeHaptic(strength > 0.65 ? 'crash' : 'heavy');
-        setImpactFlash(strength);
-        if (impactTimeoutRef.current) {
-          window.clearTimeout(impactTimeoutRef.current);
-        }
-        impactTimeoutRef.current = window.setTimeout(() => {
-          setImpactFlash(0);
-        }, 280);
-      },
-      onProgressionChange: (
-        nextGold,
-        nextUnlocked,
-        _equipped,
-        nextUpgrades,
-        nextLevel,
-        nextUnlockedWheels,
-        nextCarWheels,
-        nextUnlockedKits,
-        nextUnlockedSpoilers,
-        nextUnlockedLiveries,
-        nextCarCustom,
-        nextVisualUnlocks,
-        nextPowerUpUpgrades,
-        nextClaimedLevelRewards,
-        nextUnlockedCarColors,
-      ) => {
-        setGoldCoins(nextGold);
-        setUnlockedCars(nextUnlocked);
-        setCarUpgrades(nextUpgrades);
-        setPlayerLevel(nextLevel);
-        setUnlockedWheelStyles(nextUnlockedWheels);
-        setCarWheels(nextCarWheels);
-        setUnlockedBodyKits(nextUnlockedKits);
-        setUnlockedSpoilers(nextUnlockedSpoilers);
-        setUnlockedLiveries(nextUnlockedLiveries);
-        setCarCustom(nextCarCustom);
-        setVisualUnlocks(nextVisualUnlocks);
-        setPowerUpUpgrades(nextPowerUpUpgrades);
-        setClaimedLevelRewards(nextClaimedLevelRewards);
-        setUnlockedCarColors(nextUnlockedCarColors);
-      },
-      onLevelUp: (event) => {
-        triggerNativeHaptic('reward');
-        if (phaseRef.current === 'playing') {
-          if (pendingPostRunLevelUpRef.current) {
-            pendingPostRunLevelUpRef.current = {
-              fromLevel: pendingPostRunLevelUpRef.current.fromLevel,
-              toLevel: event.toLevel,
-              rankTitle: event.rankTitle,
-              totalXp: event.totalXp,
-            };
-          } else {
-            pendingPostRunLevelUpRef.current = event;
-          }
-          setActiveLevelUp(event);
-          if (inDriveLevelUpTimerRef.current) {
-            window.clearTimeout(inDriveLevelUpTimerRef.current);
-          }
-          inDriveLevelUpTimerRef.current = window.setTimeout(() => {
-            setActiveLevelUp((prev) =>
-              prev &&
-              prev.toLevel === event.toLevel &&
-              prev.totalXp === event.totalXp
-                ? null
-                : prev,
-            );
-            inDriveLevelUpTimerRef.current = null;
-          }, 3600);
-        } else {
-          if (inDriveLevelUpTimerRef.current) {
-            window.clearTimeout(inDriveLevelUpTimerRef.current);
-            inDriveLevelUpTimerRef.current = null;
-          }
-          setActiveLevelUp(event);
-        }
-      },
-      onMissionsChange: (nextSnapshot) => {
-        setMissions(nextSnapshot);
-      },
-      onCareerProgressChange: (nextCareer) => {
-        setCareerProgress(nextCareer);
-      },
-      onCareerRunComplete: (outcome) => {
-        setLastCareerOutcome(outcome);
-        if (outcome.won) {
-          triggerNativeHaptic('reward');
-        }
-      },
-      onCameraModeChange: (nextMode) => {
-        setCameraMode(nextMode);
-      },
-    });
-    } catch (err) {
-      console.error('HighwayEngine init failed:', err);
-      setEngineError(
-        err instanceof Error
-          ? err.message
-          : '3D grafik motoru başlatılamadı (WebGL).',
-      );
-      return () => {
-        unsubAuth();
-      };
-    }
-    setEngineError(null);
-    engineRef.current = engine;
-    const prog = engine.getProgressionState();
-    setGoldCoins(prog.goldCoins);
-    setUnlockedCars(prog.unlockedCars);
-    setCarModel(prog.equippedCar);
-    setCarUpgrades(prog.carUpgrades);
-    setPowerUpUpgrades(prog.powerUpUpgrades);
-    setUnlockedWheelStyles(prog.unlockedWheelStyles);
-    setCarWheels(prog.carWheels);
-    setUnlockedBodyKits(prog.unlockedBodyKits);
-    setUnlockedSpoilers(prog.unlockedSpoilers);
-    setUnlockedLiveries(prog.unlockedLiveries);
-    setCarCustom(prog.carCustom);
-    setVisualUnlocks(prog.visualUnlocks);
-    setPlayerLevel(prog.playerLevel);
-    setClaimedLevelRewards(prog.claimedLevelRewards);
-    setUnlockedCarColors(prog.unlockedCarColors);
-    setLicensePlate(engine.getLicensePlate());
-    setGameMode(engine.getGameMode());
-    setMissions(engine.getMissionsSnapshot());
-    setCareerProgress(engine.getCareerSnapshot());
-    const initAudio = engine.audio.getAudioSettings();
-    setMuted(initAudio.muted);
-    setAudioSettings(initAudio);
-    syncGoogleAdsSound(!initAudio.muted);
-    void initAndroidRuntime();
-    void refreshScheduledNotifications();
+              if (nextPhase !== 'playing') {
+                holdIndicatorRef.current?.setHold(null);
+                setNitroBurst(null);
+              }
+              if (nextPhase === 'menu' || nextPhase === 'playing') {
+                setCarModel(createdEngine.getActiveCarModel());
+              }
+              if (gameOverDelayRef.current) {
+                window.clearTimeout(gameOverDelayRef.current);
+                gameOverDelayRef.current = null;
+              }
+              if (nextPhase === 'gameover') {
+                setAdState(adManager.recordRunCompleted());
+                preloadGoogleAds({
+                  includeInterstitial: !adManager.isAdFree(),
+                  includeRewarded: true,
+                });
+                const latestStats = statsRef.current;
+                void submitRunToLeaderboard({
+                  plate: licensePlateRef.current,
+                  carModel: carModelRef.current,
+                  score: latestStats.score,
+                  distanceMeters: latestStats.distanceMeters,
+                  driftTotal: latestStats.driftTotalRun,
+                  playerLevel: latestStats.playerLevel.level,
+                }).catch((err) => {
+                  console.error('Leaderboard submit failed:', err);
+                });
 
-    const unsubAndroid = subscribeAndroidLifecycle({
-      onBackButton: () => {
-        const m = modalsOpenRef.current;
-        if (m.hasLevelRoadCrate) {
-          setLevelRoadCrateSession(null);
-          return true;
-        }
-        if (m.hasLevelUpModal) {
-          setActiveLevelUp(null);
-          return true;
-        }
-        if (m.levelRoadOpen) {
-          setLevelRoadOpen(false);
-          setLevelRoadFocusLevel(null);
-          return true;
-        }
-        if (m.settingsOpen) {
-          setSettingsOpen(false);
-          return true;
-        }
-        if (m.storeOpen) {
-          setStoreOpen(false);
-          return true;
-        }
-        if (adRequestBusyRef.current) {
-          return true;
-        }
-        if (m.careerMapOpen) {
-          setCareerMapOpen(false);
-          return true;
-        }
-        if (m.dailyWheelOpen) {
-          setDailyWheelOpen(false);
-          return true;
-        }
-        if (m.leaderboardOpen) {
-          setLeaderboardOpen(false);
-          return true;
-        }
-        const curPhase = phaseRef.current;
-        if (curPhase === 'playing') {
-          engine.togglePause();
-          return true;
-        }
-        if (curPhase === 'paused' || curPhase === 'garage' || curPhase === 'gameover') {
-          engine.returnToMenu();
-          return true;
-        }
-        return false;
-      },
-      onBackground: () => {
-        engine.audio.setMuted(true, false);
-        void refreshScheduledNotifications();
-        if (phaseRef.current === 'playing') {
-          engine.togglePause();
-        }
-      },
-      onForeground: () => {
-        if (!adRequestBusyRef.current) {
-          engine.audio.setMuted(mutedRef.current, false);
-        }
-        setMissions(engine.getMissionsSnapshot());
-      },
-    });
+                setShowGameOverModal(false);
+                const modalDelayMs =
+                  latestStats.gameOverReason === 'career_win' ? 480 : 1050;
+                gameOverDelayRef.current = window.setTimeout(() => {
+                  setShowGameOverModal(true);
+                  gameOverDelayRef.current = null;
+                  if (pendingPostRunLevelUpRef.current) {
+                    const pending = pendingPostRunLevelUpRef.current;
+                    pendingPostRunLevelUpRef.current = null;
+                    if (inDriveLevelUpTimerRef.current) {
+                      window.clearTimeout(inDriveLevelUpTimerRef.current);
+                      inDriveLevelUpTimerRef.current = null;
+                    }
+                    setActiveLevelUp(pending);
+                  }
+                }, modalDelayMs);
+              } else {
+                setShowGameOverModal(false);
+                if (nextPhase === 'menu' && pendingPostRunLevelUpRef.current) {
+                  const pending = pendingPostRunLevelUpRef.current;
+                  pendingPostRunLevelUpRef.current = null;
+                  if (inDriveLevelUpTimerRef.current) {
+                    window.clearTimeout(inDriveLevelUpTimerRef.current);
+                    inDriveLevelUpTimerRef.current = null;
+                  }
+                  setActiveLevelUp(pending);
+                }
+              }
+            },
+            onCallout: (nextCallout) => {
+              setCallout(nextCallout);
+              if (calloutTimeoutRef.current) {
+                window.clearTimeout(calloutTimeoutRef.current);
+              }
+              calloutTimeoutRef.current = window.setTimeout(() => {
+                setCallout(null);
+              }, 1350);
+            },
+            onMusicChange: (nextMusic) => setMusicState(nextMusic),
+            onImpact: (strength) => {
+              triggerNativeHaptic(strength > 0.65 ? 'crash' : 'heavy');
+              setImpactFlash(strength);
+              if (impactTimeoutRef.current) {
+                window.clearTimeout(impactTimeoutRef.current);
+              }
+              impactTimeoutRef.current = window.setTimeout(() => {
+                setImpactFlash(0);
+              }, 280);
+            },
+            onProgressionChange: (
+              nextGold,
+              nextUnlocked,
+              _equipped,
+              nextUpgrades,
+              nextLevel,
+              nextUnlockedWheels,
+              nextCarWheels,
+              nextUnlockedKits,
+              nextUnlockedSpoilers,
+              nextUnlockedLiveries,
+              nextCarCustom,
+              nextVisualUnlocks,
+              nextPowerUpUpgrades,
+              nextClaimedLevelRewards,
+              nextUnlockedCarColors,
+            ) => {
+              setGoldCoins(nextGold);
+              setUnlockedCars(nextUnlocked);
+              setCarUpgrades(nextUpgrades);
+              setPlayerLevel(nextLevel);
+              setUnlockedWheelStyles(nextUnlockedWheels);
+              setCarWheels(nextCarWheels);
+              setUnlockedBodyKits(nextUnlockedKits);
+              setUnlockedSpoilers(nextUnlockedSpoilers);
+              setUnlockedLiveries(nextUnlockedLiveries);
+              setCarCustom(nextCarCustom);
+              setVisualUnlocks(nextVisualUnlocks);
+              setPowerUpUpgrades(nextPowerUpUpgrades);
+              setClaimedLevelRewards(nextClaimedLevelRewards);
+              setUnlockedCarColors(nextUnlockedCarColors);
+            },
+            onLevelUp: (event) => {
+              triggerNativeHaptic('reward');
+              if (phaseRef.current === 'playing') {
+                if (pendingPostRunLevelUpRef.current) {
+                  pendingPostRunLevelUpRef.current = {
+                    fromLevel: pendingPostRunLevelUpRef.current.fromLevel,
+                    toLevel: event.toLevel,
+                    rankTitle: event.rankTitle,
+                    totalXp: event.totalXp,
+                  };
+                } else {
+                  pendingPostRunLevelUpRef.current = event;
+                }
+                setActiveLevelUp(event);
+                if (inDriveLevelUpTimerRef.current) {
+                  window.clearTimeout(inDriveLevelUpTimerRef.current);
+                }
+                inDriveLevelUpTimerRef.current = window.setTimeout(() => {
+                  setActiveLevelUp((prev) =>
+                    prev &&
+                    prev.toLevel === event.toLevel &&
+                    prev.totalXp === event.totalXp
+                      ? null
+                      : prev,
+                  );
+                  inDriveLevelUpTimerRef.current = null;
+                }, 3600);
+              } else {
+                if (inDriveLevelUpTimerRef.current) {
+                  window.clearTimeout(inDriveLevelUpTimerRef.current);
+                  inDriveLevelUpTimerRef.current = null;
+                }
+                setActiveLevelUp(event);
+              }
+            },
+            onMissionsChange: (nextSnapshot) => {
+              setMissions(nextSnapshot);
+            },
+            onCareerProgressChange: (nextCareer) => {
+              setCareerProgress(nextCareer);
+            },
+            onCareerRunComplete: (outcome) => {
+              setLastCareerOutcome(outcome);
+              if (outcome.won) {
+                triggerNativeHaptic('reward');
+              }
+            },
+            onCameraModeChange: (nextMode) => {
+              setCameraMode(nextMode);
+            },
+          },
+          !introFadingRef.current,
+        );
+      } catch (err) {
+        console.error('HighwayEngine init failed:', err);
+        setEngineError(
+          err instanceof Error
+            ? err.message
+            : '3D grafik motoru başlatılamadı (WebGL).',
+        );
+        setEngineReady(true);
+        return;
+      }
+
+      engine = createdEngine;
+      setEngineError(null);
+      engineRef.current = createdEngine;
+      const prog = createdEngine.getProgressionState();
+      setGoldCoins(prog.goldCoins);
+      setUnlockedCars(prog.unlockedCars);
+      setCarModel(prog.equippedCar);
+      setCarUpgrades(prog.carUpgrades);
+      setPowerUpUpgrades(prog.powerUpUpgrades);
+      setUnlockedWheelStyles(prog.unlockedWheelStyles);
+      setCarWheels(prog.carWheels);
+      setUnlockedBodyKits(prog.unlockedBodyKits);
+      setUnlockedSpoilers(prog.unlockedSpoilers);
+      setUnlockedLiveries(prog.unlockedLiveries);
+      setCarCustom(prog.carCustom);
+      setVisualUnlocks(prog.visualUnlocks);
+      setPlayerLevel(prog.playerLevel);
+      setClaimedLevelRewards(prog.claimedLevelRewards);
+      setUnlockedCarColors(prog.unlockedCarColors);
+      setLicensePlate(createdEngine.getLicensePlate());
+      setGameMode(createdEngine.getGameMode());
+      setMissions(createdEngine.getMissionsSnapshot());
+      setCareerProgress(createdEngine.getCareerSnapshot());
+      const initAudio = createdEngine.audio.getAudioSettings();
+      setMuted(initAudio.muted);
+      setAudioSettings(initAudio);
+      syncGoogleAdsSound(!initAudio.muted);
+      void initGoogleAds(!initAudio.muted, {
+        preloadInterstitial: !adManager.isAdFree(),
+      });
+      void refreshScheduledNotifications();
+
+      unsubAndroid = subscribeAndroidLifecycle({
+        onBackButton: () => {
+          const m = modalsOpenRef.current;
+          if (m.hasLevelRoadCrate) {
+            setLevelRoadCrateSession(null);
+            return true;
+          }
+          if (m.hasLevelUpModal) {
+            setActiveLevelUp(null);
+            return true;
+          }
+          if (m.levelRoadOpen) {
+            setLevelRoadOpen(false);
+            setLevelRoadFocusLevel(null);
+            return true;
+          }
+          if (m.settingsOpen) {
+            setSettingsOpen(false);
+            return true;
+          }
+          if (m.storeOpen) {
+            setStoreOpen(false);
+            return true;
+          }
+          if (adRequestBusyRef.current) {
+            return true;
+          }
+          if (m.careerMapOpen) {
+            setCareerMapOpen(false);
+            return true;
+          }
+          if (m.dailyWheelOpen) {
+            setDailyWheelOpen(false);
+            return true;
+          }
+          if (m.leaderboardOpen) {
+            setLeaderboardOpen(false);
+            return true;
+          }
+          const curPhase = phaseRef.current;
+          if (curPhase === 'playing') {
+            createdEngine.togglePause();
+            return true;
+          }
+          if (
+            curPhase === 'paused' ||
+            curPhase === 'garage' ||
+            curPhase === 'gameover'
+          ) {
+            createdEngine.returnToMenu();
+            return true;
+          }
+          return false;
+        },
+        onBackground: () => {
+          createdEngine.audio.setMuted(true, false);
+          void refreshScheduledNotifications();
+          if (phaseRef.current === 'playing') {
+            createdEngine.togglePause();
+          }
+        },
+        onForeground: () => {
+          if (!adRequestBusyRef.current) {
+            createdEngine.audio.setMuted(mutedRef.current, false);
+          }
+          setMissions(createdEngine.getMissionsSnapshot());
+        },
+      });
+
+      if (introFadingRef.current) {
+        createdEngine.setRenderSuspended(false);
+      }
+      setEngineReady(true);
+    };
+
+    startEngineInitRef.current = initEngineNow;
+    // Safety fallback: start background loading even if video playback callback is delayed
+    const fallbackInitTimer = window.setTimeout(initEngineNow, 380);
 
     return () => {
+      unmounted = true;
+      window.clearTimeout(fallbackInitTimer);
+      if (playbackInitTimerRef.current) {
+        window.clearTimeout(playbackInitTimerRef.current);
+        playbackInitTimerRef.current = null;
+      }
+      startEngineInitRef.current = null;
       if (hintTimeoutRef.current) window.clearTimeout(hintTimeoutRef.current);
       if (calloutTimeoutRef.current)
         window.clearTimeout(calloutTimeoutRef.current);
@@ -810,12 +875,19 @@ export default function App() {
         window.clearTimeout(inDriveLevelUpTimerRef.current);
       if (adNoticeTimeoutRef.current)
         window.clearTimeout(adNoticeTimeoutRef.current);
-      unsubAndroid();
+      unsubAndroid?.();
       unsubAuth();
-      engine.dispose();
+      engine?.dispose();
       engineRef.current = null;
     };
   }, []);
+
+  // Suspend the 120 FPS 3D WebGL loop whenever a 100% opaque full-screen overlay (intro video or Career Map)
+  // completely covers the canvas so the mobile GPU is dedicated to smooth video playback / 120 Hz scrolling.
+  useEffect(() => {
+    const shouldSuspend = (showIntro && !introFading) || careerMapOpen;
+    engineRef.current?.setRenderSuspended(shouldSuspend);
+  }, [showIntro, introFading, careerMapOpen]);
 
   useEffect(() => {
     const syncKeys = () => {
@@ -2594,6 +2666,15 @@ export default function App() {
       )}
 
       <OfflineIndicator />
+
+      {showIntro && (
+        <IntroSplashVideo
+          engineReady={engineReady}
+          onPlaybackStarted={handleIntroPlaybackStarted}
+          onFadeStart={handleIntroFadeStart}
+          onComplete={handleIntroComplete}
+        />
+      )}
     </main>
   );
 }

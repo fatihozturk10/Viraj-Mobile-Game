@@ -491,112 +491,87 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
               }}
             />
 
-            {/* Multi-layer animated low-poly triangle shard mosaic framing all four edges */}
-            <svg
-              viewBox="0 0 1000 1000"
-              preserveAspectRatio="none"
-              className="absolute inset-0 h-full w-full"
+            {/* GPU-cached static low-poly triangle shard mosaic (rasterized ONCE, faded on GPU compositor — zero per-frame SVG repaint) */}
+            <div
+              className={`absolute inset-0 will-change-[opacity] ${ending ? 'animate-rampage-tri-fast' : 'animate-rampage-glow'}`}
+              style={{ transform: 'translateZ(0)' }}
             >
-              <defs>
-                <linearGradient id="rampTriTop" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={primaryHex} stopOpacity="0.42" />
-                  <stop offset="100%" stopColor={accentHex} stopOpacity="0.03" />
-                </linearGradient>
-                <linearGradient id="rampTriBottom" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stopColor={primaryHex} stopOpacity="0.44" />
-                  <stop offset="100%" stopColor={accentHex} stopOpacity="0.03" />
-                </linearGradient>
-                <linearGradient id="rampTriLeft" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor={primaryHex} stopOpacity="0.44" />
-                  <stop offset="100%" stopColor={accentHex} stopOpacity="0.03" />
-                </linearGradient>
-                <linearGradient id="rampTriRight" x1="1" y1="0" x2="0" y2="0">
-                  <stop offset="0%" stopColor={primaryHex} stopOpacity="0.44" />
-                  <stop offset="100%" stopColor={accentHex} stopOpacity="0.03" />
-                </linearGradient>
-                <linearGradient id="rampTriSpark" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor={highlightHex} stopOpacity="0.58" />
-                  <stop offset="100%" stopColor={primaryHex} stopOpacity="0.08" />
-                </linearGradient>
-              </defs>
-
-              {/* Layer A: Surging corner clusters */}
-              <g
-                className={ending ? 'animate-rampage-tri-fast' : 'animate-rampage-tri-a'}
-                stroke={strokeColor}
-                strokeWidth="1.35"
-                strokeLinejoin="round"
+              <svg
+                viewBox="0 0 1000 1000"
+                preserveAspectRatio="none"
+                className="h-full w-full"
               >
-                <polygon points="0,0 165,0 0,155" fill="url(#rampTriLeft)" />
-                <polygon points="165,0 92,82 0,155" fill="url(#rampTriTop)" opacity="0.72" />
-                <polygon points="1000,0 835,0 1000,155" fill="url(#rampTriRight)" />
-                <polygon points="835,0 908,82 1000,155" fill="url(#rampTriTop)" opacity="0.72" />
-                <polygon points="0,1000 175,1000 0,835" fill="url(#rampTriLeft)" />
-                <polygon points="175,1000 96,914 0,835" fill="url(#rampTriBottom)" opacity="0.74" />
-                <polygon points="1000,1000 825,1000 1000,835" fill="url(#rampTriRight)" />
-                <polygon points="825,1000 904,914 1000,835" fill="url(#rampTriBottom)" opacity="0.74" />
-              </g>
+                <defs>
+                  <linearGradient id="rampTriTop" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={primaryHex} stopOpacity="0.42" />
+                    <stop offset="100%" stopColor={accentHex} stopOpacity="0.03" />
+                  </linearGradient>
+                  <linearGradient id="rampTriBottom" x1="0" y1="1" x2="0" y2="0">
+                    <stop offset="0%" stopColor={primaryHex} stopOpacity="0.44" />
+                    <stop offset="100%" stopColor={accentHex} stopOpacity="0.03" />
+                  </linearGradient>
+                  <linearGradient id="rampTriLeft" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={primaryHex} stopOpacity="0.44" />
+                    <stop offset="100%" stopColor={accentHex} stopOpacity="0.03" />
+                  </linearGradient>
+                  <linearGradient id="rampTriRight" x1="1" y1="0" x2="0" y2="0">
+                    <stop offset="0%" stopColor={primaryHex} stopOpacity="0.44" />
+                    <stop offset="100%" stopColor={accentHex} stopOpacity="0.03" />
+                  </linearGradient>
+                  <linearGradient id="rampTriSpark" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor={highlightHex} stopOpacity="0.58" />
+                    <stop offset="100%" stopColor={primaryHex} stopOpacity="0.08" />
+                  </linearGradient>
+                </defs>
 
-              {/* Layer B: Counter-phase top & bottom crystalline edge shards */}
-              <g
-                className={ending ? 'animate-rampage-tri-fast-alt' : 'animate-rampage-tri-b'}
-                stroke={strokeColor}
-                strokeWidth="1.15"
-                strokeLinejoin="round"
-              >
-                <polygon points="165,0 325,0 238,58" fill="url(#rampTriTop)" opacity="0.78" />
-                <polygon points="325,0 500,0 412,46" fill="url(#rampTriTop)" opacity="0.58" />
-                <polygon points="500,0 675,0 588,46" fill="url(#rampTriTop)" opacity="0.58" />
-                <polygon points="675,0 835,0 762,58" fill="url(#rampTriTop)" opacity="0.78" />
+                {/* Corner clusters */}
+                <g stroke={strokeColor} strokeWidth="1.35" strokeLinejoin="round">
+                  <polygon points="0,0 165,0 0,155" fill="url(#rampTriLeft)" />
+                  <polygon points="165,0 92,82 0,155" fill="url(#rampTriTop)" opacity="0.72" />
+                  <polygon points="1000,0 835,0 1000,155" fill="url(#rampTriRight)" />
+                  <polygon points="835,0 908,82 1000,155" fill="url(#rampTriTop)" opacity="0.72" />
+                  <polygon points="0,1000 175,1000 0,835" fill="url(#rampTriLeft)" />
+                  <polygon points="175,1000 96,914 0,835" fill="url(#rampTriBottom)" opacity="0.74" />
+                  <polygon points="1000,1000 825,1000 1000,835" fill="url(#rampTriRight)" />
+                  <polygon points="825,1000 904,914 1000,835" fill="url(#rampTriBottom)" opacity="0.74" />
+                </g>
 
-                <polygon points="175,1000 335,1000 248,938" fill="url(#rampTriBottom)" opacity="0.8" />
-                <polygon points="335,1000 500,1000 415,950" fill="url(#rampTriBottom)" opacity="0.6" />
-                <polygon points="500,1000 665,1000 585,950" fill="url(#rampTriBottom)" opacity="0.6" />
-                <polygon points="665,1000 825,1000 752,938" fill="url(#rampTriBottom)" opacity="0.8" />
-              </g>
+                {/* Top & bottom crystalline edge shards */}
+                <g stroke={strokeColor} strokeWidth="1.15" strokeLinejoin="round">
+                  <polygon points="165,0 325,0 238,58" fill="url(#rampTriTop)" opacity="0.78" />
+                  <polygon points="325,0 500,0 412,46" fill="url(#rampTriTop)" opacity="0.58" />
+                  <polygon points="500,0 675,0 588,46" fill="url(#rampTriTop)" opacity="0.58" />
+                  <polygon points="675,0 835,0 762,58" fill="url(#rampTriTop)" opacity="0.78" />
 
-              {/* Layer C: Kinetic drifting left-flank shards */}
-              <g
-                className={ending ? 'animate-rampage-tri-fast' : 'animate-rampage-tri-left'}
-                stroke={strokeColor}
-                strokeWidth="1.2"
-                strokeLinejoin="round"
-              >
-                <polygon points="0,155 78,210 0,295" fill="url(#rampTriLeft)" opacity="0.82" />
-                <polygon points="0,295 66,415 0,505" fill="url(#rampTriLeft)" opacity="0.74" />
-                <polygon points="0,505 62,605 0,695" fill="url(#rampTriLeft)" opacity="0.72" />
-                <polygon points="0,835 80,780 0,695" fill="url(#rampTriLeft)" opacity="0.8" />
-              </g>
+                  <polygon points="175,1000 335,1000 248,938" fill="url(#rampTriBottom)" opacity="0.8" />
+                  <polygon points="335,1000 500,1000 415,950" fill="url(#rampTriBottom)" opacity="0.6" />
+                  <polygon points="500,1000 665,1000 585,950" fill="url(#rampTriBottom)" opacity="0.6" />
+                  <polygon points="665,1000 825,1000 752,938" fill="url(#rampTriBottom)" opacity="0.8" />
+                </g>
 
-              {/* Layer D: Kinetic drifting right-flank shards */}
-              <g
-                className={ending ? 'animate-rampage-tri-fast' : 'animate-rampage-tri-right'}
-                stroke={strokeColor}
-                strokeWidth="1.2"
-                strokeLinejoin="round"
-              >
-                <polygon points="1000,155 922,210 1000,295" fill="url(#rampTriRight)" opacity="0.82" />
-                <polygon points="1000,295 934,415 1000,505" fill="url(#rampTriRight)" opacity="0.74" />
-                <polygon points="1000,505 938,605 1000,695" fill="url(#rampTriRight)" opacity="0.72" />
-                <polygon points="1000,835 920,780 1000,695" fill="url(#rampTriRight)" opacity="0.8" />
-              </g>
+                {/* Left & right flank shards */}
+                <g stroke={strokeColor} strokeWidth="1.2" strokeLinejoin="round">
+                  <polygon points="0,155 78,210 0,295" fill="url(#rampTriLeft)" opacity="0.82" />
+                  <polygon points="0,295 66,415 0,505" fill="url(#rampTriLeft)" opacity="0.74" />
+                  <polygon points="0,505 62,605 0,695" fill="url(#rampTriLeft)" opacity="0.72" />
+                  <polygon points="0,835 80,780 0,695" fill="url(#rampTriLeft)" opacity="0.8" />
+                  <polygon points="1000,155 922,210 1000,295" fill="url(#rampTriRight)" opacity="0.82" />
+                  <polygon points="1000,295 934,415 1000,505" fill="url(#rampTriRight)" opacity="0.74" />
+                  <polygon points="1000,505 938,605 1000,695" fill="url(#rampTriRight)" opacity="0.72" />
+                  <polygon points="1000,835 920,780 1000,695" fill="url(#rampTriRight)" opacity="0.8" />
+                </g>
 
-              {/* Layer E: Shimmering lightning inner accent triangles */}
-              <g
-                className={ending ? 'animate-rampage-tri-fast-alt' : 'animate-rampage-tri-spark'}
-                stroke={highlightHex}
-                strokeOpacity="0.55"
-                strokeWidth="1.1"
-                strokeLinejoin="round"
-              >
-                <polygon points="92,82 190,46 165,0" fill="url(#rampTriSpark)" opacity="0.7" />
-                <polygon points="908,82 810,46 835,0" fill="url(#rampTriSpark)" opacity="0.7" />
-                <polygon points="96,914 196,952 175,1000" fill="url(#rampTriSpark)" opacity="0.72" />
-                <polygon points="904,914 804,952 825,1000" fill="url(#rampTriSpark)" opacity="0.72" />
-                <polygon points="0,390 48,465 0,555" fill="url(#rampTriSpark)" opacity="0.64" />
-                <polygon points="1000,390 952,465 1000,555" fill="url(#rampTriSpark)" opacity="0.64" />
-              </g>
-            </svg>
+                {/* Lightning inner accent triangles */}
+                <g stroke={highlightHex} strokeOpacity="0.55" strokeWidth="1.1" strokeLinejoin="round">
+                  <polygon points="92,82 190,46 165,0" fill="url(#rampTriSpark)" opacity="0.7" />
+                  <polygon points="908,82 810,46 835,0" fill="url(#rampTriSpark)" opacity="0.7" />
+                  <polygon points="96,914 196,952 175,1000" fill="url(#rampTriSpark)" opacity="0.72" />
+                  <polygon points="904,914 804,952 825,1000" fill="url(#rampTriSpark)" opacity="0.72" />
+                  <polygon points="0,390 48,465 0,555" fill="url(#rampTriSpark)" opacity="0.64" />
+                  <polygon points="1000,390 952,465 1000,555" fill="url(#rampTriSpark)" opacity="0.64" />
+                </g>
+              </svg>
+            </div>
           </div>
         );
       })()}
@@ -611,11 +586,11 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
           {phase !== 'menu' ? (
             <div className="flex min-w-0 flex-1 flex-col gap-1 pr-1">
               <div className="flex items-baseline gap-2 text-white">
-                <span className="font-display text-2xl font-extrabold leading-tight tracking-tight font-mono-num drop-shadow-[0_2px_6px_rgba(0,0,0,0.75)] sm:text-3xl">
+                <span className="font-display text-2xl font-extrabold leading-tight tracking-tight font-mono-num [text-shadow:0_2px_6px_rgba(0,0,0,0.75)] sm:text-3xl">
                   {stats.score.toLocaleString('tr-TR')}
                 </span>
                 {stats.combo > 1 && (
-                  <span className="font-display text-base font-extrabold text-amber-400 font-mono-num drop-shadow sm:text-lg">
+                  <span className="font-display text-base font-extrabold text-amber-400 font-mono-num [text-shadow:0_1px_4px_rgba(0,0,0,0.7)] sm:text-lg">
                     ×{stats.combo}
                   </span>
                 )}
@@ -831,7 +806,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                 </span>
                 <span
                   key={Math.ceil(stats.rampageTimer)}
-                  className="animate-nitro-pop font-display text-4xl leading-none font-black text-white drop-shadow-[0_0_14px_rgba(249,115,22,0.9)] sm:text-5xl"
+                  className="animate-countdown-pop font-display text-4xl leading-none font-black text-white [text-shadow:0_0_14px_rgba(249,115,22,0.9)] sm:text-5xl"
                 >
                   {Math.ceil(stats.rampageTimer)}
                 </span>
@@ -1019,10 +994,10 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
             {callout && (
               <div
                 key={callout.id}
-                className="animate-callout pt-1 text-center"
+                className="animate-callout w-full max-w-[min(92vw,360px)] px-2 pt-1 text-center"
               >
                 <div
-                  className={`font-display text-base font-bold tracking-wide drop-shadow sm:text-xl ${
+                  className={`flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 font-display text-sm font-bold leading-snug tracking-wide [text-shadow:0_2px_8px_rgba(0,0,0,0.95)] break-words sm:text-xl ${
                     callout.tone === 'amber'
                       ? 'text-amber-300'
                       : callout.tone === 'cyan'
@@ -1032,8 +1007,12 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                           : 'text-rose-400'
                   }`}
                 >
-                  {callout.text}{' '}
-                  <span className="font-mono-num text-white">{callout.points}</span>
+                  <span>{callout.text}</span>
+                  {callout.points && (
+                    <span className="font-mono-num text-white">
+                      {callout.points}
+                    </span>
+                  )}
                 </div>
               </div>
             )}

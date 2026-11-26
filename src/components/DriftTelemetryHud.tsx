@@ -141,6 +141,11 @@ const clamp01 = (v: number): number => {
   return v < 0 ? 0 : v > 1 ? 1 : v;
 };
 
+const IS_COARSE_MOBILE =
+  typeof window !== 'undefined' &&
+  (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ||
+    Boolean(window.matchMedia?.('(pointer: coarse)').matches));
+
 const BAR_PATH = 'M 10 14 L 22 2 L 598 2 L 586 14 Z';
 
 export const DriftTelemetryHud: React.FC<DriftTelemetryHudProps> = React.memo(
@@ -354,7 +359,7 @@ export const DriftTelemetryHud: React.FC<DriftTelemetryHudProps> = React.memo(
           {/* Center: Big Floating High-Contrast Live Drift Score */}
           <span
             ref={scoreTextRef}
-            className="font-display font-mono-num text-xl sm:text-2xl font-black italic tracking-tight text-white leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]"
+            className="font-display font-mono-num text-xl sm:text-2xl font-black italic tracking-tight text-white leading-none"
             style={{
               textShadow: `0 0 14px ${palette.glow}, 0 2px 6px rgba(0,0,0,0.95)`,
             }}
@@ -363,7 +368,7 @@ export const DriftTelemetryHud: React.FC<DriftTelemetryHudProps> = React.memo(
           {/* Right: Sculpted Slanted Kinetic Multiplier Core (x1 .. x10) */}
           <div className="flex items-center gap-1">
             {isMax && (
-              <span className="font-display italic text-[9px] font-black tracking-[0.18em] text-yellow-200 drop-shadow-[0_1px_5px_rgba(0,0,0,0.95)]">
+              <span className="font-display italic text-[9px] font-black tracking-[0.18em] text-yellow-200 [text-shadow:0_1px_5px_rgba(0,0,0,0.95)]">
                 MAX
               </span>
             )}
@@ -397,9 +402,13 @@ export const DriftTelemetryHud: React.FC<DriftTelemetryHudProps> = React.memo(
           preserveAspectRatio="none"
           aria-hidden="true"
           className="h-3 sm:h-3.5 w-full overflow-visible"
-          style={{
-            filter: `drop-shadow(0 0 8px ${palette.glow})`,
-          }}
+          style={
+            IS_COARSE_MOBILE
+              ? undefined
+              : {
+                  filter: `drop-shadow(0 0 8px ${palette.glow})`,
+                }
+          }
         >
           <defs>
             <clipPath id="viraj-drift-bar-clip">
@@ -485,9 +494,11 @@ export const DriftTelemetryHud: React.FC<DriftTelemetryHudProps> = React.memo(
             <g clipPath="url(#viraj-drift-live-clip)">
               <g
                 className={
-                  drifting
-                    ? 'animate-hud-nitro-flow-fast'
-                    : 'animate-hud-nitro-flow'
+                  IS_COARSE_MOBILE
+                    ? undefined
+                    : drifting
+                      ? 'animate-hud-nitro-flow-fast'
+                      : 'animate-hud-nitro-flow'
                 }
                 opacity={drifting ? 0.58 : 0.25}
               >

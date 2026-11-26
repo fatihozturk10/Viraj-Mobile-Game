@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 export interface RoadPoint {
   x: number;
@@ -18,8 +18,6 @@ interface CareerMapSceneryProps {
   worldWidth: number;
   mapHeight: number;
   levelCoords: RoadPoint[];
-  fullRoadPath: string;
-  unlockedRoadPath: string;
   highestUnlockedLevel: number;
   boundaries: BiomeBoundaries;
   gantryYs: number[];
@@ -81,6 +79,45 @@ interface BridgePlacement {
   glow: string;
 }
 
+interface SceneryBandSpec {
+  index: number;
+  top: number;
+  bottom: number;
+  height: number;
+}
+
+const BAND_HEIGHT = 1200;
+
+/**
+ * Builds a seamless Catmull-Rom cubic Bezier sub-path for segments [startSeg .. endSeg]
+ * using the full levelCoords neighbors so adjacent SVG bands match with 0.0px seam.
+ */
+function buildSmoothRoadSegment(
+  coords: RoadPoint[],
+  startSeg: number,
+  endSeg: number,
+): string {
+  const n = coords.length;
+  if (n < 2) return '';
+  const from = Math.max(0, startSeg);
+  const to = Math.min(n - 2, endSeg);
+  if (from > to) return '';
+
+  let d = `M ${coords[from].x.toFixed(1)} ${coords[from].y.toFixed(1)}`;
+  for (let i = from; i <= to; i++) {
+    const p0 = coords[Math.max(0, i - 1)];
+    const p1 = coords[i];
+    const p2 = coords[i + 1];
+    const p3 = coords[Math.min(n - 1, i + 2)];
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
 /**
  * Sample road center X at any Y by interpolating the monotonically decreasing levelCoords.
  */
@@ -90,7 +127,6 @@ function sampleRoadXAtY(coords: RoadPoint[], y: number): number {
   if (y >= coords[0].y) return coords[0].x;
   if (y <= coords[n - 1].y) return coords[n - 1].x;
 
-  // Binary search since coords[i].y strictly decreases with i
   let lo = 0;
   let hi = n - 1;
   while (lo + 1 < hi) {
@@ -106,7 +142,6 @@ function sampleRoadXAtY(coords: RoadPoint[], y: number): number {
   const span = p1.y - p2.y;
   if (span <= 0.001) return p1.x;
   const t = (p1.y - y) / span;
-  // Smoothstep easing approximates the Catmull-Rom road spline closely
   const s = t * t * (3 - 2 * t);
   return p1.x + (p2.x - p1.x) * s;
 }
@@ -118,10 +153,6 @@ function getChapterIndexAtY(y: number, boundaries: BiomeBoundaries): number {
   return 3;
 }
 
-/**
- * Checks strict clearance from the curving highway (testing y, y-28, y+28)
- * and keeps central chapter gantry zones clean.
- */
 function isSafeFromRoadAndGantries(
   coords: RoadPoint[],
   x: number,
@@ -164,8 +195,7 @@ function computeMidpointBridge(
   const x = (pA.x + pB.x) * 0.5;
   const y = (pA.y + pB.y) * 0.5;
   const dx = pB.x - pA.x;
-  const dy = pB.y - pA.y; // negative (climbing up)
-  // Road climbs along -Y, so rotate deck to follow tangent vector (dx, dy)
+  const dy = pB.y - pA.y;
   const angleDeg = (Math.atan2(dx, -dy) * 180) / Math.PI;
   return { x, y, angleDeg, deck, rail, glow };
 }
@@ -184,7 +214,6 @@ function generateSceneryProps(
     const levelId = i + 1;
     const pt = coords[i];
 
-    // Skip spawning tall roadside props right inside bridge water crossings
     let nearBridge = false;
     for (let b = 0; b < bridgeYs.length; b++) {
       if (Math.abs(pt.y - bridgeYs[b]) < 58) {
@@ -194,7 +223,6 @@ function generateSceneryProps(
     }
     if (nearBridge) continue;
 
-    // 1. Near-left & near-right roadside props (visible even on narrow mobile viewports)
     const leftNearY = pt.y + (((levelId * 19) % 44) - 22);
     const leftNearRoadX = sampleRoadXAtY(coords, leftNearY);
     const leftNearX = leftNearRoadX - (94 + ((levelId * 37) % 62));
@@ -247,7 +275,6 @@ function generateSceneryProps(
       });
     }
 
-    // 2. Mid-corridor secondary props (visible on wider phones, tablets & desktop)
     if (levelId % 2 === 0) {
       const leftMidY = pt.y + (levelId % 4 === 0 ? -38 : 38);
       const leftMidX =
@@ -317,7 +344,7 @@ function generateRoadsideBeacons(
     const midY = (p1.y + p2.y) * 0.5;
     const rx = sampleRoadXAtY(coords, midY);
     const dx = p2.x - p1.x;
-    const side = dx >= 0 ? -1 : 1; // Place on outside of bend
+    const side = dx >= 0 ? -1 : 1;
     const chapterIndex = getChapterIndexAtY(midY, boundaries);
     beacons.push({
       id: `b_${i}`,
@@ -343,12 +370,9 @@ function generateWideFlankLandmarks(
     const y = 140 + ((r + 0.5) / rows) * (mapHeight - 280);
     const chapterIndex = getChapterIndexAtY(y, boundaries);
 
-    // Left panoramic flank (x: 56 .. centerX - 270)
     const lx = 56 + ((r * 157) % Math.max(120, Math.floor(centerX - 330)));
     const ly = y + (((r * 31) % 56) - 28);
-    if (
-      Math.abs(lx - sampleRoadXAtY(coords, ly)) > 190
-    ) {
+    if (Math.abs(lx - sampleRoadXAtY(coords, ly)) > 190) {
       items.push({
         id: `wf_l_${r}`,
         x: lx,
@@ -359,15 +383,12 @@ function generateWideFlankLandmarks(
       });
     }
 
-    // Right panoramic flank (x: centerX + 270 .. worldWidth - 56)
     const rx =
       centerX +
       270 +
       ((r * 173) % Math.max(120, Math.floor(centerX - 330)));
     const ry = y + (((r * 47) % 56) - 28);
-    if (
-      Math.abs(rx - sampleRoadXAtY(coords, ry)) > 190
-    ) {
+    if (Math.abs(rx - sampleRoadXAtY(coords, ry)) > 190) {
       items.push({
         id: `wf_r_${r}`,
         x: rx,
@@ -1186,26 +1207,60 @@ const renderMicroFoliage = (item: MicroFoliage) => {
   }
 };
 
+function rangesOverlap(a0: number, a1: number, b0: number, b1: number): boolean {
+  return a1 >= b0 && a0 <= b1;
+}
+
 export const CareerMapScenery: React.FC<CareerMapSceneryProps> = React.memo(
   ({
     worldWidth,
     mapHeight,
     levelCoords,
-    fullRoadPath,
-    unlockedRoadPath,
     highestUnlockedLevel,
     boundaries,
     gantryYs,
   }) => {
     const centerX = worldWidth * 0.5;
 
-    // 4 scenic bridges positioned cleanly at midpoints between consecutive levels (never under a node!)
+    // Fit SVG raster width to the active viewport (+ small side bleed) so narrow mobile phones
+    // don't rasterize 1000+ invisible off-screen horizontal pixels per tile.
+    const [renderWidth, setRenderWidth] = useState<number>(() => {
+      if (typeof window === 'undefined') return worldWidth;
+      return Math.min(worldWidth, Math.max(520, Math.ceil(window.innerWidth + 120)));
+    });
+
+    useEffect(() => {
+      const onResize = () => {
+        const next = Math.min(
+          worldWidth,
+          Math.max(520, Math.ceil(window.innerWidth + 120)),
+        );
+        setRenderWidth((prev) => (Math.abs(prev - next) >= 32 ? next : prev));
+      };
+      window.addEventListener('resize', onResize, { passive: true });
+      return () => window.removeEventListener('resize', onResize);
+    }, [worldWidth]);
+
+    const viewMinX = (worldWidth - renderWidth) * 0.5;
+    const viewMaxX = viewMinX + renderWidth;
+
+    const bands = useMemo<SceneryBandSpec[]>(() => {
+      const result: SceneryBandSpec[] = [];
+      let index = 0;
+      for (let top = 0; top < mapHeight; top += BAND_HEIGHT) {
+        const bottom = Math.min(mapHeight, top + BAND_HEIGHT);
+        result.push({ index, top, bottom, height: bottom - top });
+        index++;
+      }
+      return result;
+    }, [mapHeight]);
+
     const bridges = useMemo(
       () => [
-        computeMidpointBridge(levelCoords, 9, '#64748b', '#e2e8f0', '#38bdf8'), // Between Lv 10 & 11
-        computeMidpointBridge(levelCoords, 34, '#78350f', '#f59e0b', '#fb923c'), // Between Lv 35 & 36
-        computeMidpointBridge(levelCoords, 60, '#334155', '#bae6fd', '#38bdf8'), // Between Lv 61 & 62
-        computeMidpointBridge(levelCoords, 85, '#27272a', '#f43f5e', '#f97316'), // Between Lv 86 & 87
+        computeMidpointBridge(levelCoords, 9, '#64748b', '#e2e8f0', '#38bdf8'),
+        computeMidpointBridge(levelCoords, 34, '#78350f', '#f59e0b', '#fb923c'),
+        computeMidpointBridge(levelCoords, 60, '#334155', '#bae6fd', '#38bdf8'),
+        computeMidpointBridge(levelCoords, 85, '#27272a', '#f43f5e', '#f97316'),
       ],
       [levelCoords],
     );
@@ -1257,7 +1312,6 @@ export const CareerMapScenery: React.FC<CareerMapSceneryProps> = React.memo(
       [levelCoords, worldWidth, mapHeight, boundaries],
     );
 
-    // Deterministic animated atmospheric elements aligned to exact chapter bands
     const clouds = useMemo(() => {
       const bandTop = boundaries.desertToAlpineY + 120;
       const bandSpan = Math.max(400, mapHeight - bandTop - 160);
@@ -1298,481 +1352,673 @@ export const CareerMapScenery: React.FC<CareerMapSceneryProps> = React.memo(
 
     const [alpineBridge, desertBridge, arcticBridge, volcanicBridge] = bridges;
     const summitPt = levelCoords[levelCoords.length - 1];
+    const alpineMeadowCy =
+      boundaries.desertToAlpineY + (mapHeight - boundaries.desertToAlpineY) * 0.62;
+    const alpineLakeCy =
+      boundaries.desertToAlpineY + (mapHeight - boundaries.desertToAlpineY) * 0.36;
+    const desertOasisCy =
+      (boundaries.arcticToDesertY + boundaries.desertToAlpineY) * 0.5;
+    const auroraY1 =
+      boundaries.volcanicToArcticY +
+      (boundaries.arcticToDesertY - boundaries.volcanicToArcticY) * 0.3;
+    const auroraY2 =
+      boundaries.volcanicToArcticY +
+      (boundaries.arcticToDesertY - boundaries.volcanicToArcticY) * 0.72;
 
-    // Exact biome percentages for smooth soft-feathered vertical masks (zero hard seams!)
-    const pVolcEnd = ((boundaries.volcanicToArcticY / mapHeight) * 100).toFixed(2);
-    const pArcEnd = ((boundaries.arcticToDesertY / mapHeight) * 100).toFixed(2);
-    const pDesEnd = ((boundaries.desertToAlpineY / mapHeight) * 100).toFixed(2);
-    const fadeHalf = 1.6;
-    const clampPct = (v: number) => `${Math.max(0, Math.min(100, v)).toFixed(2)}%`;
+    const maxUnlockedSeg = Math.max(
+      -1,
+      Math.min(levelCoords.length - 2, highestUnlockedLevel - 2),
+    );
+
+    const bandData = useMemo(() => {
+      const xMin = viewMinX - 95;
+      const xMax = viewMaxX + 95;
+
+      return bands.map((band) => {
+        const { top, bottom } = band;
+        const pad = 160;
+        const yMin = top - pad;
+        const yMax = bottom + pad;
+
+        // Find road segment range overlapping [top - 160, bottom + 160]
+        let segStart = levelCoords.length;
+        let segEnd = -1;
+        for (let i = 0; i < levelCoords.length - 1; i++) {
+          const segTopY = levelCoords[i + 1].y;
+          const segBotY = levelCoords[i].y;
+          if (rangesOverlap(segTopY, segBotY, yMin, yMax)) {
+            if (i < segStart) segStart = i;
+            if (i > segEnd) segEnd = i;
+          }
+        }
+        const fullRoadSeg =
+          segStart <= segEnd
+            ? buildSmoothRoadSegment(levelCoords, segStart, segEnd)
+            : '';
+        const unlockedEnd = Math.min(segEnd, maxUnlockedSeg);
+        const unlockedRoadSeg =
+          highestUnlockedLevel > 1 && segStart <= unlockedEnd
+            ? buildSmoothRoadSegment(levelCoords, segStart, unlockedEnd)
+            : '';
+
+        // Biome ground texture vertical intersections (no expensive <mask>!)
+        const biomeSlices: Array<{
+          kind: 'volcanic' | 'arctic' | 'desert' | 'alpine';
+          y: number;
+          h: number;
+        }> = [];
+        const addSlice = (
+          kind: 'volcanic' | 'arctic' | 'desert' | 'alpine',
+          b0: number,
+          b1: number,
+        ) => {
+          const y0 = Math.max(top, b0);
+          const y1 = Math.min(bottom, b1);
+          if (y1 - y0 > 0.5) {
+            biomeSlices.push({ kind, y: y0, h: y1 - y0 });
+          }
+        };
+        addSlice('volcanic', 0, boundaries.volcanicToArcticY);
+        addSlice('arctic', boundaries.volcanicToArcticY, boundaries.arcticToDesertY);
+        addSlice('desert', boundaries.arcticToDesertY, boundaries.desertToAlpineY);
+        addSlice('alpine', boundaries.desertToAlpineY, mapHeight);
+
+        const inBandXY = (x: number, y: number, marginY: number) =>
+          x >= xMin && x <= xMax && y >= top - marginY && y <= bottom + marginY;
+
+        return {
+          band,
+          fullRoadSeg,
+          unlockedRoadSeg,
+          biomeSlices,
+          hasVolcanicSlice: biomeSlices.some((s) => s.kind === 'volcanic'),
+          hasArcticSlice: biomeSlices.some((s) => s.kind === 'arctic'),
+          hasDesertSlice: biomeSlices.some((s) => s.kind === 'desert'),
+          hasAlpineSlice: biomeSlices.some((s) => s.kind === 'alpine'),
+          showSummit: rangesOverlap(summitPt.y - 240, summitPt.y + 160, top, bottom),
+          showAlpineMeadow: rangesOverlap(alpineMeadowCy - 220, alpineMeadowCy + 220, top, bottom),
+          showAlpineLake: rangesOverlap(alpineLakeCy - 170, alpineLakeCy + 170, top, bottom),
+          showAlpineRiver: rangesOverlap(alpineBridge.y - 260, alpineBridge.y + 260, top, bottom),
+          showDesertGorge: rangesOverlap(desertBridge.y - 240, desertBridge.y + 240, top, bottom),
+          showDesertOasis: rangesOverlap(desertOasisCy - 120, desertOasisCy + 120, top, bottom),
+          showArcticFjord: rangesOverlap(arcticBridge.y - 240, arcticBridge.y + 240, top, bottom),
+          showArcticAurora: rangesOverlap(
+            boundaries.volcanicToArcticY,
+            boundaries.arcticToDesertY,
+            top,
+            bottom,
+          ),
+          showVolcanicRiver: rangesOverlap(
+            volcanicBridge.y - 240,
+            volcanicBridge.y + 240,
+            top,
+            bottom,
+          ),
+          landmarks: wideFlankLandmarks.filter((item) => inBandXY(item.x, item.y, 90)),
+          patches: terrainPatches.filter((tp) => inBandXY(tp.x, tp.y, 60)),
+          foliage: microFoliage.filter((item) => inBandXY(item.x, item.y, 40)),
+          props: sceneryProps.filter((prop) => inBandXY(prop.x, prop.y, 70)),
+          bandBridges: bridges.filter((br) => br.y >= top - 90 && br.y <= bottom + 90),
+          beacons: roadsideBeacons.filter((b) => inBandXY(b.x, b.y, 32)),
+          bandClouds: clouds.filter((c) => inBandXY(c.x, c.y, 60)),
+          bandSnow: snowflakes.filter((sf) => inBandXY(sf.x, sf.y, 110)),
+          bandEmbers: embers.filter((em) => inBandXY(em.x, em.y, 110)),
+        };
+      });
+    }, [
+      bands,
+      viewMinX,
+      viewMaxX,
+      levelCoords,
+      maxUnlockedSeg,
+      highestUnlockedLevel,
+      boundaries,
+      mapHeight,
+      summitPt.y,
+      alpineMeadowCy,
+      alpineLakeCy,
+      alpineBridge.y,
+      desertBridge.y,
+      desertOasisCy,
+      arcticBridge.y,
+      volcanicBridge.y,
+      wideFlankLandmarks,
+      terrainPatches,
+      microFoliage,
+      sceneryProps,
+      bridges,
+      roadsideBeacons,
+      clouds,
+      snowflakes,
+      embers,
+    ]);
 
     return (
-      <svg
-        width={worldWidth}
-        height={mapHeight}
-        viewBox={`0 0 ${worldWidth} ${mapHeight}`}
-        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2"
+      <div
         aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
       >
-        <defs>
-          <radialGradient id="volcanicCalderaGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#fde047" stopOpacity="0.85" />
-            <stop offset="35%" stopColor="#f97316" stopOpacity="0.52" />
-            <stop offset="72%" stopColor="#dc2626" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#dc2626" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="auroraCurtainA" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
-            <stop offset="28%" stopColor="#2dd4bf" stopOpacity="0.34" />
-            <stop offset="62%" stopColor="#38bdf8" stopOpacity="0.4" />
-            <stop offset="85%" stopColor="#a855f7" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="alpineLakeGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#0284c7" stopOpacity="0.62" />
-            <stop offset="55%" stopColor="#0ea5e9" stopOpacity="0.46" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.32" />
-          </linearGradient>
-          <linearGradient id="lavaRiverGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#dc2626" />
-            <stop offset="50%" stopColor="#f97316" />
-            <stop offset="100%" stopColor="#fde047" />
-          </linearGradient>
-          <linearGradient id="roadGlowActive" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stopColor="#10b981" />
-            <stop offset="35%" stopColor="#f59e0b" />
-            <stop offset="70%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#f43f5e" />
-          </linearGradient>
-          <filter id="roadShadow" x="-10%" y="-1%" width="120%" height="102%">
-            <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#000000" floodOpacity="0.58" />
-          </filter>
+        {bandData.map((bd) => {
+          const idSuffix = `b${bd.band.index}`;
+          const glowId = `roadGlowActive_${idSuffix}`;
+          const calderaId = `volcanicCalderaGlow_${idSuffix}`;
+          const auroraId = `auroraCurtainA_${idSuffix}`;
+          const lakeId = `alpineLakeGrad_${idSuffix}`;
+          const lavaId = `lavaRiverGrad_${idSuffix}`;
+          const patVolcId = `volcanicGroundPat_${idSuffix}`;
+          const patArcId = `arcticGroundPat_${idSuffix}`;
+          const patDesId = `desertGroundPat_${idSuffix}`;
+          const patAlpId = `alpineGroundPat_${idSuffix}`;
 
-          {/* Soft-feathered biome vertical masks (aligned to exact chapter boundary Ys) */}
-          <linearGradient id="maskVolcGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity="1" />
-            <stop offset={clampPct(Number(pVolcEnd) - fadeHalf)} stopColor="white" stopOpacity="1" />
-            <stop offset={clampPct(Number(pVolcEnd) + fadeHalf)} stopColor="white" stopOpacity="0" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-          <mask id="maskVolcanic">
-            <rect x="0" y="0" width={worldWidth} height={mapHeight} fill="url(#maskVolcGrad)" />
-          </mask>
-
-          <linearGradient id="maskArcticGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity="0" />
-            <stop offset={clampPct(Number(pVolcEnd) - fadeHalf)} stopColor="white" stopOpacity="0" />
-            <stop offset={clampPct(Number(pVolcEnd) + fadeHalf)} stopColor="white" stopOpacity="1" />
-            <stop offset={clampPct(Number(pArcEnd) - fadeHalf)} stopColor="white" stopOpacity="1" />
-            <stop offset={clampPct(Number(pArcEnd) + fadeHalf)} stopColor="white" stopOpacity="0" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-          <mask id="maskArctic">
-            <rect x="0" y="0" width={worldWidth} height={mapHeight} fill="url(#maskArcticGrad)" />
-          </mask>
-
-          <linearGradient id="maskDesertGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity="0" />
-            <stop offset={clampPct(Number(pArcEnd) - fadeHalf)} stopColor="white" stopOpacity="0" />
-            <stop offset={clampPct(Number(pArcEnd) + fadeHalf)} stopColor="white" stopOpacity="1" />
-            <stop offset={clampPct(Number(pDesEnd) - fadeHalf)} stopColor="white" stopOpacity="1" />
-            <stop offset={clampPct(Number(pDesEnd) + fadeHalf)} stopColor="white" stopOpacity="0" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-          <mask id="maskDesert">
-            <rect x="0" y="0" width={worldWidth} height={mapHeight} fill="url(#maskDesertGrad)" />
-          </mask>
-
-          <linearGradient id="maskAlpineGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity="0" />
-            <stop offset={clampPct(Number(pDesEnd) - fadeHalf)} stopColor="white" stopOpacity="0" />
-            <stop offset={clampPct(Number(pDesEnd) + fadeHalf)} stopColor="white" stopOpacity="1" />
-            <stop offset="100%" stopColor="white" stopOpacity="1" />
-          </linearGradient>
-          <mask id="maskAlpine">
-            <rect x="0" y="0" width={worldWidth} height={mapHeight} fill="url(#maskAlpineGrad)" />
-          </mask>
-
-          {/* Seamless Biome Ground Micro-Texture Patterns */}
-          <pattern id="alpineGroundPat" width="140" height="140" patternUnits="userSpaceOnUse">
-            <ellipse cx="32" cy="44" rx="20" ry="8" fill="#22c55e" opacity="0.08" />
-            <ellipse cx="104" cy="108" rx="22" ry="9" fill="#15803d" opacity="0.1" />
-            <path d="M 18 32 L 15 24 M 21 32 L 22 23 M 24 32 L 27 25" stroke="#4ade80" strokeWidth="1.4" strokeLinecap="round" opacity="0.28" />
-            <path d="M 88 64 L 85 57 M 91 64 L 92 55 M 94 64 L 97 58" stroke="#22c55e" strokeWidth="1.4" strokeLinecap="round" opacity="0.26" />
-            <circle cx="42" cy="42" r="1.6" fill="#fde047" opacity="0.34" />
-            <circle cx="118" cy="34" r="1.4" fill="#ffffff" opacity="0.24" />
-            <circle cx="102" cy="106" r="1.6" fill="#38bdf8" opacity="0.28" />
-          </pattern>
-
-          <pattern id="desertGroundPat" width="150" height="140" patternUnits="userSpaceOnUse">
-            <path d="M 12 34 Q 36 26 60 34 T 108 34" fill="none" stroke="#fdba74" strokeWidth="2" strokeLinecap="round" opacity="0.16" />
-            <path d="M 48 92 Q 76 84 104 92 T 144 90" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" opacity="0.15" />
-            <path d="M 14 114 Q 26 104 38 114 Z" fill="#d97706" opacity="0.2" />
-            <circle cx="76" cy="54" r="2.2" fill="#9a3412" opacity="0.28" />
-            <circle cx="30" cy="74" r="1.8" fill="#7c2d12" opacity="0.28" />
-          </pattern>
-
-          <pattern id="arcticGroundPat" width="150" height="140" patternUnits="userSpaceOnUse">
-            <ellipse cx="38" cy="40" rx="24" ry="8" fill="#e0f2fe" opacity="0.12" />
-            <ellipse cx="110" cy="102" rx="26" ry="9" fill="#bae6fd" opacity="0.1" />
-            <path d="M 76 30 L 88 38 L 82 48" fill="none" stroke="#7dd3fc" strokeWidth="1.2" opacity="0.22" />
-            <path d="M 24 98 L 24 104 M 21 101 L 27 101" stroke="#f0f9ff" strokeWidth="1.3" strokeLinecap="round" opacity="0.34" />
-            <circle cx="62" cy="84" r="1.5" fill="#ffffff" opacity="0.28" />
-          </pattern>
-
-          <pattern id="volcanicGroundPat" width="150" height="140" patternUnits="userSpaceOnUse">
-            <path d="M 18 42 Q 30 33 42 42 Z" fill="#27272a" opacity="0.34" />
-            <path d="M 102 104 Q 116 94 130 104 Z" fill="#18181b" opacity="0.38" />
-            <path d="M 68 58 L 80 52 L 90 60" fill="none" stroke="#f97316" strokeWidth="1.4" strokeLinecap="round" opacity="0.22" />
-            <circle cx="34" cy="96" r="2" fill="#27272a" opacity="0.45" />
-            <circle cx="40" cy="98" r="1.2" fill="#fb923c" opacity="0.38" />
-          </pattern>
-        </defs>
-
-        {/* 1. Seamlessly Feathered Full-Width Biome Surface Ground Textures */}
-        <rect x="0" y="0" width={worldWidth} height={mapHeight} fill="url(#volcanicGroundPat)" mask="url(#maskVolcanic)" />
-        <rect x="0" y="0" width={worldWidth} height={mapHeight} fill="url(#arcticGroundPat)" mask="url(#maskArctic)" />
-        <rect x="0" y="0" width={worldWidth} height={mapHeight} fill="url(#desertGroundPat)" mask="url(#maskDesert)" />
-        <rect x="0" y="0" width={worldWidth} height={mapHeight} fill="url(#alpineGroundPat)" mask="url(#maskAlpine)" />
-
-        {/* 2. Volcanic Summit Caldera Crown behind Level 100 */}
-        <g transform={`translate(${summitPt.x} ${summitPt.y - 34})`}>
-          <ellipse cx="0" cy="-10" rx="340" ry="155" fill="url(#volcanicCalderaGlow)" className="animate-career-lava" />
-          <polygon points="-290,95 -125,-95 125,-95 290,95" fill="#18070b" opacity="0.82" />
-          <polygon points="-200,95 -95,-72 95,-72 200,95" fill="#2a0c12" opacity="0.86" />
-          <ellipse cx="0" cy="-72" rx="108" ry="26" fill="#ea580c" opacity="0.85" />
-          <ellipse cx="0" cy="-72" rx="68" ry="15" fill="#fde047" opacity="0.88" />
-        </g>
-
-        {/* 3. Large Topographic Lakes, Oases & Rivers routed cleanly beneath the 4 Midpoint Bridges */}
-        {/* Alpine Emerald Meadow & Mountain Lake */}
-        <ellipse
-          cx={centerX - 310}
-          cy={boundaries.desertToAlpineY + (mapHeight - boundaries.desertToAlpineY) * 0.62}
-          rx="260"
-          ry="200"
-          fill="#15803d"
-          opacity="0.16"
-        />
-        <ellipse
-          cx={centerX + 340}
-          cy={boundaries.desertToAlpineY + (mapHeight - boundaries.desertToAlpineY) * 0.36}
-          rx="210"
-          ry="140"
-          fill="url(#alpineLakeGrad)"
-        />
-        {/* Alpine River passing directly through alpineBridge */}
-        <path
-          d={`M ${worldWidth + 40} ${alpineBridge.y + 185} C ${alpineBridge.x + 340} ${alpineBridge.y + 65}, ${alpineBridge.x - 340} ${alpineBridge.y - 65}, -40 ${alpineBridge.y - 195}`}
-          fill="none"
-          stroke="#0284c7"
-          strokeOpacity="0.42"
-          strokeWidth="62"
-          strokeLinecap="round"
-        />
-        <path
-          d={`M ${worldWidth + 40} ${alpineBridge.y + 185} C ${alpineBridge.x + 340} ${alpineBridge.y + 65}, ${alpineBridge.x - 340} ${alpineBridge.y - 65}, -40 ${alpineBridge.y - 195}`}
-          fill="none"
-          stroke="#38bdf8"
-          strokeOpacity="0.48"
-          strokeWidth="26"
-          strokeLinecap="round"
-        />
-        <path
-          d={`M ${worldWidth + 40} ${alpineBridge.y + 185} C ${alpineBridge.x + 340} ${alpineBridge.y + 65}, ${alpineBridge.x - 340} ${alpineBridge.y - 65}, -40 ${alpineBridge.y - 195}`}
-          fill="none"
-          stroke="#e0f2fe"
-          strokeOpacity="0.38"
-          strokeWidth="5"
-          strokeDasharray="18 28"
-          strokeLinecap="round"
-        />
-
-        {/* Desert Canyon Gorge passing directly through desertBridge + Left Oasis Lagoon */}
-        <path
-          d={`M -40 ${desertBridge.y + 160} C ${desertBridge.x - 320} ${desertBridge.y + 52}, ${desertBridge.x + 320} ${desertBridge.y - 52}, ${worldWidth + 40} ${desertBridge.y - 170}`}
-          fill="none"
-          stroke="#3b1306"
-          strokeOpacity="0.6"
-          strokeWidth="68"
-          strokeLinecap="round"
-        />
-        <path
-          d={`M -40 ${desertBridge.y + 160} C ${desertBridge.x - 320} ${desertBridge.y + 52}, ${desertBridge.x + 320} ${desertBridge.y - 52}, ${worldWidth + 40} ${desertBridge.y - 170}`}
-          fill="none"
-          stroke="#7c2d12"
-          strokeOpacity="0.52"
-          strokeWidth="36"
-          strokeLinecap="round"
-        />
-        <ellipse
-          cx={centerX - 360}
-          cy={(boundaries.arcticToDesertY + boundaries.desertToAlpineY) * 0.5}
-          rx="145"
-          ry="84"
-          fill="#15803d"
-          opacity="0.34"
-        />
-        <ellipse
-          cx={centerX - 360}
-          cy={(boundaries.arcticToDesertY + boundaries.desertToAlpineY) * 0.5}
-          rx="100"
-          ry="54"
-          fill="#0ea5e9"
-          opacity="0.52"
-        />
-
-        {/* Arctic Frozen Fjord passing directly through arcticBridge + Sweeping Aurora Curtains */}
-        <path
-          d={`M -40 ${arcticBridge.y - 150} C ${arcticBridge.x - 320} ${arcticBridge.y - 45}, ${arcticBridge.x + 320} ${arcticBridge.y + 45}, ${worldWidth + 40} ${arcticBridge.y + 165}`}
-          fill="none"
-          stroke="#0c4a6e"
-          strokeOpacity="0.6"
-          strokeWidth="66"
-          strokeLinecap="round"
-        />
-        <path
-          d={`M -40 ${arcticBridge.y - 150} C ${arcticBridge.x - 320} ${arcticBridge.y - 45}, ${arcticBridge.x + 320} ${arcticBridge.y + 45}, ${worldWidth + 40} ${arcticBridge.y + 165}`}
-          fill="none"
-          stroke="#7dd3fc"
-          strokeOpacity="0.46"
-          strokeWidth="26"
-          strokeLinecap="round"
-        />
-        <g className="animate-career-aurora">
-          <path
-            d={`M -40 ${boundaries.volcanicToArcticY + (boundaries.arcticToDesertY - boundaries.volcanicToArcticY) * 0.3} C ${centerX - 360} ${boundaries.volcanicToArcticY + 520}, ${centerX + 260} ${boundaries.volcanicToArcticY + 720}, ${worldWidth + 40} ${boundaries.volcanicToArcticY + 460}`}
-            fill="none"
-            stroke="url(#auroraCurtainA)"
-            strokeWidth="110"
-            strokeLinecap="round"
-          />
-          <path
-            d={`M -40 ${boundaries.volcanicToArcticY + (boundaries.arcticToDesertY - boundaries.volcanicToArcticY) * 0.72} C ${centerX - 240} ${boundaries.arcticToDesertY - 460}, ${centerX + 320} ${boundaries.arcticToDesertY - 620}, ${worldWidth + 40} ${boundaries.arcticToDesertY - 380}`}
-            fill="none"
-            stroke="url(#auroraCurtainA)"
-            strokeWidth="92"
-            strokeLinecap="round"
-          />
-        </g>
-
-        {/* Volcanic Magma River passing directly through volcanicBridge */}
-        <g className="animate-career-lava">
-          <path
-            d={`M -40 ${volcanicBridge.y + 165} C ${volcanicBridge.x - 320} ${volcanicBridge.y + 55}, ${volcanicBridge.x + 320} ${volcanicBridge.y - 55}, ${worldWidth + 40} ${volcanicBridge.y - 165}`}
-            fill="none"
-            stroke="#dc2626"
-            strokeOpacity="0.56"
-            strokeWidth="54"
-            strokeLinecap="round"
-          />
-          <path
-            d={`M -40 ${volcanicBridge.y + 165} C ${volcanicBridge.x - 320} ${volcanicBridge.y + 55}, ${volcanicBridge.x + 320} ${volcanicBridge.y - 55}, ${worldWidth + 40} ${volcanicBridge.y - 165}`}
-            fill="none"
-            stroke="url(#lavaRiverGrad)"
-            strokeOpacity="0.88"
-            strokeWidth="22"
-            strokeLinecap="round"
-          />
-          <path
-            d={`M -40 ${volcanicBridge.y + 165} C ${volcanicBridge.x - 320} ${volcanicBridge.y + 55}, ${volcanicBridge.x + 320} ${volcanicBridge.y - 55}, ${worldWidth + 40} ${volcanicBridge.y - 165}`}
-            fill="none"
-            stroke="#fef08a"
-            strokeOpacity="0.85"
-            strokeWidth="5.5"
-            strokeDasharray="24 22"
-            strokeLinecap="round"
-          />
-        </g>
-
-        {/* 4. Wide Panoramic Mountains & Silhouettes */}
-        {wideFlankLandmarks.map(renderWideFlankLandmark)}
-
-        {/* 5. Soft Terrain Contour Patches */}
-        {terrainPatches.map((tp) => {
-          const fill =
-            tp.chapterIndex === 0
-              ? tp.tone === 0
-                ? '#16a34a'
-                : '#15803d'
-              : tp.chapterIndex === 1
-                ? tp.tone === 0
-                  ? '#d97706'
-                  : '#b45309'
-                : tp.chapterIndex === 2
-                  ? tp.tone === 0
-                    ? '#bae6fd'
-                    : '#7dd3fc'
-                  : tp.tone === 0
-                    ? '#27272a'
-                    : '#431407';
           return (
-            <ellipse
-              key={tp.id}
-              cx={tp.x.toFixed(1)}
-              cy={tp.y.toFixed(1)}
-              rx={tp.rx}
-              ry={tp.ry}
-              fill={fill}
-              opacity={tp.chapterIndex === 2 ? '0.14' : '0.2'}
-              transform={`rotate(${tp.rot} ${tp.x.toFixed(1)} ${tp.y.toFixed(1)})`}
-            />
+            <svg
+              key={bd.band.index}
+              width={renderWidth}
+              height={bd.band.height}
+              viewBox={`${viewMinX} ${bd.band.top} ${renderWidth} ${bd.band.height}`}
+              className="pointer-events-none absolute left-1/2 block -translate-x-1/2"
+              style={{
+                top: `${bd.band.top}px`,
+                contain: 'layout style paint',
+              }}
+            >
+              <defs>
+                {bd.showSummit && (
+                  <radialGradient id={calderaId} cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#fde047" stopOpacity="0.85" />
+                    <stop offset="35%" stopColor="#f97316" stopOpacity="0.52" />
+                    <stop offset="72%" stopColor="#dc2626" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#dc2626" stopOpacity="0" />
+                  </radialGradient>
+                )}
+                {bd.showArcticAurora && (
+                  <linearGradient id={auroraId} x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
+                    <stop offset="28%" stopColor="#2dd4bf" stopOpacity="0.34" />
+                    <stop offset="62%" stopColor="#38bdf8" stopOpacity="0.4" />
+                    <stop offset="85%" stopColor="#a855f7" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
+                  </linearGradient>
+                )}
+                {bd.showAlpineLake && (
+                  <linearGradient id={lakeId} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#0284c7" stopOpacity="0.62" />
+                    <stop offset="55%" stopColor="#0ea5e9" stopOpacity="0.46" />
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.32" />
+                  </linearGradient>
+                )}
+                {bd.showVolcanicRiver && (
+                  <linearGradient id={lavaId} x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#dc2626" />
+                    <stop offset="50%" stopColor="#f97316" />
+                    <stop offset="100%" stopColor="#fde047" />
+                  </linearGradient>
+                )}
+                {bd.unlockedRoadSeg && (
+                  <linearGradient
+                    id={glowId}
+                    gradientUnits="userSpaceOnUse"
+                    x1="0"
+                    y1={mapHeight}
+                    x2="0"
+                    y2="0"
+                  >
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="35%" stopColor="#f59e0b" />
+                    <stop offset="70%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#f43f5e" />
+                  </linearGradient>
+                )}
+
+                {bd.hasAlpineSlice && (
+                  <pattern id={patAlpId} width="140" height="140" patternUnits="userSpaceOnUse">
+                    <ellipse cx="32" cy="44" rx="20" ry="8" fill="#22c55e" opacity="0.08" />
+                    <ellipse cx="104" cy="108" rx="22" ry="9" fill="#15803d" opacity="0.1" />
+                    <path d="M 18 32 L 15 24 M 21 32 L 22 23 M 24 32 L 27 25" stroke="#4ade80" strokeWidth="1.4" strokeLinecap="round" opacity="0.28" />
+                    <path d="M 88 64 L 85 57 M 91 64 L 92 55 M 94 64 L 97 58" stroke="#22c55e" strokeWidth="1.4" strokeLinecap="round" opacity="0.26" />
+                    <circle cx="42" cy="42" r="1.6" fill="#fde047" opacity="0.34" />
+                    <circle cx="118" cy="34" r="1.4" fill="#ffffff" opacity="0.24" />
+                    <circle cx="102" cy="106" r="1.6" fill="#38bdf8" opacity="0.28" />
+                  </pattern>
+                )}
+                {bd.hasDesertSlice && (
+                  <pattern id={patDesId} width="150" height="140" patternUnits="userSpaceOnUse">
+                    <path d="M 12 34 Q 36 26 60 34 T 108 34" fill="none" stroke="#fdba74" strokeWidth="2" strokeLinecap="round" opacity="0.16" />
+                    <path d="M 48 92 Q 76 84 104 92 T 144 90" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" opacity="0.15" />
+                    <path d="M 14 114 Q 26 104 38 114 Z" fill="#d97706" opacity="0.2" />
+                    <circle cx="76" cy="54" r="2.2" fill="#9a3412" opacity="0.28" />
+                    <circle cx="30" cy="74" r="1.8" fill="#7c2d12" opacity="0.28" />
+                  </pattern>
+                )}
+                {bd.hasArcticSlice && (
+                  <pattern id={patArcId} width="150" height="140" patternUnits="userSpaceOnUse">
+                    <ellipse cx="38" cy="40" rx="24" ry="8" fill="#e0f2fe" opacity="0.12" />
+                    <ellipse cx="110" cy="102" rx="26" ry="9" fill="#bae6fd" opacity="0.1" />
+                    <path d="M 76 30 L 88 38 L 82 48" fill="none" stroke="#7dd3fc" strokeWidth="1.2" opacity="0.22" />
+                    <path d="M 24 98 L 24 104 M 21 101 L 27 101" stroke="#f0f9ff" strokeWidth="1.3" strokeLinecap="round" opacity="0.34" />
+                    <circle cx="62" cy="84" r="1.5" fill="#ffffff" opacity="0.28" />
+                  </pattern>
+                )}
+                {bd.hasVolcanicSlice && (
+                  <pattern id={patVolcId} width="150" height="140" patternUnits="userSpaceOnUse">
+                    <path d="M 18 42 Q 30 33 42 42 Z" fill="#27272a" opacity="0.34" />
+                    <path d="M 102 104 Q 116 94 130 104 Z" fill="#18181b" opacity="0.38" />
+                    <path d="M 68 58 L 80 52 L 90 60" fill="none" stroke="#f97316" strokeWidth="1.4" strokeLinecap="round" opacity="0.22" />
+                    <circle cx="34" cy="96" r="2" fill="#27272a" opacity="0.45" />
+                    <circle cx="40" cy="98" r="1.2" fill="#fb923c" opacity="0.38" />
+                  </pattern>
+                )}
+              </defs>
+
+              {/* 1. Direct Biome Surface Ground Textures (zero <mask> offscreen passes!) */}
+              {bd.biomeSlices.map((sl) => {
+                const patUrl =
+                  sl.kind === 'volcanic'
+                    ? `url(#${patVolcId})`
+                    : sl.kind === 'arctic'
+                      ? `url(#${patArcId})`
+                      : sl.kind === 'desert'
+                        ? `url(#${patDesId})`
+                        : `url(#${patAlpId})`;
+                return (
+                  <rect
+                    key={sl.kind}
+                    x={viewMinX}
+                    y={sl.y}
+                    width={renderWidth}
+                    height={sl.h}
+                    fill={patUrl}
+                  />
+                );
+              })}
+
+              {/* 2. Volcanic Summit Caldera Crown behind Level 100 */}
+              {bd.showSummit && (
+                <g transform={`translate(${summitPt.x} ${summitPt.y - 34})`}>
+                  <ellipse cx="0" cy="-10" rx="340" ry="155" fill={`url(#${calderaId})`} className="animate-career-lava" />
+                  <polygon points="-290,95 -125,-95 125,-95 290,95" fill="#18070b" opacity="0.82" />
+                  <polygon points="-200,95 -95,-72 95,-72 200,95" fill="#2a0c12" opacity="0.86" />
+                  <ellipse cx="0" cy="-72" rx="108" ry="26" fill="#ea580c" opacity="0.85" />
+                  <ellipse cx="0" cy="-72" rx="68" ry="15" fill="#fde047" opacity="0.88" />
+                </g>
+              )}
+
+              {/* 3. Large Topographic Lakes, Oases & Rivers routed cleanly beneath the 4 Midpoint Bridges */}
+              {bd.showAlpineMeadow && (
+                <ellipse
+                  cx={centerX - 310}
+                  cy={alpineMeadowCy}
+                  rx="260"
+                  ry="200"
+                  fill="#15803d"
+                  opacity="0.16"
+                />
+              )}
+              {bd.showAlpineLake && (
+                <ellipse
+                  cx={centerX + 340}
+                  cy={alpineLakeCy}
+                  rx="210"
+                  ry="140"
+                  fill={`url(#${lakeId})`}
+                />
+              )}
+              {bd.showAlpineRiver && (
+                <>
+                  <path
+                    d={`M ${worldWidth + 40} ${alpineBridge.y + 185} C ${alpineBridge.x + 340} ${alpineBridge.y + 65}, ${alpineBridge.x - 340} ${alpineBridge.y - 65}, -40 ${alpineBridge.y - 195}`}
+                    fill="none"
+                    stroke="#0284c7"
+                    strokeOpacity="0.42"
+                    strokeWidth="62"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={`M ${worldWidth + 40} ${alpineBridge.y + 185} C ${alpineBridge.x + 340} ${alpineBridge.y + 65}, ${alpineBridge.x - 340} ${alpineBridge.y - 65}, -40 ${alpineBridge.y - 195}`}
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeOpacity="0.48"
+                    strokeWidth="26"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={`M ${worldWidth + 40} ${alpineBridge.y + 185} C ${alpineBridge.x + 340} ${alpineBridge.y + 65}, ${alpineBridge.x - 340} ${alpineBridge.y - 65}, -40 ${alpineBridge.y - 195}`}
+                    fill="none"
+                    stroke="#e0f2fe"
+                    strokeOpacity="0.38"
+                    strokeWidth="5"
+                    strokeDasharray="18 28"
+                    strokeLinecap="round"
+                  />
+                </>
+              )}
+
+              {bd.showDesertGorge && (
+                <>
+                  <path
+                    d={`M -40 ${desertBridge.y + 160} C ${desertBridge.x - 320} ${desertBridge.y + 52}, ${desertBridge.x + 320} ${desertBridge.y - 52}, ${worldWidth + 40} ${desertBridge.y - 170}`}
+                    fill="none"
+                    stroke="#3b1306"
+                    strokeOpacity="0.6"
+                    strokeWidth="68"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={`M -40 ${desertBridge.y + 160} C ${desertBridge.x - 320} ${desertBridge.y + 52}, ${desertBridge.x + 320} ${desertBridge.y - 52}, ${worldWidth + 40} ${desertBridge.y - 170}`}
+                    fill="none"
+                    stroke="#7c2d12"
+                    strokeOpacity="0.52"
+                    strokeWidth="36"
+                    strokeLinecap="round"
+                  />
+                </>
+              )}
+              {bd.showDesertOasis && (
+                <>
+                  <ellipse
+                    cx={centerX - 360}
+                    cy={desertOasisCy}
+                    rx="145"
+                    ry="84"
+                    fill="#15803d"
+                    opacity="0.34"
+                  />
+                  <ellipse
+                    cx={centerX - 360}
+                    cy={desertOasisCy}
+                    rx="100"
+                    ry="54"
+                    fill="#0ea5e9"
+                    opacity="0.52"
+                  />
+                </>
+              )}
+
+              {bd.showArcticFjord && (
+                <>
+                  <path
+                    d={`M -40 ${arcticBridge.y - 150} C ${arcticBridge.x - 320} ${arcticBridge.y - 45}, ${arcticBridge.x + 320} ${arcticBridge.y + 45}, ${worldWidth + 40} ${arcticBridge.y + 165}`}
+                    fill="none"
+                    stroke="#0c4a6e"
+                    strokeOpacity="0.6"
+                    strokeWidth="66"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={`M -40 ${arcticBridge.y - 150} C ${arcticBridge.x - 320} ${arcticBridge.y - 45}, ${arcticBridge.x + 320} ${arcticBridge.y + 45}, ${worldWidth + 40} ${arcticBridge.y + 165}`}
+                    fill="none"
+                    stroke="#7dd3fc"
+                    strokeOpacity="0.46"
+                    strokeWidth="26"
+                    strokeLinecap="round"
+                  />
+                </>
+              )}
+              {bd.showArcticAurora && (
+                <g className="animate-career-aurora">
+                  <path
+                    d={`M -40 ${auroraY1} C ${centerX - 360} ${boundaries.volcanicToArcticY + 520}, ${centerX + 260} ${boundaries.volcanicToArcticY + 720}, ${worldWidth + 40} ${boundaries.volcanicToArcticY + 460}`}
+                    fill="none"
+                    stroke={`url(#${auroraId})`}
+                    strokeWidth="110"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={`M -40 ${auroraY2} C ${centerX - 240} ${boundaries.arcticToDesertY - 460}, ${centerX + 320} ${boundaries.arcticToDesertY - 620}, ${worldWidth + 40} ${boundaries.arcticToDesertY - 380}`}
+                    fill="none"
+                    stroke={`url(#${auroraId})`}
+                    strokeWidth="92"
+                    strokeLinecap="round"
+                  />
+                </g>
+              )}
+
+              {bd.showVolcanicRiver && (
+                <g className="animate-career-lava">
+                  <path
+                    d={`M -40 ${volcanicBridge.y + 165} C ${volcanicBridge.x - 320} ${volcanicBridge.y + 55}, ${volcanicBridge.x + 320} ${volcanicBridge.y - 55}, ${worldWidth + 40} ${volcanicBridge.y - 165}`}
+                    fill="none"
+                    stroke="#dc2626"
+                    strokeOpacity="0.56"
+                    strokeWidth="54"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={`M -40 ${volcanicBridge.y + 165} C ${volcanicBridge.x - 320} ${volcanicBridge.y + 55}, ${volcanicBridge.x + 320} ${volcanicBridge.y - 55}, ${worldWidth + 40} ${volcanicBridge.y - 165}`}
+                    fill="none"
+                    stroke={`url(#${lavaId})`}
+                    strokeOpacity="0.88"
+                    strokeWidth="22"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d={`M -40 ${volcanicBridge.y + 165} C ${volcanicBridge.x - 320} ${volcanicBridge.y + 55}, ${volcanicBridge.x + 320} ${volcanicBridge.y - 55}, ${worldWidth + 40} ${volcanicBridge.y - 165}`}
+                    fill="none"
+                    stroke="#fef08a"
+                    strokeOpacity="0.85"
+                    strokeWidth="5.5"
+                    strokeDasharray="24 22"
+                    strokeLinecap="round"
+                  />
+                </g>
+              )}
+
+              {/* 4. Wide Panoramic Mountains & Silhouettes */}
+              {bd.landmarks.map(renderWideFlankLandmark)}
+
+              {/* 5. Soft Terrain Contour Patches */}
+              {bd.patches.map((tp) => {
+                const fill =
+                  tp.chapterIndex === 0
+                    ? tp.tone === 0
+                      ? '#16a34a'
+                      : '#15803d'
+                    : tp.chapterIndex === 1
+                      ? tp.tone === 0
+                        ? '#d97706'
+                        : '#b45309'
+                      : tp.chapterIndex === 2
+                        ? tp.tone === 0
+                          ? '#bae6fd'
+                          : '#7dd3fc'
+                        : tp.tone === 0
+                          ? '#27272a'
+                          : '#431407';
+                return (
+                  <ellipse
+                    key={tp.id}
+                    cx={tp.x.toFixed(1)}
+                    cy={tp.y.toFixed(1)}
+                    rx={tp.rx}
+                    ry={tp.ry}
+                    fill={fill}
+                    opacity={tp.chapterIndex === 2 ? '0.14' : '0.2'}
+                    transform={`rotate(${tp.rot} ${tp.x.toFixed(1)} ${tp.y.toFixed(1)})`}
+                  />
+                );
+              })}
+
+              {/* 6. Road-Clear Micro Foliage & Detailed Biome Props */}
+              {bd.foliage.map(renderMicroFoliage)}
+              {bd.props.map(renderBiomeProp)}
+
+              {/* 7. Tangent-Aligned Midpoint Highway Bridges */}
+              {bd.bandBridges.map((br, idx) => (
+                <g
+                  key={`bridge_${bd.band.index}_${idx}`}
+                  transform={`translate(${br.x.toFixed(1)} ${br.y.toFixed(1)}) rotate(${br.angleDeg.toFixed(1)})`}
+                >
+                  <rect x="-46" y="-56" width="92" height="112" rx="10" fill={br.deck} opacity="0.95" />
+                  <rect x="-46" y="-56" width="7.5" height="112" rx="3" fill={br.rail} />
+                  <rect x="38.5" y="-56" width="7.5" height="112" rx="3" fill={br.rail} />
+                  {[-40, -14, 14, 40].map((py) => (
+                    <g key={py}>
+                      <circle cx="-42.2" cy={py} r="2.8" fill={br.glow} />
+                      <circle cx="42.2" cy={py} r="2.8" fill={br.glow} />
+                    </g>
+                  ))}
+                </g>
+              ))}
+
+              {/* 8. Roadside Streetlamps & Light Pools */}
+              {bd.beacons.map((b) => (
+                <g key={b.id} transform={`translate(${b.x.toFixed(1)} ${b.y.toFixed(1)})`}>
+                  <circle cx="0" cy="0" r="16" fill={b.color} opacity="0.16" />
+                  <circle cx="0" cy="0" r="6.5" fill={b.color} opacity="0.34" />
+                  <circle cx="0" cy="0" r="2.4" fill="#ffffff" opacity="0.92" />
+                </g>
+              ))}
+
+              {/* 9. Crisp Aspect-True Multi-Layer Racing Highway (layered shadow strokes instead of costly feDropShadow!) */}
+              {bd.fullRoadSeg && (
+                <>
+                  <path
+                    d={bd.fullRoadSeg}
+                    fill="none"
+                    stroke="#000000"
+                    strokeOpacity="0.22"
+                    strokeWidth="92"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    transform="translate(0 7)"
+                  />
+                  <path
+                    d={bd.fullRoadSeg}
+                    fill="none"
+                    stroke="#000000"
+                    strokeOpacity="0.34"
+                    strokeWidth="82"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    transform="translate(0 4)"
+                  />
+                  <path
+                    d={bd.fullRoadSeg}
+                    fill="none"
+                    stroke="#090d16"
+                    strokeWidth="76"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d={bd.fullRoadSeg}
+                    fill="none"
+                    stroke="#64748b"
+                    strokeWidth="64"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.82"
+                  />
+                  <path
+                    d={bd.fullRoadSeg}
+                    fill="none"
+                    stroke="#ef4444"
+                    strokeWidth="62"
+                    strokeDasharray="10 38"
+                    strokeLinecap="butt"
+                    opacity="0.28"
+                  />
+                  <path
+                    d={bd.fullRoadSeg}
+                    fill="none"
+                    stroke="#141418"
+                    strokeWidth="54"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d={bd.fullRoadSeg}
+                    fill="none"
+                    stroke="#e2e8f0"
+                    strokeWidth="46"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.24"
+                  />
+                  <path
+                    d={bd.fullRoadSeg}
+                    fill="none"
+                    stroke="#1d1e24"
+                    strokeWidth="42"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </>
+              )}
+              {bd.unlockedRoadSeg && (
+                <>
+                  <path
+                    d={bd.unlockedRoadSeg}
+                    fill="none"
+                    stroke={`url(#${glowId})`}
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.28"
+                  />
+                  <path
+                    d={bd.unlockedRoadSeg}
+                    fill="none"
+                    stroke={`url(#${glowId})`}
+                    strokeWidth="4.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.76"
+                  />
+                </>
+              )}
+              {bd.fullRoadSeg && (
+                <path
+                  d={bd.fullRoadSeg}
+                  fill="none"
+                  stroke="#fde047"
+                  strokeWidth="2.8"
+                  strokeDasharray="13 15"
+                  strokeLinecap="round"
+                  opacity="0.88"
+                />
+              )}
+
+              {/* 10. Atmospheric Particles (Clouds, Snow, Embers) */}
+              {bd.bandClouds.map((c) => (
+                <g key={c.id} transform={`translate(${c.x} ${c.y}) scale(${c.scale})`}>
+                  <g className="animate-career-cloud" style={{ animationDelay: c.delay }}>
+                    <ellipse cx="0" cy="0" rx="52" ry="18" fill="#f8fafc" opacity="0.2" />
+                    <ellipse cx="-24" cy="4" rx="34" ry="14" fill="#f8fafc" opacity="0.18" />
+                    <ellipse cx="26" cy="5" rx="30" ry="13" fill="#e2e8f0" opacity="0.16" />
+                  </g>
+                </g>
+              ))}
+
+              {bd.bandSnow.map((sf) => (
+                <g key={sf.id} transform={`translate(${sf.x} ${sf.y})`}>
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r={sf.r}
+                    fill="#e0f2fe"
+                    className="animate-career-snow"
+                    style={{ animationDelay: sf.delay }}
+                  />
+                </g>
+              ))}
+
+              {bd.bandEmbers.map((em) => (
+                <g key={em.id} transform={`translate(${em.x} ${em.y})`}>
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r={em.r}
+                    fill="#fb923c"
+                    className="animate-career-ember"
+                    style={{ animationDelay: em.delay }}
+                  />
+                </g>
+              ))}
+            </svg>
           );
         })}
-
-        {/* 6. Road-Clear Micro Foliage & Detailed Biome Props */}
-        {microFoliage.map(renderMicroFoliage)}
-        {sceneryProps.map(renderBiomeProp)}
-
-        {/* 7. Tangent-Aligned Midpoint Highway Bridges */}
-        {bridges.map((br, idx) => (
-          <g
-            key={`bridge_${idx}`}
-            transform={`translate(${br.x.toFixed(1)} ${br.y.toFixed(1)}) rotate(${br.angleDeg.toFixed(1)})`}
-          >
-            <rect x="-46" y="-56" width="92" height="112" rx="10" fill={br.deck} opacity="0.95" />
-            <rect x="-46" y="-56" width="7.5" height="112" rx="3" fill={br.rail} />
-            <rect x="38.5" y="-56" width="7.5" height="112" rx="3" fill={br.rail} />
-            {[-40, -14, 14, 40].map((py) => (
-              <g key={py}>
-                <circle cx="-42.2" cy={py} r="2.8" fill={br.glow} />
-                <circle cx="42.2" cy={py} r="2.8" fill={br.glow} />
-              </g>
-            ))}
-          </g>
-        ))}
-
-        {/* 8. Roadside Streetlamps & Light Pools */}
-        {roadsideBeacons.map((b) => (
-          <g key={b.id} transform={`translate(${b.x.toFixed(1)} ${b.y.toFixed(1)})`}>
-            <circle cx="0" cy="0" r="16" fill={b.color} opacity="0.16" />
-            <circle cx="0" cy="0" r="6.5" fill={b.color} opacity="0.34" />
-            <circle cx="0" cy="0" r="2.4" fill="#ffffff" opacity="0.92" />
-          </g>
-        ))}
-
-        {/* 9. Crisp Aspect-True Multi-Layer Racing Highway */}
-        <path
-          d={fullRoadPath}
-          fill="none"
-          stroke="#090d16"
-          strokeWidth="76"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter="url(#roadShadow)"
-        />
-        <path
-          d={fullRoadPath}
-          fill="none"
-          stroke="#64748b"
-          strokeWidth="64"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.82"
-        />
-        <path
-          d={fullRoadPath}
-          fill="none"
-          stroke="#ef4444"
-          strokeWidth="62"
-          strokeDasharray="10 38"
-          strokeLinecap="butt"
-          opacity="0.28"
-        />
-        <path
-          d={fullRoadPath}
-          fill="none"
-          stroke="#141418"
-          strokeWidth="54"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d={fullRoadPath}
-          fill="none"
-          stroke="#e2e8f0"
-          strokeWidth="46"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.24"
-        />
-        <path
-          d={fullRoadPath}
-          fill="none"
-          stroke="#1d1e24"
-          strokeWidth="42"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {highestUnlockedLevel > 1 && (
-          <>
-            <path
-              d={unlockedRoadPath}
-              fill="none"
-              stroke="url(#roadGlowActive)"
-              strokeWidth="12"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity="0.28"
-            />
-            <path
-              d={unlockedRoadPath}
-              fill="none"
-              stroke="url(#roadGlowActive)"
-              strokeWidth="4.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity="0.76"
-            />
-          </>
-        )}
-        <path
-          d={fullRoadPath}
-          fill="none"
-          stroke="#fde047"
-          strokeWidth="2.8"
-          strokeDasharray="13 15"
-          strokeLinecap="round"
-          opacity="0.88"
-        />
-
-        {/* 10. Animated Atmospheric Particles (Clouds, Snow, Embers) */}
-        {clouds.map((c) => (
-          <g key={c.id} transform={`translate(${c.x} ${c.y}) scale(${c.scale})`}>
-            <g className="animate-career-cloud" style={{ animationDelay: c.delay }}>
-              <ellipse cx="0" cy="0" rx="52" ry="18" fill="#f8fafc" opacity="0.2" />
-              <ellipse cx="-24" cy="4" rx="34" ry="14" fill="#f8fafc" opacity="0.18" />
-              <ellipse cx="26" cy="5" rx="30" ry="13" fill="#e2e8f0" opacity="0.16" />
-            </g>
-          </g>
-        ))}
-
-        {snowflakes.map((sf) => (
-          <g key={sf.id} transform={`translate(${sf.x} ${sf.y})`}>
-            <circle
-              cx="0"
-              cy="0"
-              r={sf.r}
-              fill="#e0f2fe"
-              className="animate-career-snow"
-              style={{ animationDelay: sf.delay }}
-            />
-          </g>
-        ))}
-
-        {embers.map((em) => (
-          <g key={em.id} transform={`translate(${em.x} ${em.y})`}>
-            <circle
-              cx="0"
-              cy="0"
-              r={em.r}
-              fill="#fb923c"
-              className="animate-career-ember"
-              style={{ animationDelay: em.delay }}
-            />
-          </g>
-        ))}
-      </svg>
+      </div>
     );
   },
 );

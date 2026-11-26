@@ -16,6 +16,11 @@ const clampPct = (v: number): number => {
   return v < 0 ? 0 : v > 100 ? 100 : v;
 };
 
+const IS_COARSE_MOBILE =
+  typeof window !== 'undefined' &&
+  (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ||
+    Boolean(window.matchMedia?.('(pointer: coarse)').matches));
+
 export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
   ({ nitroPercent, nitroActive, onNitroToggle }) => {
     const safePct = clampPct(nitroPercent);
@@ -40,6 +45,9 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
       trail: safePct,
       lastNitroActive: nitroActive,
       lastRenderedInt: -1,
+      lastAppliedDisplay: -999,
+      lastAppliedTrail: -999,
+      lastDomWriteMs: 0,
       rafId: 0,
       lastFrameTime: 0,
     });
@@ -48,11 +56,23 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
       displayPct: number,
       trailPct: number,
       active: boolean,
+      force = false,
     ) => {
+      const st = animRef.current;
+      if (
+        !force &&
+        Math.abs(displayPct - st.lastAppliedDisplay) < 0.08 &&
+        Math.abs(trailPct - st.lastAppliedTrail) < 0.08
+      ) {
+        return;
+      }
+      st.lastAppliedDisplay = displayPct;
+      st.lastAppliedTrail = trailPct;
+
       const fillX = displayPct * 10;
       const trailX = trailPct * 10;
-      const fillTransform = `translate(${fillX.toFixed(2)} 0)`;
-      const trailTransform = `translate(${trailX.toFixed(2)} 0)`;
+      const fillTransform = `translate(${fillX.toFixed(1)} 0)`;
+      const trailTransform = `translate(${trailX.toFixed(1)} 0)`;
 
       if (fillGroupRef.current) {
         fillGroupRef.current.setAttribute('transform', fillTransform);
@@ -144,10 +164,10 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
     // Set exact initial transform/text synchronously before first paint
     useLayoutEffect(() => {
       const st = animRef.current;
-      applyVisuals(st.display, st.trail, st.lastNitroActive);
+      applyVisuals(st.display, st.trail, st.lastNitroActive, true);
     }, []);
 
-    // Dedicated native-refresh rAF loop for silky-smooth 60/120fps bar motion
+    // Dedicated native-refresh rAF loop for silky-smooth bar motion (throttled DOM writes on mobile)
     useEffect(() => {
       const st = animRef.current;
       st.lastFrameTime = performance.now();
@@ -189,7 +209,10 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
           }
         }
 
-        applyVisuals(st.display, st.trail, st.lastNitroActive);
+        if (!IS_COARSE_MOBILE || now - st.lastDomWriteMs >= 28) {
+          st.lastDomWriteMs = now;
+          applyVisuals(st.display, st.trail, st.lastNitroActive);
+        }
         st.rafId = requestAnimationFrame(tick);
       };
 
@@ -221,7 +244,7 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
       >
         {/* Floating frameless label tucked cleanly into the left aerodynamic curve */}
         <div className="pointer-events-none absolute top-0 left-1 z-10 flex items-center gap-2 leading-none">
-          <span className="inline-flex items-center gap-1 drop-shadow-[0_1px_5px_rgba(0,0,0,0.95)]">
+          <span className="inline-flex items-center gap-1 [text-shadow:0_1px_5px_rgba(0,0,0,0.95)]">
             <Flame
               className={`h-3.5 w-3.5 shrink-0 transition-colors duration-200 ${
                 nitroActive
@@ -245,7 +268,7 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
           </span>
           <span
             ref={pctTextRef}
-            className={`font-mono-num text-xs sm:text-sm font-black tracking-tight drop-shadow-[0_1px_5px_rgba(0,0,0,0.95)] transition-colors duration-200 ${
+            className={`font-mono-num text-xs sm:text-sm font-black tracking-tight [text-shadow:0_1px_5px_rgba(0,0,0,0.95)] transition-colors duration-200 ${
               nitroActive
                 ? 'text-cyan-100'
                 : isReady
@@ -261,13 +284,17 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
           preserveAspectRatio="none"
           aria-hidden="true"
           className="h-full w-full overflow-visible"
-          style={{
-            filter: nitroActive
-              ? 'drop-shadow(0 0 11px rgba(34,211,238,0.82))'
-              : isReady
-                ? 'drop-shadow(0 2px 8px rgba(14,165,233,0.42))'
-                : 'drop-shadow(0 2px 6px rgba(0,0,0,0.65))',
-          }}
+          style={
+            IS_COARSE_MOBILE
+              ? undefined
+              : {
+                  filter: nitroActive
+                    ? 'drop-shadow(0 0 11px rgba(34,211,238,0.82))'
+                    : isReady
+                      ? 'drop-shadow(0 2px 8px rgba(14,165,233,0.42))'
+                      : 'drop-shadow(0 2px 6px rgba(0,0,0,0.65))',
+                }
+          }
         >
           <defs>
             {/* Outer aerodynamic turbo-wing silhouette clip */}
@@ -447,9 +474,11 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
             <g clipPath="url(#viraj-nitro-live-fill-clip)">
               <g
                 className={
-                  nitroActive
-                    ? 'animate-hud-nitro-flow-fast'
-                    : 'animate-hud-nitro-flow'
+                  IS_COARSE_MOBILE
+                    ? undefined
+                    : nitroActive
+                      ? 'animate-hud-nitro-flow-fast'
+                      : 'animate-hud-nitro-flow'
                 }
                 opacity={nitroActive ? 0.56 : isReady ? 0.22 : 0.06}
               >

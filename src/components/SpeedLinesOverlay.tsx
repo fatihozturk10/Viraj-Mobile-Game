@@ -17,6 +17,11 @@ interface LineSeed {
 
 const LINE_COUNT = 48;
 
+const IS_COARSE_MOBILE =
+  typeof window !== 'undefined' &&
+  (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ||
+    Boolean(window.matchMedia?.('(pointer: coarse)').matches));
+
 export const SpeedLinesOverlay: React.FC<SpeedLinesOverlayProps> = React.memo(
   ({ active, speedKmh, nitroActive }) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -26,6 +31,7 @@ export const SpeedLinesOverlay: React.FC<SpeedLinesOverlayProps> = React.memo(
     stateRef.current = { active, speedKmh, nitroActive };
 
     useEffect(() => {
+      if (IS_COARSE_MOBILE) return;
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -214,6 +220,8 @@ export const SpeedLinesOverlay: React.FC<SpeedLinesOverlayProps> = React.memo(
         startLoopRef.current?.();
       }
     }, [active, speedKmh > 102, nitroActive]);
+
+    if (IS_COARSE_MOBILE) return null;
 
     return (
       <canvas

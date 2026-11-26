@@ -259,18 +259,20 @@ export const LevelUpCelebrationOverlay: React.FC<LevelUpCelebrationOverlayProps>
     return (
       <div className="pointer-events-none fixed inset-x-0 top-20 z-30 flex justify-center px-3">
         <div
-          className="animate-nitro-pop flex items-center gap-3 rounded-2xl border-2 border-amber-400/80 bg-zinc-950/95 px-4 py-2.5 shadow-[0_0_32px_rgba(251,191,36,0.45)]"
+          className="animate-banner-pop flex max-w-[min(94vw,380px)] items-center gap-2.5 rounded-2xl border-2 border-amber-400/80 bg-zinc-950/95 px-3.5 py-2 shadow-[0_0_28px_rgba(251,191,36,0.42)] sm:gap-3 sm:px-4 sm:py-2.5"
         >
-          <DriverLevelEmblem level={event.toLevel} size="md" />
-          <div className="flex flex-col">
-            <span className="font-display text-[10px] font-black tracking-[0.22em] text-amber-300 uppercase">
+          <div className="shrink-0">
+            <DriverLevelEmblem level={event.toLevel} size="md" />
+          </div>
+          <div className="flex min-w-0 flex-col">
+            <span className="font-display text-[10px] font-black tracking-[0.2em] text-amber-300 uppercase">
               SEVİYE ATLADIN!
             </span>
-            <span className="font-display text-base font-black text-white">
+            <span className="font-display text-sm font-black leading-tight text-white break-words sm:text-base">
               Sv.{event.fromLevel} → Sv.{event.toLevel} · {event.rankTitle}
             </span>
             {highlight && (
-              <span className="text-[11px] font-bold text-emerald-300">
+              <span className="text-[11px] font-bold leading-snug text-emerald-300 break-words">
                 Yeni Ödül Açıldı: {highlight.title}
               </span>
             )}

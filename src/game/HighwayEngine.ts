@@ -966,13 +966,19 @@ export class HighwayEngine {
 
   private frameId = 0;
   private disposed = false;
+  private renderSuspended = false;
   private lastTime = performance.now();
   private lastShadowUpdateMs = 0;
   private envMapTexture: THREE.Texture | null = null;
 
-  constructor(container: HTMLElement, callbacks: EngineCallbacks) {
+  constructor(
+    container: HTMLElement,
+    callbacks: EngineCallbacks,
+    startSuspended = false,
+  ) {
     this.container = container;
     this.callbacks = callbacks;
+    this.renderSuspended = startSuspended;
 
     try {
       const saved = localStorage.getItem(BEST_SCORE_KEY);
@@ -2017,9 +2023,9 @@ export class HighwayEngine {
     window.addEventListener('pagehide', this.handlePageHide);
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
 
-    // Warm shaders immediately on desktop, or deferred after first menu paint on mobile to avoid mid-race GLSL compile stalls
+    // Warm shaders immediately on desktop or while hidden behind the intro video so zero GLSL stalls occur in menu/gameplay
     if (!this.isSoftwareGl) {
-      if (!this.isMobileDevice) {
+      if (!this.isMobileDevice || this.renderSuspended) {
         this.renderer.compile(this.scene, this.camera);
       } else {
         window.setTimeout(() => {
@@ -2031,7 +2037,27 @@ export class HighwayEngine {
     }
 
     this.lastTime = performance.now();
-    this.scheduleNextTick();
+    if (this.renderSuspended) {
+      // Pre-render one warm menu frame into the backbuffer, then stay completely idle (0% GPU/CPU) until intro fades out
+      this.stepMenuPreview(0.016);
+      this.renderer.render(this.scene, this.camera);
+    } else {
+      this.scheduleNextTick();
+    }
+  }
+
+  public setRenderSuspended(suspended: boolean): void {
+    if (this.renderSuspended === suspended) return;
+    this.renderSuspended = suspended;
+    if (suspended) {
+      cancelAnimationFrame(this.frameId);
+      clearTimeout(this.frameId);
+      this.frameId = 0;
+    } else if (!this.disposed) {
+      this.lastTime = performance.now();
+      this.startupFrameCount = 0;
+      this.scheduleNextTick();
+    }
   }
 
   private handleContextLost = (e: Event): void => {
@@ -2041,6 +2067,7 @@ export class HighwayEngine {
   };
 
   private handleContextRestored = (): void => {
+    if (this.disposed || this.renderSuspended) return;
     this.lastTime = performance.now();
     this.scheduleNextTick();
   };
@@ -5127,7 +5154,7 @@ export class HighwayEngine {
     }
 
     // 2. Flying tumbling burning car debris chunks
-    const count = 22;
+    const count = this.isMobileDevice ? 14 : 22;
     for (let i = 0; i < count; i++) {
       if (this.debris.length >= this.maxDebris) break;
       const d = this.debrisPool.pop() || {
@@ -5180,8 +5207,8 @@ export class HighwayEngine {
     }
 
     // 3. Intense sparks + billowing dark explosion smoke
-    this.emitSparks(worldPos, 0, 32);
-    this.emitDamageSmoke(worldPos, 12, true);
+    this.emitSparks(worldPos, 0, this.isMobileDevice ? 18 : 32);
+    this.emitDamageSmoke(worldPos, this.isMobileDevice ? 7 : 12, true);
     this.audio.playCarExplosion();
   }
 
@@ -5544,7 +5571,7 @@ export class HighwayEngine {
   }
 
   private scheduleNextTick(): void {
-    if (this.disposed) return;
+    if (this.disposed || this.renderSuspended) return;
     if (this.isSoftwareGl) {
       this.afterDraw(this.tick);
     } else {
@@ -5557,7 +5584,10 @@ export class HighwayEngine {
     const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
     gl.flush();
     const poll = () => {
-      if (this.disposed) return;
+      if (this.disposed || this.renderSuspended) {
+        if (sync) gl.deleteSync(sync);
+        return;
+      }
       const state = sync && gl.getSyncParameter(sync, gl.SYNC_STATUS);
       if (state === gl.UNSIGNALED) {
         this.frameId = window.setTimeout(poll, 5);
@@ -5570,7 +5600,7 @@ export class HighwayEngine {
   }
 
   private tick = (): void => {
-    if (this.disposed) return;
+    if (this.disposed || this.renderSuspended) return;
 
     const now = performance.now();
     const rawFrameMs = now - this.lastTime;
@@ -9082,15 +9112,17 @@ export class HighwayEngine {
 
   private stepSpeedStreaks(dt: number): void {
     const speedKmh = this.speedMs * 3.6;
-    if (speedKmh < 105 && !this.nitroActive) {
+    const boostActive = this.nitroActive || this.rampageTimer > 0;
+    if (speedKmh < 105 && !boostActive) {
       this.streaksMesh.count = 0;
       return;
     }
 
     const intensity = THREE.MathUtils.clamp((speedKmh - 105) / 120, 0, 1);
     const activeCount = Math.round(
-      this.maxStreaks * (this.nitroActive ? 1 : 0.2 + intensity * 0.8),
+      this.maxStreaks * (boostActive ? 1 : 0.2 + intensity * 0.8),
     );
+    const widthScale = this.isMobileDevice ? (boostActive ? 1.45 : 1.15) : 1;
 
     for (let i = 0; i < activeCount; i++) {
       const st = this.streaks[i];
@@ -9106,9 +9138,9 @@ export class HighwayEngine {
       _dummy.position.set(st.x, st.y, st.z);
       _dummy.rotation.set(0, 0, 0);
       _dummy.scale.set(
-        1,
-        1,
-        st.len * (0.9 + intensity * 0.85) * (this.nitroActive ? 1.8 : 1.0),
+        widthScale,
+        widthScale,
+        st.len * (0.9 + intensity * 0.85) * (boostActive ? 1.95 : 1.0),
       );
       _dummy.updateMatrix();
       this.streaksMesh.setMatrixAt(i, _dummy.matrix);

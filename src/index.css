@@ -173,6 +173,40 @@
   animation: nitroFlamePop 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes centeredBannerPop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.86);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-banner-pop {
+  animation: centeredBannerPop 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes countdownPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-countdown-pop {
+  animation: countdownPop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .animate-nitro-spin {
   animation: nitroSpin 1.4s linear infinite;
 }
@@ -970,39 +1004,45 @@ input[type="range"]::-webkit-slider-thumb {
 
 .animate-career-cloud {
   animation: careerCloudDrift 16s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 
 .animate-career-aurora {
   animation: careerAuroraWave 11s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 
 .animate-career-snow {
   animation: careerSnowDrift 7.5s linear infinite;
-  will-change: transform, opacity;
 }
 
 .animate-career-ember {
   animation: careerEmberRise 5.2s ease-out infinite;
-  will-change: transform, opacity;
 }
 
 .animate-career-turbine {
   transform-box: fill-box;
   transform-origin: center;
   animation: careerTurbineSpin 5.5s linear infinite;
-  will-change: transform;
 }
 
 .animate-career-lava {
   animation: careerLavaPulse 3.2s ease-in-out infinite;
-  will-change: opacity;
 }
 
 .animate-career-beacon {
   animation: careerBeaconPulse 2.1s ease-in-out infinite;
   will-change: transform, opacity;
+}
+
+/* On mobile touchscreens, keep Career Map scenic SVG bands 100% static so Chromium caches GPU tiles without checkerboarding on fast scroll */
+@media (pointer: coarse) {
+  .animate-career-cloud,
+  .animate-career-aurora,
+  .animate-career-snow,
+  .animate-career-ember,
+  .animate-career-turbine,
+  .animate-career-lava {
+    animation: none !important;
+  }
 }
 
 /* ===== Driving HUD Bespoke Instrument Animations (GPU-composited) ===== */

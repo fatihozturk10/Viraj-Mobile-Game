@@ -26,6 +26,7 @@ public class MainActivity extends BridgeActivity {
         if (this.bridge != null && this.bridge.getWebView() != null) {
             WebView webView = this.bridge.getWebView();
             webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
         }
         applyImmersiveFullscreen();
     }
