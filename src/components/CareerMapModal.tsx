@@ -26,6 +26,7 @@ import {
 } from '../game/careerLevels';
 import {
   CrateTierId,
+  getCrateByTier,
   LootRarity,
   RolledLootItem,
 } from '../services/storeCatalog';
@@ -781,37 +782,96 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                   100,
                   Math.round((progress.totalStars / chest.starsRequired) * 100),
                 );
+                const crateSpec = chest.crateTierId
+                  ? getCrateByTier(chest.crateTierId)
+                  : null;
+                const crateBadgeStyle =
+                  chest.crateTierId === 'legendary'
+                    ? 'border-amber-400/50 bg-amber-500/20 text-amber-200'
+                    : chest.crateTierId === 'pro'
+                      ? 'border-fuchsia-400/45 bg-fuchsia-500/18 text-fuchsia-200'
+                      : 'border-sky-400/45 bg-sky-500/18 text-sky-200';
+                const crateCardBorder =
+                  chest.crateTierId === 'legendary'
+                    ? 'border-amber-400/40 bg-gradient-to-r from-amber-500/12 via-zinc-900/90 to-zinc-900/90'
+                    : chest.crateTierId === 'pro'
+                      ? 'border-fuchsia-400/30 bg-gradient-to-r from-fuchsia-500/10 via-zinc-900/90 to-zinc-900/90'
+                      : chest.crateTierId === 'street'
+                        ? 'border-sky-400/30 bg-gradient-to-r from-sky-500/10 via-zinc-900/90 to-zinc-900/90'
+                        : 'border-white/10 bg-zinc-900/80';
                 return (
                   <div
                     key={chest.starsRequired}
                     className={`flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 ${
                       ready
-                        ? 'border-emerald-400/50 bg-emerald-500/14'
+                        ? 'border-emerald-400/55 bg-emerald-500/14'
                         : claimed
                           ? 'border-white/8 bg-zinc-900/40 opacity-75'
-                          : 'border-white/10 bg-zinc-900/80'
+                          : crateCardBorder
                     }`}
                   >
+                    {crateSpec && (
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/15 bg-zinc-950 shadow-inner">
+                        <img
+                          src={crateSpec.imageUrl}
+                          alt={crateSpec.title}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="font-display text-sm font-extrabold text-white">
                           {chest.title}
                         </span>
                         <span className="font-mono-num text-xs font-bold text-amber-300">
                           ★ {chest.starsRequired}
                         </span>
+                        {crateSpec && (
+                          <span
+                            className={`rounded-md border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${crateBadgeStyle}`}
+                          >
+                            {crateSpec.title}
+                          </span>
+                        )}
                       </div>
                       <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                         <div
                           className={`h-full ${
-                            claimed || ready ? 'bg-emerald-400' : 'bg-amber-400'
+                            claimed || ready
+                              ? 'bg-emerald-400'
+                              : chest.crateTierId === 'legendary'
+                                ? 'bg-amber-400'
+                                : chest.crateTierId === 'pro'
+                                  ? 'bg-fuchsia-400'
+                                  : chest.crateTierId === 'street'
+                                    ? 'bg-sky-400'
+                                    : 'bg-amber-400'
                           }`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <div className="mt-1 flex items-center gap-1 text-xs font-bold text-amber-300 font-mono-num">
-                        <Coins className="h-3 w-3 text-amber-400" />
-                        <span>+{chest.rewardGold.toLocaleString('tr-TR')} Altın</span>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold font-mono-num">
+                        {crateSpec && (
+                          <span
+                            className={`flex items-center gap-1 ${
+                              chest.crateTierId === 'legendary'
+                                ? 'text-amber-300'
+                                : chest.crateTierId === 'pro'
+                                  ? 'text-fuchsia-300'
+                                  : 'text-sky-300'
+                            }`}
+                          >
+                            <Gift className="h-3 w-3" />
+                            <span>1× {crateSpec.title}</span>
+                          </span>
+                        )}
+                        {chest.rewardGold > 0 && (
+                          <span className="flex items-center gap-1 text-amber-300">
+                            <Coins className="h-3 w-3 text-amber-400" />
+                            <span>+{chest.rewardGold.toLocaleString('tr-TR')} Altın</span>
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -827,7 +887,9 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                         onClick={() => {
                           if (!ready) return;
                           onClaimStarChest(chest.starsRequired);
-                          setOpeningChest(chest);
+                          if (!chest.crateTierId) {
+                            setOpeningChest(chest);
+                          }
                         }}
                         className={`min-h-[40px] rounded-xl px-3.5 text-xs font-extrabold whitespace-nowrap shrink-0 transition-colors ${
                           ready
@@ -835,7 +897,11 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                             : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                         }`}
                       >
-                        {ready ? 'Sandığı Aç' : `${chest.starsRequired - progress.totalStars}★ Kaldı`}
+                        {ready
+                          ? crateSpec
+                            ? 'Kasayı Aç'
+                            : 'Sandığı Aç'
+                          : `${chest.starsRequired - progress.totalStars}★ Kaldı`}
                       </button>
                     )}
                   </div>

@@ -4016,16 +4016,23 @@ export class HighwayEngine {
     return this.activeCareerLevel ? this.activeCareerLevel.id : null;
   }
 
-  public claimCareerStarChest(
-    starsRequired: number,
-  ): { ok: boolean; rewardGold: number; title: string } {
+  public claimCareerStarChest(starsRequired: number): {
+    ok: boolean;
+    rewardGold: number;
+    crateTierId?: CrateTierId;
+    title: string;
+  } {
     const res = this.careerManager.claimStarChest(starsRequired);
-    if (res.ok && res.rewardGold > 0) {
-      this.totalGold += res.rewardGold;
-      this.saveProgression();
-      this.notifyProgression();
+    if (res.ok) {
+      if (res.rewardGold > 0) {
+        this.totalGold += res.rewardGold;
+        this.saveProgression();
+        this.notifyProgression();
+      }
       this.callbacks.onCareerProgressChange?.(this.careerManager.getSnapshot());
-      this.audio.playAchievementUnlock();
+      if (!res.crateTierId) {
+        this.audio.playAchievementUnlock();
+      }
       this.pushHud(true);
     }
     return res;
@@ -7257,6 +7264,9 @@ export class HighwayEngine {
         this.playerVelY = 0;
         this.cameraShake = Math.max(this.cameraShake, 0.28);
         this.emitSparks(this.playerCar.root.position, 0, 12);
+        if (this.driftScore > 0) {
+          this.driftGraceTimer = this.driftGraceDuration;
+        }
       }
     }
 
@@ -7296,39 +7306,45 @@ export class HighwayEngine {
     );
     this.lateralVel = (this.playerLateral - prevLateral) / dt;
 
-    // Cornering Drift State, Live Drift Score & Tire Smoke (only when tires on ground)
+    // Cornering Drift State, Live Drift Score & Tire Smoke (airborne ramp jumps preserve & grow drift streak)
     const lateralG = Math.abs(_roadSample.curvature * this.speedMs * this.speedMs);
     const steerNorm = THREE.MathUtils.clamp(this.lateralVel / 10.5, -1, 1);
     const wetLateralThreshold = 14.5 - roadWet * 3.4;
     const wetSteerThreshold = 0.55 - roadWet * 0.13;
+    const isAirborneJump = this.playerHeight > 0.05;
     const isCorneringHard =
-      this.playerHeight < 0.15 &&
+      !isAirborneJump &&
       (lateralG > wetLateralThreshold ||
         Math.abs(steerNorm) > wetSteerThreshold ||
         this.slickTimer > 0) &&
       this.speedMs > 28;
-    this.drifting = isCorneringHard;
+    const isAirborneDriftBoost = isAirborneJump && this.speedMs > 18;
+    this.drifting = isCorneringHard || isAirborneDriftBoost;
 
-    if (isCorneringHard) {
-      this.smokeTimer += dt;
-      if (this.smokeTimer > 0.045) {
-        this.smokeTimer = 0;
-        this.emitTireSmoke(_roadSample);
+    if (isCorneringHard || isAirborneDriftBoost) {
+      if (isCorneringHard) {
+        this.smokeTimer += dt;
+        if (this.smokeTimer > 0.045) {
+          this.smokeTimer = 0;
+          this.emitTireSmoke(_roadSample);
+        }
       }
 
-      this.driftDuration += dt;
+      this.driftDuration += isAirborneDriftBoost ? dt * 1.15 : dt;
       this.driftGraceTimer = this.driftGraceDuration;
-      const driftIntensity = THREE.MathUtils.clamp(
-        lateralG / 20 + Math.abs(steerNorm) * 0.65,
-        0.55,
-        2.2,
-      );
+      const driftIntensity = isAirborneDriftBoost
+        ? 1.25
+        : THREE.MathUtils.clamp(
+            lateralG / 20 + Math.abs(steerNorm) * 0.65,
+            0.55,
+            2.2,
+          );
       const driftSpeedFactor = THREE.MathUtils.clamp(
         this.speedMs / 36,
         0.75,
         2.0,
       );
-      const wetDriftBonus = 1 + roadWet * 0.22;
+      const wetDriftBonus = isAirborneDriftBoost ? 1 : 1 + roadWet * 0.22;
       this.driftScore +=
         145 * driftIntensity * driftSpeedFactor * wetDriftBonus * dt;
 
@@ -7627,9 +7643,28 @@ export class HighwayEngine {
         const pts = 350 * this.combo;
         this.score += pts;
         this.boostCombo(1);
+
+        // Preserve and boost drift streak on ramp takeoff
+        this.drifting = true;
+        this.driftGraceTimer = this.driftGraceDuration;
+        this.driftDuration += 0.55;
+        const rampDriftSpeed = THREE.MathUtils.clamp(
+          this.speedMs / 36,
+          0.85,
+          2.0,
+        );
+        this.driftScore += Math.round(140 * rampDriftSpeed);
+        const { mult: rampNextMult } = this.getDriftMultiplierState();
+        if (rampNextMult > this.driftMultiplier) {
+          this.driftMultiplier = rampNextMult;
+          if (rampNextMult >= 2) {
+            this.boostCombo(1);
+          }
+        }
+
         this.audio.playNitroIgnite();
         this.emitSparks(this.playerCar.root.position, 0, 16);
-        this.emitCallout('UÇUŞ BONUSU!', `+${pts} · +18 Nitro`, 'amber');
+        this.emitCallout('UÇUŞ BONUSU!', `+${pts} · +18 Nitro · Drift +`, 'amber');
         this.careerRoadEventsCount++;
         this.handleMissionRewards(this.missions.recordDelta('rampJump', 1));
       } else if (hit.kind === 'boostpad') {

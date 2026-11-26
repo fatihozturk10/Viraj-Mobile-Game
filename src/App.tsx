@@ -55,6 +55,8 @@ import {
 import {
   initGoogleAds,
   isGoogleAdsConfigured,
+  isGoogleInterstitialReady,
+  preloadGoogleAds,
   syncGoogleAdsSound,
   triggerGoogleInterstitialAd,
   triggerGoogleRewardedAd,
@@ -499,7 +501,9 @@ export default function App() {
     const mountEl = canvasMountRef.current;
     if (!mountEl) return;
 
-    void initGoogleAds(!mutedRef.current);
+    void initGoogleAds(!mutedRef.current, {
+      preloadInterstitial: !adManager.isAdFree(),
+    });
     void consumePendingRedirectAuth();
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
@@ -511,6 +515,7 @@ export default function App() {
             setStoreEntitlements(res.snapshot);
             if (res.restoredAdFree && !adManager.isAdFree()) {
               setAdState(adManager.purchaseAdFree());
+              preloadGoogleAds({ includeInterstitial: false, includeRewarded: true });
             }
           })
           .catch(() => {
@@ -544,6 +549,10 @@ export default function App() {
         }
         if (nextPhase === 'gameover') {
           setAdState(adManager.recordRunCompleted());
+          preloadGoogleAds({
+            includeInterstitial: !adManager.isAdFree(),
+            includeRewarded: true,
+          });
           const latestStats = statsRef.current;
           void submitRunToLeaderboard({
             plate: licensePlateRef.current,
@@ -1242,6 +1251,15 @@ export default function App() {
         adManager.shouldShowInterstitial() &&
         isGoogleAdsConfigured()
       ) {
+        if (!isGoogleInterstitialReady()) {
+          // Never stall the button waiting for ad download — proceed immediately and preload for next run
+          preloadGoogleAds({
+            includeInterstitial: !adManager.isAdFree(),
+            includeRewarded: true,
+          });
+          proceed();
+          return;
+        }
         adRequestBusyRef.current = true;
         void triggerGoogleInterstitialAd(
           actionLabel,
@@ -1285,13 +1303,6 @@ export default function App() {
 
   const handleCloseCareerMap = useCallback(() => {
     setCareerMapOpen(false);
-  }, []);
-
-  const handleClaimCareerStarChest = useCallback((starsRequired: number) => {
-    const res = engineRef.current?.claimCareerStarChest(starsRequired);
-    if (res?.ok) {
-      triggerNativeHaptic('reward');
-    }
   }, []);
 
   const handleOpenGarage = useCallback(() => {
@@ -1430,6 +1441,7 @@ export default function App() {
 
   const handleConfirmPurchaseAdFree = useCallback(() => {
     setAdState(adManager.purchaseAdFree());
+    preloadGoogleAds({ includeInterstitial: false, includeRewarded: true });
   }, []);
 
   const handleFulfillStorePurchase = useCallback(
@@ -2233,6 +2245,21 @@ export default function App() {
     }
   }, [openLevelRoadCrates]);
 
+  const handleClaimCareerStarChest = useCallback(
+    (starsRequired: number) => {
+      const res = engineRef.current?.claimCareerStarChest(starsRequired);
+      if (!res?.ok) return;
+      triggerNativeHaptic('reward');
+      if (res.crateTierId) {
+        openLevelRoadCrates(
+          [res.crateTierId],
+          `Kariyer Yıldız Ödülü · ★ ${starsRequired}`,
+        );
+      }
+    },
+    [openLevelRoadCrates],
+  );
+
   const handleWatchAdRevive = useCallback(() => {
     openRewardedAd({ kind: 'crash_revive' });
   }, [openRewardedAd]);
@@ -2470,6 +2497,17 @@ export default function App() {
         />
       )}
 
+      {careerMapOpen && (
+        <CareerMapModal
+          open={careerMapOpen}
+          progress={careerProgress}
+          goldCoins={goldCoins}
+          onClose={handleCloseCareerMap}
+          onStartLevel={handleStartCareerLevel}
+          onClaimStarChest={handleClaimCareerStarChest}
+        />
+      )}
+
       {levelRoadCrateSession && (
         <CrateOpeningCeremony
           title={levelRoadCrateSession.title}
@@ -2485,20 +2523,10 @@ export default function App() {
           onOpenGarage={() => {
             setLevelRoadCrateSession(null);
             setLevelRoadOpen(false);
+            setCareerMapOpen(false);
             launchGarage();
           }}
           onClose={() => setLevelRoadCrateSession(null)}
-        />
-      )}
-
-      {careerMapOpen && (
-        <CareerMapModal
-          open={careerMapOpen}
-          progress={careerProgress}
-          goldCoins={goldCoins}
-          onClose={handleCloseCareerMap}
-          onStartLevel={handleStartCareerLevel}
-          onClaimStarChest={handleClaimCareerStarChest}
         />
       )}
 

@@ -1,4 +1,5 @@
 import { AtmosphereId, BiomeId } from '../types/game';
+import { CrateTierId } from '../services/storeCatalog';
 
 export type CareerRoadRule = 'classic' | 'twoway' | 'pursuit';
 
@@ -68,6 +69,7 @@ export interface CareerChapterSpec {
 export interface CareerStarChestSpec {
   starsRequired: number;
   rewardGold: number;
+  crateTierId?: CrateTierId;
   title: string;
 }
 
@@ -263,10 +265,46 @@ export const CAREER_CHAPTERS: CareerChapterSpec[] = [
 
 export const CAREER_STAR_CHESTS: CareerStarChestSpec[] = [
   { starsRequired: 15, rewardGold: 450, title: 'Çaylak Sandığı' },
+  {
+    starsRequired: 30,
+    rewardGold: 0,
+    crateTierId: 'street',
+    title: 'Sokak Kasası',
+  },
   { starsRequired: 45, rewardGold: 900, title: 'Vadi Kupası' },
+  {
+    starsRequired: 70,
+    rewardGold: 0,
+    crateTierId: 'street',
+    title: 'Vadi Sokak Kasası',
+  },
   { starsRequired: 90, rewardGold: 1800, title: 'Çöl Şampiyonu' },
+  {
+    starsRequired: 120,
+    rewardGold: 0,
+    crateTierId: 'pro',
+    title: 'Çöl Pro Kasası',
+  },
   { starsRequired: 150, rewardGold: 3200, title: 'Buzul Efsanesi' },
+  {
+    starsRequired: 180,
+    rewardGold: 0,
+    crateTierId: 'pro',
+    title: 'Buzul Pro Kasası',
+  },
+  {
+    starsRequired: 210,
+    rewardGold: 0,
+    crateTierId: 'legendary',
+    title: 'Kutup Efsanevi Kasası',
+  },
   { starsRequired: 225, rewardGold: 5500, title: 'Zirve Ustası' },
+  {
+    starsRequired: 270,
+    rewardGold: 0,
+    crateTierId: 'legendary',
+    title: 'Volkanik Efsanevi Kasa',
+  },
   { starsRequired: 300, rewardGold: 12000, title: 'Kariyer Kralı' },
 ];
 
@@ -1112,22 +1150,40 @@ export class CareerProgressManager {
     };
   }
 
-  public claimStarChest(
-    starsRequired: number,
-  ): { ok: boolean; rewardGold: number; title: string } {
+  public claimStarChest(starsRequired: number): {
+    ok: boolean;
+    rewardGold: number;
+    crateTierId?: CrateTierId;
+    title: string;
+  } {
     const chest = CAREER_STAR_CHESTS.find(
       (c) => c.starsRequired === starsRequired,
     );
     if (!chest) return { ok: false, rewardGold: 0, title: '' };
     if (this.claimedChests.has(starsRequired)) {
-      return { ok: false, rewardGold: 0, title: chest.title };
+      return {
+        ok: false,
+        rewardGold: 0,
+        crateTierId: chest.crateTierId,
+        title: chest.title,
+      };
     }
     const snap = this.getSnapshot();
     if (snap.totalStars < starsRequired) {
-      return { ok: false, rewardGold: 0, title: chest.title };
+      return {
+        ok: false,
+        rewardGold: 0,
+        crateTierId: chest.crateTierId,
+        title: chest.title,
+      };
     }
     this.claimedChests.add(starsRequired);
     this.save();
-    return { ok: true, rewardGold: chest.rewardGold, title: chest.title };
+    return {
+      ok: true,
+      rewardGold: chest.rewardGold,
+      crateTierId: chest.crateTierId,
+      title: chest.title,
+    };
   }
 }
