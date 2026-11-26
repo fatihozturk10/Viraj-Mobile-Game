@@ -13,8 +13,16 @@ export interface RoadsideSampleLike {
   normal: THREE.Vector3;
 }
 
+export interface RoadsideChunkSlot {
+  bollardBodies: THREE.InstancedMesh;
+  bollardBands: THREE.InstancedMesh;
+  cypresses: THREE.InstancedMesh;
+  shrubs: THREE.InstancedMesh;
+}
+
 export interface RoadsidePlacementContext {
-  chunkGroup: THREE.Group;
+  extrasGroup: THREE.Group;
+  slot: RoadsideChunkSlot;
   startIndex: number;
   count: number;
   guardrailOffset: number;
@@ -40,6 +48,12 @@ const _propWorldP = new THREE.Vector3();
 const _propBiome = createBiomeSample();
 const _propBandOffset = new THREE.Matrix4().makeTranslation(0, 0.24, 0);
 const _propMatM = new THREE.Matrix4();
+const _propTmpColor = new THREE.Color();
+const _propWhite = new THREE.Color(0xffffff);
+
+const MAX_CHUNK_BOLLARDS = 16;
+const MAX_CHUNK_CYPRESSES = 24;
+const MAX_CHUNK_SHRUBS = 24;
 
 export class RoadsidePropsSystem {
   private readonly textures: ProceduralTextureSet;
@@ -300,9 +314,82 @@ export class RoadsidePropsSystem {
     this.activeRotors.clear();
   }
 
+  public createChunkSlot(parentGroup: THREE.Group): RoadsideChunkSlot {
+    const bollardBodies = new THREE.InstancedMesh(
+      this.bollardBodyGeo,
+      this.bollardBodyMat,
+      MAX_CHUNK_BOLLARDS,
+    );
+    bollardBodies.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    bollardBodies.count = 0;
+    bollardBodies.visible = false;
+    bollardBodies.matrixAutoUpdate = false;
+
+    const bollardBands = new THREE.InstancedMesh(
+      this.bollardBandGeo,
+      this.bollardBandMat,
+      MAX_CHUNK_BOLLARDS,
+    );
+    bollardBands.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    bollardBands.count = 0;
+    bollardBands.visible = false;
+    bollardBands.matrixAutoUpdate = false;
+
+    const cypresses = new THREE.InstancedMesh(
+      this.cypressConeGeo,
+      this.cypressMat,
+      MAX_CHUNK_CYPRESSES,
+    );
+    cypresses.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    cypresses.setColorAt(0, _propWhite);
+    if (cypresses.instanceColor) {
+      cypresses.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    }
+    cypresses.count = 0;
+    cypresses.visible = false;
+    cypresses.castShadow = true;
+    cypresses.matrixAutoUpdate = false;
+
+    const shrubs = new THREE.InstancedMesh(
+      this.shrubGeo,
+      this.shrubMat,
+      MAX_CHUNK_SHRUBS,
+    );
+    shrubs.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    shrubs.setColorAt(0, _propWhite);
+    if (shrubs.instanceColor) {
+      shrubs.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    }
+    shrubs.count = 0;
+    shrubs.visible = false;
+    shrubs.matrixAutoUpdate = false;
+
+    parentGroup.add(bollardBodies, bollardBands, cypresses, shrubs);
+    return { bollardBodies, bollardBands, cypresses, shrubs };
+  }
+
+  public clearChunkSlot(slot: RoadsideChunkSlot): void {
+    slot.bollardBodies.count = 0;
+    slot.bollardBodies.visible = false;
+    slot.bollardBands.count = 0;
+    slot.bollardBands.visible = false;
+    slot.cypresses.count = 0;
+    slot.cypresses.visible = false;
+    slot.shrubs.count = 0;
+    slot.shrubs.visible = false;
+  }
+
+  public disposeChunkSlot(slot: RoadsideChunkSlot): void {
+    slot.bollardBodies.dispose();
+    slot.bollardBands.dispose();
+    slot.cypresses.dispose();
+    slot.shrubs.dispose();
+  }
+
   public populateChunk(ctx: RoadsidePlacementContext): void {
     const {
-      chunkGroup,
+      extrasGroup,
+      slot,
       startIndex,
       count,
       guardrailOffset,
@@ -311,11 +398,9 @@ export class RoadsidePropsSystem {
       hasRoadClearance,
     } = ctx;
 
-    const bollardMatrices: THREE.Matrix4[] = [];
-    const cypressMatrices: THREE.Matrix4[] = [];
-    const cypressColors: THREE.Color[] = [];
-    const shrubMatrices: THREE.Matrix4[] = [];
-    const shrubColors: THREE.Color[] = [];
+    let bollardCount = 0;
+    let cypressCount = 0;
+    let shrubCount = 0;
 
     const dummy = _propDummy;
     const basisMat = _propBasisMat;
@@ -330,7 +415,7 @@ export class RoadsidePropsSystem {
       const idx = sample.index;
       const absCurv = Math.abs(sample.curvature);
 
-      // 1. Reflective Shoulder Bollards (InstancedMesh)
+      // 1. Reflective Shoulder Bollards (Pooled InstancedMesh, zero allocations)
       if (idx % 4 === 0) {
         negTangent.copy(sample.tangent).negate();
         basisMat.makeBasis(sample.right, sample.normal, negTangent);
@@ -339,6 +424,7 @@ export class RoadsidePropsSystem {
           // Denser along curve outsides or every 16m on straights
           const isOuter = sample.curvature * side < -0.005;
           if (!isOuter && idx % 8 !== 0) continue;
+          if (bollardCount >= MAX_CHUNK_BOLLARDS) continue;
 
           dummy.position
             .copy(sample.pos)
@@ -347,7 +433,10 @@ export class RoadsidePropsSystem {
           dummy.quaternion.setFromRotationMatrix(basisMat);
           dummy.scale.set(1, 1, 1);
           dummy.updateMatrix();
-          bollardMatrices.push(dummy.matrix.clone());
+          slot.bollardBodies.setMatrixAt(bollardCount, dummy.matrix);
+          _propMatM.multiplyMatrices(dummy.matrix, _propBandOffset);
+          slot.bollardBands.setMatrixAt(bollardCount, _propMatM);
+          bollardCount++;
         }
       }
 
@@ -384,7 +473,7 @@ export class RoadsidePropsSystem {
           face.position.set(0, 3.1, 0.042);
 
           signGroup.add(post, backing, face);
-          chunkGroup.add(signGroup);
+          extrasGroup.add(signGroup);
           placedTrafficSignInChunk = true;
         }
       }
@@ -413,7 +502,7 @@ export class RoadsidePropsSystem {
           beacon.position.set(0, 1.92, 0);
 
           sosGroup.add(box, face, beacon);
-          chunkGroup.add(sosGroup);
+          extrasGroup.add(sosGroup);
         } else {
           // Green O-4 KM Marker Post
           const kmGroup = new THREE.Group();
@@ -429,7 +518,7 @@ export class RoadsidePropsSystem {
           face.position.set(0, 1.05, 0.045);
 
           kmGroup.add(post, face);
-          chunkGroup.add(kmGroup);
+          extrasGroup.add(kmGroup);
         }
       }
 
@@ -449,8 +538,8 @@ export class RoadsidePropsSystem {
 
           if (allowed) {
             const elev = computeEmbankmentHeight(sample.s, side, distOut);
-            const worldP = sample.pos
-              .clone()
+            const worldP = _propWorldP
+              .copy(sample.pos)
               .addScaledVector(sample.right, side * distOut);
             worldP.y = sample.pos.y + elev;
 
@@ -489,7 +578,7 @@ export class RoadsidePropsSystem {
               lampBar.position.set(0, 8.55, 0.25);
 
               bbGroup.add(frame, face, lampBar);
-              chunkGroup.add(bbGroup);
+              extrasGroup.add(bbGroup);
               placedBillboardInChunk = true;
             }
           }
@@ -509,8 +598,8 @@ export class RoadsidePropsSystem {
           let allowed = !isInsideCurve;
           if (allowed) {
             const elev = computeEmbankmentHeight(sample.s, side, distOut);
-            const worldP = sample.pos
-              .clone()
+            const worldP = _propWorldP
+              .copy(sample.pos)
               .addScaledVector(sample.right, side * distOut);
             worldP.y = sample.pos.y + elev;
 
@@ -551,7 +640,7 @@ export class RoadsidePropsSystem {
 
               this.activeRotors.add(rotor);
               turbine.add(tower, nacelle, rotor);
-              chunkGroup.add(turbine);
+              extrasGroup.add(turbine);
               placedLandmarkInChunk = true;
             }
           }
@@ -561,8 +650,8 @@ export class RoadsidePropsSystem {
           const isInsideCurve = sample.curvature * side > 0.0005;
           if (!isInsideCurve) {
             const elev = computeEmbankmentHeight(sample.s, side, distOut);
-            const worldP = sample.pos
-              .clone()
+            const worldP = _propWorldP
+              .copy(sample.pos)
               .addScaledVector(sample.right, side * distOut);
             worldP.y = sample.pos.y + elev;
 
@@ -587,14 +676,14 @@ export class RoadsidePropsSystem {
               win.position.set(0, 1.55, 1.82);
 
               cabin.add(base, roof, win);
-              chunkGroup.add(cabin);
+              extrasGroup.add(cabin);
               placedLandmarkInChunk = true;
             }
           }
         }
       }
 
-      // 6. Biome-aware Cypresses / Yuccas & Roadside Shrubs (InstancedMesh)
+      // 6. Biome-aware Cypresses / Yuccas & Roadside Shrubs (Pooled InstancedMesh, zero allocations)
       if (i % 2 === 1) {
         const biome = sampleBiomeAtDistance(sample.s, _propBiome);
         for (const side of [-1, 1]) {
@@ -616,96 +705,72 @@ export class RoadsidePropsSystem {
 
           if (!hasRoadClearance(worldP, 11.4)) continue;
 
-          if (r > 0.68 && hashInt(idx, side > 0 ? 111 : 119) < biome.cypressPresence) {
+          if (
+            r > 0.68 &&
+            hashInt(idx, side > 0 ? 111 : 119) < biome.cypressPresence
+          ) {
+            if (cypressCount >= MAX_CHUNK_CYPRESSES) continue;
             // Tall slender Cypress / Frosted Spire / Desert Yucca
             const scale = 0.8 + hashInt(idx, 113) * 0.55;
             dummy.position.set(worldP.x, worldP.y + 3.6 * scale, worldP.z);
             dummy.rotation.set(0, r * Math.PI * 2, 0);
             dummy.scale.set(scale * 0.85, scale, scale * 0.85);
             dummy.updateMatrix();
-            cypressMatrices.push(dummy.matrix.clone());
-
-            const cTint = biome.cypressColorA
-              .clone()
+            slot.cypresses.setMatrixAt(cypressCount, dummy.matrix);
+            _propTmpColor
+              .copy(biome.cypressColorA)
               .lerp(biome.cypressColorB, hashInt(idx, 127));
-            cypressColors.push(cTint);
+            slot.cypresses.setColorAt(cypressCount, _propTmpColor);
+            cypressCount++;
           } else if (distOut < 19) {
+            if (shrubCount >= MAX_CHUNK_SHRUBS) continue;
             // Low roadside shrub / desert scrub / snow drift / volcanic ash mound
             const scale = 0.65 + hashInt(idx, 131) * 0.65;
             dummy.position.set(worldP.x, worldP.y + 0.45 * scale, worldP.z);
             dummy.rotation.set(r * 1.2, r * 3.1, 0);
             dummy.scale.set(scale * 1.35, scale * 0.78, scale * 1.15);
             dummy.updateMatrix();
-            shrubMatrices.push(dummy.matrix.clone());
-
-            const sTint = biome.shrubColorA
-              .clone()
+            slot.shrubs.setMatrixAt(shrubCount, dummy.matrix);
+            _propTmpColor
+              .copy(biome.shrubColorA)
               .lerp(biome.shrubColorB, hashInt(idx, 139));
-            shrubColors.push(sTint);
+            slot.shrubs.setColorAt(shrubCount, _propTmpColor);
+            shrubCount++;
           }
         }
       }
     }
 
-    // Batch shoulder bollards
-    if (bollardMatrices.length > 0) {
-      const bodies = new THREE.InstancedMesh(
-        this.bollardBodyGeo,
-        this.bollardBodyMat,
-        bollardMatrices.length,
-      );
-      const bands = new THREE.InstancedMesh(
-        this.bollardBandGeo,
-        this.bollardBandMat,
-        bollardMatrices.length,
-      );
-      const bandOffset = _propBandOffset;
-      const m = _propMatM;
-      for (let b = 0; b < bollardMatrices.length; b++) {
-        bodies.setMatrixAt(b, bollardMatrices[b]);
-        m.multiplyMatrices(bollardMatrices[b], bandOffset);
-        bands.setMatrixAt(b, m);
-      }
-      bodies.instanceMatrix.needsUpdate = true;
-      bands.instanceMatrix.needsUpdate = true;
-      bodies.computeBoundingSphere();
-      bands.computeBoundingSphere();
-      chunkGroup.add(bodies, bands);
+    // Finalize pooled InstancedMeshes (in-place GPU upload, zero buffer allocations)
+    slot.bollardBodies.count = bollardCount;
+    slot.bollardBodies.visible = bollardCount > 0;
+    slot.bollardBands.count = bollardCount;
+    slot.bollardBands.visible = bollardCount > 0;
+    if (bollardCount > 0) {
+      slot.bollardBodies.instanceMatrix.needsUpdate = true;
+      slot.bollardBands.instanceMatrix.needsUpdate = true;
+      slot.bollardBodies.computeBoundingSphere();
+      slot.bollardBands.computeBoundingSphere();
     }
 
-    // Batch cypresses
-    if (cypressMatrices.length > 0) {
-      const cypresses = new THREE.InstancedMesh(
-        this.cypressConeGeo,
-        this.cypressMat,
-        cypressMatrices.length,
-      );
-      for (let c = 0; c < cypressMatrices.length; c++) {
-        cypresses.setMatrixAt(c, cypressMatrices[c]);
-        cypresses.setColorAt(c, cypressColors[c]);
+    slot.cypresses.count = cypressCount;
+    slot.cypresses.visible = cypressCount > 0;
+    if (cypressCount > 0) {
+      slot.cypresses.instanceMatrix.needsUpdate = true;
+      if (slot.cypresses.instanceColor) {
+        slot.cypresses.instanceColor.needsUpdate = true;
       }
-      cypresses.instanceMatrix.needsUpdate = true;
-      if (cypresses.instanceColor) cypresses.instanceColor.needsUpdate = true;
-      cypresses.computeBoundingSphere();
-      cypresses.castShadow = true;
-      chunkGroup.add(cypresses);
+      slot.cypresses.computeBoundingSphere();
     }
 
-    // Batch shrubs
-    if (shrubMatrices.length > 0) {
-      const shrubs = new THREE.InstancedMesh(
-        this.shrubGeo,
-        this.shrubMat,
-        shrubMatrices.length,
-      );
-      for (let s = 0; s < shrubMatrices.length; s++) {
-        shrubs.setMatrixAt(s, shrubMatrices[s]);
-        shrubs.setColorAt(s, shrubColors[s]);
+    slot.shrubs.count = shrubCount;
+    slot.shrubs.visible = shrubCount > 0;
+    if (shrubCount > 0) {
+      slot.shrubs.instanceMatrix.needsUpdate = true;
+      if (slot.shrubs.instanceColor) {
+        slot.shrubs.instanceColor.needsUpdate = true;
       }
-      shrubs.instanceMatrix.needsUpdate = true;
-      if (shrubs.instanceColor) shrubs.instanceColor.needsUpdate = true;
-      shrubs.computeBoundingSphere();
-      chunkGroup.add(shrubs);
+      slot.shrubs.computeBoundingSphere();
     }
   }
 

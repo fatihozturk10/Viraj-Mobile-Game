@@ -38,40 +38,86 @@ interface HoldThrottleIndicatorProps {
   nitroBurst: NitroBurstState | null;
 }
 
+type HoldMode = 'none' | 'cruise' | 'accel' | 'brake';
+
 export const HoldThrottleIndicator = React.memo(
   forwardRef<HoldThrottleIndicatorHandle, HoldThrottleIndicatorProps>(
     ({ active, nitroActive, nitroPercent, nitroBurst }, ref) => {
-      const [hold, setHoldState] = useState<HoldFeedbackState | null>(null);
-      const pendingHoldRef = useRef<HoldFeedbackState | null | undefined>(
-        undefined,
-      );
-      const rafRef = useRef<number>(0);
+      const [holdMode, setHoldMode] = useState<HoldMode>('none');
+      const holdRef = useRef<HoldFeedbackState | null>(null);
+      const nitroActiveRef = useRef(nitroActive);
+      nitroActiveRef.current = nitroActive;
+
+      // Direct GPU-composited DOM refs: 0 React re-renders and 0 layout recalcs during 120Hz touch drag
+      const anchorElRef = useRef<HTMLDivElement | null>(null);
+      const stemElRef = useRef<HTMLDivElement | null>(null);
+      const orbitElRef = useRef<HTMLDivElement | null>(null);
+      const rippleElRef = useRef<HTMLDivElement | null>(null);
+      const ringElRef = useRef<HTMLDivElement | null>(null);
+      const labelElRef = useRef<HTMLDivElement | null>(null);
+      const pctElRef = useRef<HTMLSpanElement | null>(null);
+
+      const syncDomFromHold = (next: HoldFeedbackState | null) => {
+        if (!next) return;
+        const { anchorX, anchorY, currentX, currentY, throttle } = next;
+        const isBraking = throttle < -0.12;
+        const isNitro = nitroActiveRef.current && !isBraking;
+        const intensity = Math.min(1, Math.abs(throttle));
+        const ringScale = isNitro ? 1.12 : 1 + intensity * 0.14;
+
+        if (anchorElRef.current) {
+          anchorElRef.current.style.transform = `translate3d(${anchorX}px, ${anchorY}px, 0) translate(-50%, -50%)`;
+        }
+        if (stemElRef.current) {
+          const dy = currentY - anchorY;
+          const h = Math.abs(dy);
+          if (h > 6) {
+            const top = dy >= 0 ? anchorY : currentY;
+            stemElRef.current.style.display = 'block';
+            stemElRef.current.style.transform = `translate3d(${anchorX}px, ${top}px, 0) translateX(-50%) scaleY(${h})`;
+          } else {
+            stemElRef.current.style.display = 'none';
+          }
+        }
+        if (orbitElRef.current) {
+          orbitElRef.current.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        }
+        if (rippleElRef.current) {
+          rippleElRef.current.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        }
+        if (ringElRef.current) {
+          ringElRef.current.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) translate(-50%, -50%) scale(${ringScale.toFixed(3)})`;
+        }
+        if (labelElRef.current) {
+          const ly = Math.max(36, currentY - 42);
+          labelElRef.current.style.transform = `translate3d(${currentX}px, ${ly}px, 0) translate(-50%, -100%)`;
+        }
+        if (pctElRef.current && !isNitro) {
+          const pct = Math.round(intensity * 100);
+          const txt = `${pct}%`;
+          if (pctElRef.current.textContent !== txt) {
+            pctElRef.current.textContent = txt;
+          }
+        }
+      };
 
       useImperativeHandle(
         ref,
         () => ({
           setHold: (next) => {
-            // Immediate clear on pointer up/cancel; coalesce rapid 60–240Hz touchmove events to 1 rAF update
+            holdRef.current = next;
             if (next === null) {
-              if (rafRef.current) {
-                cancelAnimationFrame(rafRef.current);
-                rafRef.current = 0;
-              }
-              pendingHoldRef.current = undefined;
-              setHoldState((prev) => (prev === null ? prev : null));
+              setHoldMode((prev) => (prev === 'none' ? prev : 'none'));
               return;
             }
-            pendingHoldRef.current = next;
-            if (!rafRef.current) {
-              rafRef.current = requestAnimationFrame(() => {
-                rafRef.current = 0;
-                const latest = pendingHoldRef.current;
-                pendingHoldRef.current = undefined;
-                if (latest !== undefined) {
-                  setHoldState(latest);
-                }
-              });
-            }
+            const nextMode: HoldMode =
+              next.throttle < -0.12
+                ? 'brake'
+                : next.throttle > 0.12
+                  ? 'accel'
+                  : 'cruise';
+            setHoldMode((prev) => (prev === nextMode ? prev : nextMode));
+            syncDomFromHold(next);
           },
         }),
         [],
@@ -79,33 +125,24 @@ export const HoldThrottleIndicator = React.memo(
 
       useEffect(() => {
         if (!active) {
-          if (rafRef.current) {
-            cancelAnimationFrame(rafRef.current);
-            rafRef.current = 0;
-          }
-          pendingHoldRef.current = undefined;
-          setHoldState(null);
+          holdRef.current = null;
+          setHoldMode('none');
         }
       }, [active]);
 
       useEffect(() => {
-        return () => {
-          if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        };
-      }, []);
+        if (active && holdMode !== 'none' && holdRef.current) {
+          syncDomFromHold(holdRef.current);
+        }
+      }, [active, holdMode, nitroActive]);
 
-      const activeHold = active ? hold : null;
+      const showHold = active && holdMode !== 'none';
       const activeBurst = active ? nitroBurst : null;
-      if (!activeHold && !activeBurst) return null;
+      if (!showHold && !activeBurst) return null;
 
-      const isBraking = Boolean(activeHold && activeHold.throttle < -0.12);
-      const isNitroHold = Boolean(activeHold && nitroActive && !isBraking);
-      const isAccelerating = Boolean(
-        activeHold && !isNitroHold && activeHold.throttle > 0.12,
-      );
-      const intensity = activeHold
-        ? Math.min(1, Math.abs(activeHold.throttle))
-        : 0;
+      const isBraking = holdMode === 'brake';
+      const isNitroHold = showHold && nitroActive && !isBraking;
+      const isAccelerating = showHold && !isNitroHold && holdMode === 'accel';
 
       const ringClass = isNitroHold
         ? 'border-sky-300 bg-sky-500/25 text-cyan-200 shadow-[0_0_28px_rgba(56,189,248,0.65)]'
@@ -139,13 +176,16 @@ export const HoldThrottleIndicator = React.memo(
             ? 'border-rose-400/50 bg-zinc-950/90 text-rose-300'
             : 'border-white/15 bg-zinc-950/85 text-zinc-200';
 
-      const anchorOffsetY = activeHold
-        ? activeHold.currentY - activeHold.anchorY
+      const initialHold = holdRef.current;
+      const initAnchorX = initialHold?.anchorX ?? 0;
+      const initAnchorY = initialHold?.anchorY ?? 0;
+      const initCurX = initialHold?.currentX ?? 0;
+      const initCurY = initialHold?.currentY ?? 0;
+      const initIntensity = initialHold
+        ? Math.min(1, Math.abs(initialHold.throttle))
         : 0;
-      const stemTop = activeHold
-        ? Math.min(activeHold.anchorY, activeHold.currentY)
-        : 0;
-      const stemHeight = Math.abs(anchorOffsetY);
+      const initStemH = Math.abs(initCurY - initAnchorY);
+      const initStemTop = Math.min(initAnchorY, initCurY);
 
       return (
         <div
@@ -176,13 +216,14 @@ export const HoldThrottleIndicator = React.memo(
             </div>
           )}
 
-          {/* Hold Steering / Throttle / Active Nitro Finger Aura (GPU-composited positioning) */}
-          {activeHold && (
+          {/* Hold Steering / Throttle / Active Nitro Finger Aura (Zero-React-Rerender GPU positioning) */}
+          {showHold && (
             <>
               <div
+                ref={anchorElRef}
                 className="absolute left-0 top-0 flex flex-col items-center will-change-transform"
                 style={{
-                  transform: `translate3d(${activeHold.anchorX}px, ${activeHold.anchorY}px, 0) translate(-50%, -50%)`,
+                  transform: `translate3d(${initAnchorX}px, ${initAnchorY}px, 0) translate(-50%, -50%)`,
                 }}
               >
                 <ChevronUp
@@ -202,48 +243,54 @@ export const HoldThrottleIndicator = React.memo(
                 />
               </div>
 
-              {stemHeight > 6 && (
-                <div
-                  className={`absolute left-0 top-0 w-0.5 rounded-full will-change-transform ${
-                    isNitroHold
-                      ? 'bg-sky-400/75'
-                      : isAccelerating
-                        ? 'bg-emerald-400/60'
-                        : isBraking
-                          ? 'bg-rose-400/60'
-                          : 'bg-amber-400/35'
-                  }`}
-                  style={{
-                    transform: `translate3d(${activeHold.anchorX}px, ${stemTop}px, 0) translateX(-50%)`,
-                    height: stemHeight,
-                  }}
-                />
-              )}
+              <div
+                ref={stemElRef}
+                className={`absolute left-0 top-0 h-[1px] w-0.5 origin-top rounded-full will-change-transform ${
+                  isNitroHold
+                    ? 'bg-sky-400/75'
+                    : isAccelerating
+                      ? 'bg-emerald-400/60'
+                      : isBraking
+                        ? 'bg-rose-400/60'
+                        : 'bg-amber-400/35'
+                }`}
+                style={{
+                  display: initStemH > 6 ? 'block' : 'none',
+                  transform: `translate3d(${initAnchorX}px, ${initStemTop}px, 0) translateX(-50%) scaleY(${Math.max(1, initStemH)})`,
+                }}
+              />
 
               {/* Rotating Electric Cyan Orbital Ring when Nitro is burning */}
               {isNitroHold && (
                 <div
-                  className="animate-nitro-spin absolute h-20 w-20 rounded-full border-2 border-dashed border-sky-300/80"
+                  ref={orbitElRef}
+                  className="absolute left-0 top-0 will-change-transform"
                   style={{
-                    left: activeHold.currentX,
-                    top: activeHold.currentY,
+                    transform: `translate3d(${initCurX}px, ${initCurY}px, 0)`,
                   }}
-                />
+                >
+                  <div className="animate-nitro-spin h-20 w-20 rounded-full border-2 border-dashed border-sky-300/80" />
+                </div>
               )}
 
               <div
-                className={`animate-hold-ripple absolute h-14 w-14 rounded-full border-2 ${rippleClass}`}
+                ref={rippleElRef}
+                className="absolute left-0 top-0 will-change-transform"
                 style={{
-                  left: activeHold.currentX,
-                  top: activeHold.currentY,
+                  transform: `translate3d(${initCurX}px, ${initCurY}px, 0)`,
                 }}
-              />
+              >
+                <div
+                  className={`animate-hold-ripple h-14 w-14 rounded-full border-2 ${rippleClass}`}
+                />
+              </div>
 
               <div
+                ref={ringElRef}
                 className={`absolute left-0 top-0 flex h-14 w-14 items-center justify-center rounded-full border-2 transition-colors duration-100 will-change-transform ${ringClass}`}
                 style={{
-                  transform: `translate3d(${activeHold.currentX}px, ${activeHold.currentY}px, 0) translate(-50%, -50%) scale(${
-                    isNitroHold ? 1.12 : 1 + intensity * 0.14
+                  transform: `translate3d(${initCurX}px, ${initCurY}px, 0) translate(-50%, -50%) scale(${
+                    isNitroHold ? 1.12 : 1 + initIntensity * 0.14
                   })`,
                 }}
               >
@@ -264,9 +311,10 @@ export const HoldThrottleIndicator = React.memo(
               </div>
 
               <div
+                ref={labelElRef}
                 className={`absolute left-0 top-0 rounded-md border px-2 py-0.5 font-display text-[11px] font-bold tracking-wider whitespace-nowrap shadow-lg will-change-transform ${labelColor}`}
                 style={{
-                  transform: `translate3d(${activeHold.currentX}px, ${Math.max(36, activeHold.currentY - 42)}px, 0) translate(-50%, -100%)`,
+                  transform: `translate3d(${initCurX}px, ${Math.max(36, initCurY - 42)}px, 0) translate(-50%, -100%)`,
                 }}
               >
                 {labelText}
@@ -276,8 +324,11 @@ export const HoldThrottleIndicator = React.memo(
                   </span>
                 ) : (
                   (isAccelerating || isBraking) && (
-                    <span className="ml-1.5 font-mono-num opacity-85">
-                      {Math.round(intensity * 100)}%
+                    <span
+                      ref={pctElRef}
+                      className="ml-1.5 font-mono-num opacity-85"
+                    >
+                      {Math.round(initIntensity * 100)}%
                     </span>
                   )
                 )}

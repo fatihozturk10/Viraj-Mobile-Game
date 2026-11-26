@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoadZoneId, UpcomingCurve } from '../types/game';
 import { createBiomeSample, sampleBiomeAtDistance } from './biomes';
-import { RoadsidePropsSystem } from './roadsideProps';
+import { RoadsideChunkSlot, RoadsidePropsSystem } from './roadsideProps';
 import { ProceduralTextureSet } from './textures';
 
 function mergeStaticGeometries(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
@@ -153,17 +153,41 @@ interface RoadSection {
   transitionLen: number;
 }
 
+const MAX_POSTS_PER_CHUNK = 24;
+const MAX_LAMPS_PER_CHUNK = 6;
+const MAX_CHEVRONS_PER_CHUNK = 8;
+const MAX_PROPS_PER_CHUNK = 24;
+
 interface RoadChunk {
   startIndex: number;
   endIndex: number;
   startS: number;
   endS: number;
   group: THREE.Group;
-  disposables: THREE.BufferGeometry[];
-  instancedMeshes: THREE.InstancedMesh[];
+  extrasGroup: THREE.Group;
+  extraDisposables: THREE.BufferGeometry[];
+  extraInstanced: THREE.InstancedMesh[];
+  roadGeo: THREE.BufferGeometry;
+  shouldersGeo: THREE.BufferGeometry;
+  railsGeo: THREE.BufferGeometry;
+  terrainGeo: THREE.BufferGeometry;
+  postInst: THREE.InstancedMesh;
+  studInst: THREE.InstancedMesh;
+  lampPoleInst: THREE.InstancedMesh;
+  lampArmInst: THREE.InstancedMesh;
+  lampHeadInst: THREE.InstancedMesh;
+  chevronPostInst: THREE.InstancedMesh;
+  chevronBoardInst: THREE.InstancedMesh;
+  trunkInst: THREE.InstancedMesh;
+  foliageInst: THREE.InstancedMesh;
+  cactusInst: THREE.InstancedMesh;
+  iceInst: THREE.InstancedMesh;
+  basaltInst: THREE.InstancedMesh;
+  rockInst: THREE.InstancedMesh;
+  roadsideSlot: RoadsideChunkSlot;
 }
 
-// Module-level reusable scratch objects to eliminate GC churn during 80m chunk builds
+// Module-level reusable scratch objects to eliminate GC churn during 80m chunk updates
 const _chunkDummy = new THREE.Object3D();
 const _chunkBasisMat = new THREE.Matrix4();
 const _chunkNegTangent = new THREE.Vector3();
@@ -177,6 +201,7 @@ const _chunkConeOffset = new THREE.Matrix4().makeTranslation(0, 4.1, 0);
 const _sampleRightBase = new THREE.Vector3();
 const _chunkBiome = createBiomeSample();
 const _chunkTmpColor = new THREE.Color();
+const _chunkWhite = new THREE.Color(0xffffff);
 const _chunkRiverColor = new THREE.Color(0x164e63);
 const _chunkIceColorA = new THREE.Color(0x9bd7f5);
 const _chunkIceColorB = new THREE.Color(0xeef9ff);
@@ -568,24 +593,49 @@ export class RoadSystem {
     );
   }
 
-  private disposeChunk(chunk: RoadChunk): void {
-    this.roadsideProps.unregisterChunkRotors(chunk.group);
+  private clearChunkExtras(chunk: RoadChunk): void {
+    if (chunk.extrasGroup.children.length > 0) {
+      this.roadsideProps.unregisterChunkRotors(chunk.extrasGroup);
+      chunk.extrasGroup.clear();
+    }
+    for (let i = 0; i < chunk.extraDisposables.length; i++) {
+      chunk.extraDisposables[i].dispose();
+    }
+    chunk.extraDisposables.length = 0;
+    for (let i = 0; i < chunk.extraInstanced.length; i++) {
+      chunk.extraInstanced[i].dispose();
+    }
+    chunk.extraInstanced.length = 0;
+  }
+
+  private destroyPooledChunk(chunk: RoadChunk): void {
+    this.clearChunkExtras(chunk);
     this.group.remove(chunk.group);
-    for (let i = 0; i < chunk.disposables.length; i++) {
-      chunk.disposables[i].dispose();
-    }
-    // Critical: free GPU instanceMatrix & instanceColor WebGL buffers on every recycled chunk
-    for (let i = 0; i < chunk.instancedMeshes.length; i++) {
-      chunk.instancedMeshes[i].dispose();
-    }
+    chunk.roadGeo.dispose();
+    chunk.shouldersGeo.dispose();
+    chunk.railsGeo.dispose();
+    chunk.terrainGeo.dispose();
+    chunk.postInst.dispose();
+    chunk.studInst.dispose();
+    chunk.lampPoleInst.dispose();
+    chunk.lampArmInst.dispose();
+    chunk.lampHeadInst.dispose();
+    chunk.chevronPostInst.dispose();
+    chunk.chevronBoardInst.dispose();
+    chunk.trunkInst.dispose();
+    chunk.foliageInst.dispose();
+    chunk.cactusInst.dispose();
+    chunk.iceInst.dispose();
+    chunk.basaltInst.dispose();
+    chunk.rockInst.dispose();
+    this.roadsideProps.disposeChunkSlot(chunk.roadsideSlot);
   }
 
   public reset(): void {
-    for (const chunk of this.chunks) {
-      this.disposeChunk(chunk);
-    }
     this.roadsideProps.resetRotors();
-    this.chunks = [];
+    for (let i = 0; i < this.chunks.length; i++) {
+      this.clearChunkExtras(this.chunks[i]);
+    }
     this.samples = [];
     this.baseIndex = 0;
     this.sectionCount = 0;
@@ -645,9 +695,15 @@ export class RoadSystem {
       heading += curvature * SAMPLE_STEP;
     }
 
+    // Allocate fixed GPU chunk pool ONCE; reuse every chunk in-place on restarts & streaming
+    if (this.chunks.length === 0) {
+      for (let c = 0; c < this.chunkCount; c++) {
+        this.chunks.push(this.createPooledChunk());
+      }
+    }
     for (let c = 0; c < this.chunkCount; c++) {
       const startIdx = c * CHUNK_SAMPLES;
-      this.chunks.push(this.buildChunk(startIdx, startIdx + CHUNK_SAMPLES));
+      this.populateChunk(this.chunks[c], startIdx, startIdx + CHUNK_SAMPLES);
     }
   }
 
@@ -775,8 +831,9 @@ export class RoadSystem {
   public update(playerS: number, dt = 0.016): void {
     this.roadsideProps.update(dt);
     while (this.chunks.length > 0 && this.chunks[0].endS < playerS - 72) {
-      const oldChunk = this.chunks.shift()!;
-      this.disposeChunk(oldChunk);
+      // Subway-Surfers-style GPU chunk recycling: reuse the tail chunk's pre-allocated
+      // WebGL buffers and InstancedMeshes at the front — zero alloc/dispose!
+      const recycled = this.chunks.shift()!;
 
       const dropCount = CHUNK_SAMPLES;
       const dropped = this.samples.splice(0, dropCount);
@@ -792,7 +849,8 @@ export class RoadSystem {
       const lastChunk = this.chunks[this.chunks.length - 1];
       const newStartIdx = lastChunk.endIndex;
       const newEndIdx = newStartIdx + CHUNK_SAMPLES;
-      this.chunks.push(this.buildChunk(newStartIdx, newEndIdx));
+      this.populateChunk(recycled, newStartIdx, newEndIdx);
+      this.chunks.push(recycled);
     }
   }
 
@@ -920,66 +978,370 @@ export class RoadSystem {
     ];
   }
 
-  private buildChunk(startIndex: number, endIndex: number): RoadChunk {
-    const chunkGroup = new THREE.Group();
-    const disposables: THREE.BufferGeometry[] = [];
-    const count = endIndex - startIndex + 1;
+  private createPooledInstanced(
+    geo: THREE.BufferGeometry,
+    mat: THREE.Material,
+    maxCount: number,
+    hasColor = false,
+  ): THREE.InstancedMesh {
+    const inst = new THREE.InstancedMesh(geo, mat, maxCount);
+    inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    if (hasColor) {
+      inst.setColorAt(0, _chunkWhite);
+      if (inst.instanceColor) {
+        inst.instanceColor.setUsage(THREE.DynamicDrawUsage);
+      }
+    }
+    inst.count = 0;
+    inst.visible = false;
+    inst.matrixAutoUpdate = false;
+    return inst;
+  }
 
-    // 1. Asphalt Road Ribbon
-    const roadGeo = this.createRibbonGeometry(
-      startIndex,
-      count,
-      -ROAD_HALF_WIDTH,
-      ROAD_HALF_WIDTH,
-      0,
-      14,
-    );
-    disposables.push(roadGeo);
+  private createPooledRoadGeo(count: number): THREE.BufferGeometry {
+    const vertCount = count * 2;
+    const positions = new Float32Array(vertCount * 3);
+    const normals = new Float32Array(vertCount * 3);
+    const uvs = new Float32Array(vertCount * 2);
+    const indices = new Uint16Array((count - 1) * 6);
+    let idxPtr = 0;
+    for (let i = 0; i < count - 1; i++) {
+      const idx = i * 2;
+      indices[idxPtr++] = idx;
+      indices[idxPtr++] = idx + 1;
+      indices[idxPtr++] = idx + 2;
+      indices[idxPtr++] = idx + 1;
+      indices[idxPtr++] = idx + 3;
+      indices[idxPtr++] = idx + 2;
+    }
+    const geo = new THREE.BufferGeometry();
+    const posAttr = new THREE.BufferAttribute(positions, 3);
+    const normAttr = new THREE.BufferAttribute(normals, 3);
+    const uvAttr = new THREE.BufferAttribute(uvs, 2);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    normAttr.setUsage(THREE.DynamicDrawUsage);
+    uvAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', posAttr);
+    geo.setAttribute('normal', normAttr);
+    geo.setAttribute('uv', uvAttr);
+    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+    return geo;
+  }
+
+  private createPooledShouldersGeo(count: number): THREE.BufferGeometry {
+    const halfVerts = count * 2;
+    const vertCount = halfVerts * 2;
+    const positions = new Float32Array(vertCount * 3);
+    const normals = new Float32Array(vertCount * 3);
+    const uvs = new Float32Array(vertCount * 2);
+    const indices = new Uint16Array((count - 1) * 12);
+    let idxPtr = 0;
+    for (let half = 0; half < 2; half++) {
+      const vBase = half * halfVerts;
+      for (let i = 0; i < count - 1; i++) {
+        const idx = vBase + i * 2;
+        indices[idxPtr++] = idx;
+        indices[idxPtr++] = idx + 1;
+        indices[idxPtr++] = idx + 2;
+        indices[idxPtr++] = idx + 1;
+        indices[idxPtr++] = idx + 3;
+        indices[idxPtr++] = idx + 2;
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    const posAttr = new THREE.BufferAttribute(positions, 3);
+    const normAttr = new THREE.BufferAttribute(normals, 3);
+    const uvAttr = new THREE.BufferAttribute(uvs, 2);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    normAttr.setUsage(THREE.DynamicDrawUsage);
+    uvAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', posAttr);
+    geo.setAttribute('normal', normAttr);
+    geo.setAttribute('uv', uvAttr);
+    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+    return geo;
+  }
+
+  private createPooledRailsGeo(count: number): THREE.BufferGeometry {
+    const halfVerts = count * 4;
+    const vertCount = halfVerts * 2;
+    const positions = new Float32Array(vertCount * 3);
+    const normals = new Float32Array(vertCount * 3);
+    const indices = new Uint16Array((count - 1) * 36);
+    let idxPtr = 0;
+    for (let half = 0; half < 2; half++) {
+      const vBase = half * halfVerts;
+      for (let i = 0; i < count - 1; i++) {
+        const a = vBase + i * 4;
+        const b = vBase + (i + 1) * 4;
+        indices[idxPtr++] = a;
+        indices[idxPtr++] = a + 1;
+        indices[idxPtr++] = b;
+        indices[idxPtr++] = a + 1;
+        indices[idxPtr++] = b + 1;
+        indices[idxPtr++] = b;
+        indices[idxPtr++] = a + 1;
+        indices[idxPtr++] = a + 2;
+        indices[idxPtr++] = b + 1;
+        indices[idxPtr++] = a + 2;
+        indices[idxPtr++] = b + 2;
+        indices[idxPtr++] = b + 1;
+        indices[idxPtr++] = a + 2;
+        indices[idxPtr++] = a + 3;
+        indices[idxPtr++] = b + 2;
+        indices[idxPtr++] = a + 3;
+        indices[idxPtr++] = b + 3;
+        indices[idxPtr++] = b + 2;
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    const posAttr = new THREE.BufferAttribute(positions, 3);
+    const normAttr = new THREE.BufferAttribute(normals, 3);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    normAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', posAttr);
+    geo.setAttribute('normal', normAttr);
+    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+    return geo;
+  }
+
+  private createPooledTerrainGeo(count: number): THREE.BufferGeometry {
+    const cols = 5;
+    const halfVerts = count * cols;
+    const vertCount = halfVerts * 2;
+    const positions = new Float32Array(vertCount * 3);
+    const normals = new Float32Array(vertCount * 3);
+    const colors = new Float32Array(vertCount * 3);
+    const indices = new Uint16Array((count - 1) * (cols - 1) * 6 * 2);
+    let idxPtr = 0;
+    // Half 0 = left (-1), Half 1 = right (+1)
+    for (let half = 0; half < 2; half++) {
+      const vBase = half * halfVerts;
+      const isRight = half === 1;
+      for (let i = 0; i < count - 1; i++) {
+        for (let j = 0; j < cols - 1; j++) {
+          const a = vBase + i * cols + j;
+          const b = a + 1;
+          const c = vBase + (i + 1) * cols + j;
+          const d = c + 1;
+          if (isRight) {
+            indices[idxPtr++] = a;
+            indices[idxPtr++] = b;
+            indices[idxPtr++] = c;
+            indices[idxPtr++] = b;
+            indices[idxPtr++] = d;
+            indices[idxPtr++] = c;
+          } else {
+            indices[idxPtr++] = a;
+            indices[idxPtr++] = c;
+            indices[idxPtr++] = b;
+            indices[idxPtr++] = b;
+            indices[idxPtr++] = c;
+            indices[idxPtr++] = d;
+          }
+        }
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    const posAttr = new THREE.BufferAttribute(positions, 3);
+    const normAttr = new THREE.BufferAttribute(normals, 3);
+    const colAttr = new THREE.BufferAttribute(colors, 3);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    normAttr.setUsage(THREE.DynamicDrawUsage);
+    colAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', posAttr);
+    geo.setAttribute('normal', normAttr);
+    geo.setAttribute('color', colAttr);
+    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+    return geo;
+  }
+
+  private createPooledChunk(): RoadChunk {
+    const count = CHUNK_SAMPLES + 1;
+    const chunkGroup = new THREE.Group();
+    const extrasGroup = new THREE.Group();
+    extrasGroup.matrixAutoUpdate = false;
+    chunkGroup.add(extrasGroup);
+
+    const roadGeo = this.createPooledRoadGeo(count);
     const roadMesh = new THREE.Mesh(roadGeo, this.asphaltMat);
     roadMesh.receiveShadow = true;
+    roadMesh.matrixAutoUpdate = false;
     chunkGroup.add(roadMesh);
 
-    // 2. Left & Right Shoulders / Rumble Curbs
-    const leftShoulderGeo = this.createRibbonGeometry(
-      startIndex,
-      count,
-      -(ROAD_HALF_WIDTH + SHOULDER_WIDTH),
-      -ROAD_HALF_WIDTH,
-      0.005,
-      8,
-      false,
+    const shouldersGeo = this.createPooledShouldersGeo(count);
+    const shouldersMesh = new THREE.Mesh(shouldersGeo, this.shoulderMat);
+    shouldersMesh.receiveShadow = true;
+    shouldersMesh.matrixAutoUpdate = false;
+    chunkGroup.add(shouldersMesh);
+
+    const railsGeo = this.createPooledRailsGeo(count);
+    const railsMesh = new THREE.Mesh(railsGeo, this.guardrailMat);
+    railsMesh.matrixAutoUpdate = false;
+    chunkGroup.add(railsMesh);
+
+    const terrainGeo = this.createPooledTerrainGeo(count);
+    const terrainMesh = new THREE.Mesh(terrainGeo, this.terrainMat);
+    terrainMesh.receiveShadow = true;
+    terrainMesh.matrixAutoUpdate = false;
+    chunkGroup.add(terrainMesh);
+
+    const postInst = this.createPooledInstanced(
+      this.postGeo,
+      this.postMat,
+      MAX_POSTS_PER_CHUNK,
     );
-    const rightShoulderGeo = this.createRibbonGeometry(
-      startIndex,
-      count,
-      ROAD_HALF_WIDTH,
-      ROAD_HALF_WIDTH + SHOULDER_WIDTH,
-      0.005,
-      8,
+    const studInst = this.createPooledInstanced(
+      this.studGeo,
+      this.studMat,
+      MAX_POSTS_PER_CHUNK,
+    );
+    const lampPoleInst = this.createPooledInstanced(
+      this.lampPoleGeo,
+      this.postMat,
+      MAX_LAMPS_PER_CHUNK,
+    );
+    const lampArmInst = this.createPooledInstanced(
+      this.lampArmGeo,
+      this.postMat,
+      MAX_LAMPS_PER_CHUNK,
+    );
+    const lampHeadInst = this.createPooledInstanced(
+      this.lampHeadGeo,
+      this.lampHeadMat,
+      MAX_LAMPS_PER_CHUNK,
+    );
+    const chevronPostInst = this.createPooledInstanced(
+      this.chevronPostGeo,
+      this.postMat,
+      MAX_CHEVRONS_PER_CHUNK,
+    );
+    const chevronBoardInst = this.createPooledInstanced(
+      this.chevronBoardGeo,
+      this.chevronMat,
+      MAX_CHEVRONS_PER_CHUNK,
+    );
+    const trunkInst = this.createPooledInstanced(
+      this.trunkGeo,
+      this.trunkMat,
+      MAX_PROPS_PER_CHUNK,
+    );
+    const foliageInst = this.createPooledInstanced(
+      this.foliageGeo,
+      this.foliageMat,
+      MAX_PROPS_PER_CHUNK,
       true,
     );
-    disposables.push(leftShoulderGeo, rightShoulderGeo);
-    const leftShoulder = new THREE.Mesh(leftShoulderGeo, this.shoulderMat);
-    leftShoulder.receiveShadow = true;
-    const rightShoulder = new THREE.Mesh(rightShoulderGeo, this.shoulderMat);
-    rightShoulder.receiveShadow = true;
-    chunkGroup.add(leftShoulder, rightShoulder);
+    const cactusInst = this.createPooledInstanced(
+      this.cactusGeo,
+      this.cactusMat,
+      MAX_PROPS_PER_CHUNK,
+      true,
+    );
+    const iceInst = this.createPooledInstanced(
+      this.iceSpireGeo,
+      this.iceMat,
+      MAX_PROPS_PER_CHUNK,
+      true,
+    );
+    const basaltInst = this.createPooledInstanced(
+      this.basaltGeo,
+      this.basaltMat,
+      MAX_PROPS_PER_CHUNK,
+      true,
+    );
+    const rockInst = this.createPooledInstanced(
+      this.rockGeo,
+      this.rockMat,
+      MAX_PROPS_PER_CHUNK,
+      true,
+    );
 
-    // 3. Steel Guardrails
-    const leftRailGeo = this.createGuardrailRibbon(
-      startIndex,
-      count,
-      -GUARDRAIL_OFFSET,
+    chunkGroup.add(
+      postInst,
+      studInst,
+      lampPoleInst,
+      lampArmInst,
+      lampHeadInst,
+      chevronPostInst,
+      chevronBoardInst,
+      trunkInst,
+      foliageInst,
+      cactusInst,
+      iceInst,
+      basaltInst,
+      rockInst,
     );
-    const rightRailGeo = this.createGuardrailRibbon(
-      startIndex,
-      count,
-      GUARDRAIL_OFFSET,
-    );
-    disposables.push(leftRailGeo, rightRailGeo);
-    const leftRail = new THREE.Mesh(leftRailGeo, this.guardrailMat);
-    const rightRail = new THREE.Mesh(rightRailGeo, this.guardrailMat);
-    chunkGroup.add(leftRail, rightRail);
+
+    const roadsideSlot = this.roadsideProps.createChunkSlot(chunkGroup);
+    this.group.add(chunkGroup);
+
+    return {
+      startIndex: 0,
+      endIndex: 0,
+      startS: 0,
+      endS: 0,
+      group: chunkGroup,
+      extrasGroup,
+      extraDisposables: [],
+      extraInstanced: [],
+      roadGeo,
+      shouldersGeo,
+      railsGeo,
+      terrainGeo,
+      postInst,
+      studInst,
+      lampPoleInst,
+      lampArmInst,
+      lampHeadInst,
+      chevronPostInst,
+      chevronBoardInst,
+      trunkInst,
+      foliageInst,
+      cactusInst,
+      iceInst,
+      basaltInst,
+      rockInst,
+      roadsideSlot,
+    };
+  }
+
+  private finalizeInstanced(
+    inst: THREE.InstancedMesh,
+    count: number,
+    hasColor = false,
+  ): void {
+    inst.count = count;
+    inst.visible = count > 0;
+    if (count > 0) {
+      inst.instanceMatrix.needsUpdate = true;
+      if (hasColor && inst.instanceColor) {
+        inst.instanceColor.needsUpdate = true;
+      }
+      inst.computeBoundingSphere();
+    }
+  }
+
+  private populateChunk(
+    chunk: RoadChunk,
+    startIndex: number,
+    endIndex: number,
+  ): void {
+    const count = endIndex - startIndex + 1;
+    // Reset any recenter() translation before writing world-space sample coordinates
+    chunk.group.position.set(0, 0, 0);
+    chunk.group.updateMatrix();
+    chunk.group.updateMatrixWorld(true);
+    this.clearChunkExtras(chunk);
+
+    // 1. Asphalt Road Ribbon (in-place GPU buffer update)
+    this.updateRoadRibbonInPlace(chunk.roadGeo, startIndex, count);
+
+    // 2. Merged Left & Right Shoulders / Rumble Curbs (1 draw call, in-place)
+    this.updateShouldersInPlace(chunk.shouldersGeo, startIndex, count);
+
+    // 3. Merged Left & Right Steel Guardrails (1 draw call, in-place)
+    this.updateRailsInPlace(chunk.railsGeo, startIndex, count);
 
     const chunkStartS = this.getSample(startIndex).s;
     const chunkZone = this.getRoadZoneAtS(chunkStartS + 4);
@@ -988,30 +1350,13 @@ export class RoadSystem {
     const prevZone = this.getRoadZoneAtS(chunkStartS - 4);
     const nextZone = this.getRoadZoneAtS(chunkStartS + 84);
 
-    // 4. Terrain Embankments (dropped into deep valley under bridges; mountain cut on tunnels)
-    const leftTerrainGeo = this.createTerrainSkirt(
-      startIndex,
-      count,
-      -1,
-      chunkZone,
-    );
-    const rightTerrainGeo = this.createTerrainSkirt(
-      startIndex,
-      count,
-      1,
-      chunkZone,
-    );
-    disposables.push(leftTerrainGeo, rightTerrainGeo);
-    const leftTerrain = new THREE.Mesh(leftTerrainGeo, this.terrainMat);
-    const rightTerrain = new THREE.Mesh(rightTerrainGeo, this.terrainMat);
-    leftTerrain.receiveShadow = true;
-    rightTerrain.receiveShadow = true;
-    chunkGroup.add(leftTerrain, rightTerrain);
+    // 4. Merged Left & Right Terrain Embankments (1 draw call, in-place)
+    this.updateTerrainInPlace(chunk.terrainGeo, startIndex, count, chunkZone);
 
     if (isTunnel) {
       this.addTunnelStructures(
-        chunkGroup,
-        disposables,
+        chunk.extrasGroup,
+        chunk.extraDisposables,
         startIndex,
         count,
         prevZone !== 'tunnel',
@@ -1019,8 +1364,8 @@ export class RoadSystem {
       );
     } else if (isBridge) {
       this.addBridgeStructures(
-        chunkGroup,
-        disposables,
+        chunk.extrasGroup,
+        chunk.extraDisposables,
         startIndex,
         count,
         prevZone !== 'bridge',
@@ -1028,20 +1373,7 @@ export class RoadSystem {
       );
     }
 
-    // 5. Guardrail Posts + Glowing Cats-Eye Road Studs (InstancedMesh)
-    const postCount = Math.floor((count - 1) / 2) * 2;
-    const postInstanced = new THREE.InstancedMesh(
-      this.postGeo,
-      this.postMat,
-      postCount,
-    );
-    const studCount = Math.floor((count - 1) / 2) * 2;
-    const studInstanced = new THREE.InstancedMesh(
-      this.studGeo,
-      this.studMat,
-      studCount,
-    );
-
+    // 5. Guardrail Posts + Glowing Cats-Eye Road Studs (Pooled InstancedMesh)
     const dummy = _chunkDummy;
     const basisMat = _chunkBasisMat;
     const negTangent = _chunkNegTangent;
@@ -1053,30 +1385,32 @@ export class RoadSystem {
       basisMat.makeBasis(s.right, s.normal, negTangent);
 
       for (const side of [-1, 1]) {
-        dummy.position
-          .copy(s.pos)
-          .addScaledVector(s.right, side * (GUARDRAIL_OFFSET + 0.08))
-          .addScaledVector(s.normal, 0.44);
-        dummy.quaternion.setFromRotationMatrix(basisMat);
-        dummy.scale.set(1, 1, 1);
-        dummy.updateMatrix();
-        postInstanced.setMatrixAt(pIdx++, dummy.matrix);
+        if (pIdx < MAX_POSTS_PER_CHUNK) {
+          dummy.position
+            .copy(s.pos)
+            .addScaledVector(s.right, side * (GUARDRAIL_OFFSET + 0.08))
+            .addScaledVector(s.normal, 0.44);
+          dummy.quaternion.setFromRotationMatrix(basisMat);
+          dummy.scale.set(1, 1, 1);
+          dummy.updateMatrix();
+          chunk.postInst.setMatrixAt(pIdx++, dummy.matrix);
+        }
 
-        // Reflective amber road edge studs flush with banked road surface
-        dummy.position
-          .copy(s.pos)
-          .addScaledVector(s.right, side * (ROAD_HALF_WIDTH - 0.28))
-          .addScaledVector(s.normal, 0.03);
-        dummy.quaternion.setFromRotationMatrix(basisMat);
-        dummy.updateMatrix();
-        studInstanced.setMatrixAt(sIdx++, dummy.matrix);
+        if (sIdx < MAX_POSTS_PER_CHUNK) {
+          // Reflective amber road edge studs flush with banked road surface
+          dummy.position
+            .copy(s.pos)
+            .addScaledVector(s.right, side * (ROAD_HALF_WIDTH - 0.28))
+            .addScaledVector(s.normal, 0.03);
+          dummy.quaternion.setFromRotationMatrix(basisMat);
+          dummy.scale.set(1, 1, 1);
+          dummy.updateMatrix();
+          chunk.studInst.setMatrixAt(sIdx++, dummy.matrix);
+        }
       }
     }
-    postInstanced.instanceMatrix.needsUpdate = true;
-    postInstanced.computeBoundingSphere();
-    studInstanced.instanceMatrix.needsUpdate = true;
-    studInstanced.computeBoundingSphere();
-    chunkGroup.add(postInstanced, studInstanced);
+    this.finalizeInstanced(chunk.postInst, pIdx);
+    this.finalizeInstanced(chunk.studInst, sIdx);
 
     // 6. Overhead Highway Sign Gantry (every 3 chunks = 240m, skipped inside tunnels/bridges)
     const chunkOrdinal = Math.round(startIndex / CHUNK_SAMPLES);
@@ -1110,33 +1444,27 @@ export class RoadSystem {
         gantry.add(sign, face);
       }
 
-      chunkGroup.add(gantry);
+      chunk.extrasGroup.add(gantry);
     }
 
-    // 7. Streetlamps + Curve Chevrons + Biome-Driven Roadside Flora & Landmarks (Instanced)
-    const lampPoleMatrices: THREE.Matrix4[] = [];
-    const lampArmMatrices: THREE.Matrix4[] = [];
-    const lampHeadMatrices: THREE.Matrix4[] = [];
-    const chevronPostMatrices: THREE.Matrix4[] = [];
-    const chevronBoardMatrices: THREE.Matrix4[] = [];
-    const treeMatrices: THREE.Matrix4[] = [];
-    const treeColors: THREE.Color[] = [];
-    const rockMatrices: THREE.Matrix4[] = [];
-    const rockColors: THREE.Color[] = [];
-    const cactusMatrices: THREE.Matrix4[] = [];
-    const cactusColors: THREE.Color[] = [];
-    const iceMatrices: THREE.Matrix4[] = [];
-    const iceColors: THREE.Color[] = [];
-    const basaltMatrices: THREE.Matrix4[] = [];
-    const basaltColors: THREE.Color[] = [];
+    // 7. Streetlamps + Curve Chevrons + Biome-Driven Roadside Flora (Pooled InstancedMeshes, zero allocations)
+    let lampCount = 0;
+    let chevronCount = 0;
+    let treeCount = 0;
+    let rockCount = 0;
+    let cactusCount = 0;
+    let iceCount = 0;
+    let basaltCount = 0;
     const chunkBiome = _chunkBiome;
     const tmpPos = _chunkTmpPos;
+    const tmpColor = _chunkTmpColor;
+    const m = _chunkMatM;
 
     for (let i = 0; i < count - 1; i++) {
       const sample = this.getSample(startIndex + i);
       const absCurv = Math.abs(sample.curvature);
 
-      if (!isTunnel && sample.index % 9 === 0) {
+      if (!isTunnel && sample.index % 9 === 0 && lampCount < MAX_LAMPS_PER_CHUNK) {
         const side = (sample.index / 9) % 2 === 0 ? -1 : 1;
 
         dummy.position
@@ -1146,25 +1474,30 @@ export class RoadSystem {
         dummy.rotation.set(0, -sample.heading, 0);
         dummy.scale.set(1, 1, 1);
         dummy.updateMatrix();
-        lampPoleMatrices.push(dummy.matrix.clone());
+        chunk.lampPoleInst.setMatrixAt(lampCount, dummy.matrix);
 
         dummy.position
           .copy(sample.pos)
           .addScaledVector(sample.right, side * (GUARDRAIL_OFFSET - 0.35))
           .addScaledVector(sample.normal, 7.05);
         dummy.updateMatrix();
-        lampArmMatrices.push(dummy.matrix.clone());
+        chunk.lampArmInst.setMatrixAt(lampCount, dummy.matrix);
 
         dummy.position
           .copy(sample.pos)
           .addScaledVector(sample.right, side * (GUARDRAIL_OFFSET - 1.25))
           .addScaledVector(sample.normal, 6.96);
         dummy.updateMatrix();
-        lampHeadMatrices.push(dummy.matrix.clone());
+        chunk.lampHeadInst.setMatrixAt(lampCount, dummy.matrix);
+        lampCount++;
       }
 
       // Curve Warning Chevrons on outer curve edge (every 16m on bends)
-      if (absCurv > 0.008 && sample.index % 4 === 0) {
+      if (
+        absCurv > 0.008 &&
+        sample.index % 4 === 0 &&
+        chevronCount < MAX_CHEVRONS_PER_CHUNK
+      ) {
         const outerSide = sample.curvature > 0 ? -1 : 1;
         tmpPos
           .copy(sample.pos)
@@ -1174,7 +1507,7 @@ export class RoadSystem {
         dummy.rotation.set(0, 0, 0);
         dummy.scale.set(1, 1, 1);
         dummy.updateMatrix();
-        chevronPostMatrices.push(dummy.matrix.clone());
+        chunk.chevronPostInst.setMatrixAt(chevronCount, dummy.matrix);
 
         dummy.position.copy(tmpPos).addScaledVector(sample.normal, 2.05);
         dummy.rotation.set(
@@ -1183,7 +1516,8 @@ export class RoadSystem {
           sample.curvature < 0 ? Math.PI : 0,
         );
         dummy.updateMatrix();
-        chevronBoardMatrices.push(dummy.matrix.clone());
+        chunk.chevronBoardInst.setMatrixAt(chevronCount, dummy.matrix);
+        chevronCount++;
       }
 
       if (!isTunnel && !isBridge && i % 2 === 0) {
@@ -1213,7 +1547,7 @@ export class RoadSystem {
             continue;
           }
 
-          const seed = (((sample.index * 29 + (side > 0 ? 13 : 5)) % 97) / 97);
+          const seed = ((sample.index * 29 + (side > 0 ? 13 : 5)) % 97) / 97;
           const colorBlend = ((sample.index * 7 + (side > 0 ? 3 : 0)) % 10) / 10;
 
           if (isFeatureProp) {
@@ -1228,27 +1562,44 @@ export class RoadSystem {
             const basaltCut = iceCut + chunkBiome.basaltRatio;
 
             if (seed < cactusCut) {
-              cactusMatrices.push(dummy.matrix.clone());
-              cactusColors.push(
-                chunkBiome.treeColorA.clone().lerp(chunkBiome.treeColorB, colorBlend),
-              );
+              if (cactusCount < MAX_PROPS_PER_CHUNK) {
+                chunk.cactusInst.setMatrixAt(cactusCount, dummy.matrix);
+                tmpColor
+                  .copy(chunkBiome.treeColorA)
+                  .lerp(chunkBiome.treeColorB, colorBlend);
+                chunk.cactusInst.setColorAt(cactusCount, tmpColor);
+                cactusCount++;
+              }
             } else if (seed < iceCut) {
-              iceMatrices.push(dummy.matrix.clone());
-              iceColors.push(
-                _chunkIceColorA.clone().lerp(_chunkIceColorB, colorBlend),
-              );
+              if (iceCount < MAX_PROPS_PER_CHUNK) {
+                chunk.iceInst.setMatrixAt(iceCount, dummy.matrix);
+                tmpColor
+                  .copy(_chunkIceColorA)
+                  .lerp(_chunkIceColorB, colorBlend);
+                chunk.iceInst.setColorAt(iceCount, tmpColor);
+                iceCount++;
+              }
             } else if (seed < basaltCut) {
-              basaltMatrices.push(dummy.matrix.clone());
-              basaltColors.push(
-                _chunkBasaltColorA.clone().lerp(_chunkBasaltColorB, colorBlend),
-              );
-            } else {
-              treeMatrices.push(dummy.matrix.clone());
-              treeColors.push(
-                chunkBiome.treeColorA.clone().lerp(chunkBiome.treeColorB, colorBlend),
-              );
+              if (basaltCount < MAX_PROPS_PER_CHUNK) {
+                chunk.basaltInst.setMatrixAt(basaltCount, dummy.matrix);
+                tmpColor
+                  .copy(_chunkBasaltColorA)
+                  .lerp(_chunkBasaltColorB, colorBlend);
+                chunk.basaltInst.setColorAt(basaltCount, tmpColor);
+                basaltCount++;
+              }
+            } else if (treeCount < MAX_PROPS_PER_CHUNK) {
+              m.multiplyMatrices(dummy.matrix, _chunkTrunkOffset);
+              chunk.trunkInst.setMatrixAt(treeCount, m);
+              m.multiplyMatrices(dummy.matrix, _chunkConeOffset);
+              chunk.foliageInst.setMatrixAt(treeCount, m);
+              tmpColor
+                .copy(chunkBiome.treeColorA)
+                .lerp(chunkBiome.treeColorB, colorBlend);
+              chunk.foliageInst.setColorAt(treeCount, tmpColor);
+              treeCount++;
             }
-          } else {
+          } else if (rockCount < MAX_PROPS_PER_CHUNK) {
             const scale = 0.7 + (((sample.index * 19) % 10) / 10) * 1.25;
             dummy.position.set(worldP.x, worldP.y + 0.35 * scale, worldP.z);
             dummy.rotation.set(
@@ -1258,165 +1609,33 @@ export class RoadSystem {
             );
             dummy.scale.set(scale * 1.25, scale * 0.85, scale);
             dummy.updateMatrix();
-            rockMatrices.push(dummy.matrix.clone());
-            rockColors.push(
-              chunkBiome.rockColorA.clone().lerp(chunkBiome.rockColorB, colorBlend),
-            );
+            chunk.rockInst.setMatrixAt(rockCount, dummy.matrix);
+            tmpColor
+              .copy(chunkBiome.rockColorA)
+              .lerp(chunkBiome.rockColorB, colorBlend);
+            chunk.rockInst.setColorAt(rockCount, tmpColor);
+            rockCount++;
           }
         }
       }
     }
 
-    if (lampPoleMatrices.length > 0) {
-      const poles = new THREE.InstancedMesh(
-        this.lampPoleGeo,
-        this.postMat,
-        lampPoleMatrices.length,
-      );
-      const arms = new THREE.InstancedMesh(
-        this.lampArmGeo,
-        this.postMat,
-        lampArmMatrices.length,
-      );
-      const heads = new THREE.InstancedMesh(
-        this.lampHeadGeo,
-        this.lampHeadMat,
-        lampHeadMatrices.length,
-      );
-      for (let li = 0; li < lampPoleMatrices.length; li++) {
-        poles.setMatrixAt(li, lampPoleMatrices[li]);
-        arms.setMatrixAt(li, lampArmMatrices[li]);
-        heads.setMatrixAt(li, lampHeadMatrices[li]);
-      }
-      poles.instanceMatrix.needsUpdate = true;
-      arms.instanceMatrix.needsUpdate = true;
-      heads.instanceMatrix.needsUpdate = true;
-      poles.computeBoundingSphere();
-      arms.computeBoundingSphere();
-      heads.computeBoundingSphere();
-      chunkGroup.add(poles, arms, heads);
-    }
-
-    if (chevronPostMatrices.length > 0) {
-      const posts = new THREE.InstancedMesh(
-        this.chevronPostGeo,
-        this.postMat,
-        chevronPostMatrices.length,
-      );
-      const boards = new THREE.InstancedMesh(
-        this.chevronBoardGeo,
-        this.chevronMat,
-        chevronBoardMatrices.length,
-      );
-      for (let ci = 0; ci < chevronPostMatrices.length; ci++) {
-        posts.setMatrixAt(ci, chevronPostMatrices[ci]);
-        boards.setMatrixAt(ci, chevronBoardMatrices[ci]);
-      }
-      posts.instanceMatrix.needsUpdate = true;
-      boards.instanceMatrix.needsUpdate = true;
-      posts.computeBoundingSphere();
-      boards.computeBoundingSphere();
-      chunkGroup.add(posts, boards);
-    }
-
-    if (treeMatrices.length > 0) {
-      const trunks = new THREE.InstancedMesh(
-        this.trunkGeo,
-        this.trunkMat,
-        treeMatrices.length,
-      );
-      const foliage = new THREE.InstancedMesh(
-        this.foliageGeo,
-        this.foliageMat,
-        treeMatrices.length,
-      );
-      const trunkOffset = _chunkTrunkOffset;
-      const coneOffset = _chunkConeOffset;
-      const m = _chunkMatM;
-
-      for (let t = 0; t < treeMatrices.length; t++) {
-        m.multiplyMatrices(treeMatrices[t], trunkOffset);
-        trunks.setMatrixAt(t, m);
-
-        m.multiplyMatrices(treeMatrices[t], coneOffset);
-        foliage.setMatrixAt(t, m);
-        foliage.setColorAt(t, treeColors[t]);
-      }
-      trunks.instanceMatrix.needsUpdate = true;
-      foliage.instanceMatrix.needsUpdate = true;
-      if (foliage.instanceColor) foliage.instanceColor.needsUpdate = true;
-      trunks.computeBoundingSphere();
-      foliage.computeBoundingSphere();
-      chunkGroup.add(trunks, foliage);
-    }
-
-    if (cactusMatrices.length > 0) {
-      const cacti = new THREE.InstancedMesh(
-        this.cactusGeo,
-        this.cactusMat,
-        cactusMatrices.length,
-      );
-      for (let c = 0; c < cactusMatrices.length; c++) {
-        cacti.setMatrixAt(c, cactusMatrices[c]);
-        cacti.setColorAt(c, cactusColors[c]);
-      }
-      cacti.instanceMatrix.needsUpdate = true;
-      if (cacti.instanceColor) cacti.instanceColor.needsUpdate = true;
-      cacti.computeBoundingSphere();
-      chunkGroup.add(cacti);
-    }
-
-    if (iceMatrices.length > 0) {
-      const spires = new THREE.InstancedMesh(
-        this.iceSpireGeo,
-        this.iceMat,
-        iceMatrices.length,
-      );
-      for (let ic = 0; ic < iceMatrices.length; ic++) {
-        spires.setMatrixAt(ic, iceMatrices[ic]);
-        spires.setColorAt(ic, iceColors[ic]);
-      }
-      spires.instanceMatrix.needsUpdate = true;
-      if (spires.instanceColor) spires.instanceColor.needsUpdate = true;
-      spires.computeBoundingSphere();
-      chunkGroup.add(spires);
-    }
-
-    if (basaltMatrices.length > 0) {
-      const basalts = new THREE.InstancedMesh(
-        this.basaltGeo,
-        this.basaltMat,
-        basaltMatrices.length,
-      );
-      for (let b = 0; b < basaltMatrices.length; b++) {
-        basalts.setMatrixAt(b, basaltMatrices[b]);
-        basalts.setColorAt(b, basaltColors[b]);
-      }
-      basalts.instanceMatrix.needsUpdate = true;
-      if (basalts.instanceColor) basalts.instanceColor.needsUpdate = true;
-      basalts.computeBoundingSphere();
-      chunkGroup.add(basalts);
-    }
-
-    if (rockMatrices.length > 0) {
-      const rocks = new THREE.InstancedMesh(
-        this.rockGeo,
-        this.rockMat,
-        rockMatrices.length,
-      );
-      for (let r = 0; r < rockMatrices.length; r++) {
-        rocks.setMatrixAt(r, rockMatrices[r]);
-        rocks.setColorAt(r, rockColors[r]);
-      }
-      rocks.instanceMatrix.needsUpdate = true;
-      if (rocks.instanceColor) rocks.instanceColor.needsUpdate = true;
-      rocks.computeBoundingSphere();
-      chunkGroup.add(rocks);
-    }
+    this.finalizeInstanced(chunk.lampPoleInst, lampCount);
+    this.finalizeInstanced(chunk.lampArmInst, lampCount);
+    this.finalizeInstanced(chunk.lampHeadInst, lampCount);
+    this.finalizeInstanced(chunk.chevronPostInst, chevronCount);
+    this.finalizeInstanced(chunk.chevronBoardInst, chevronCount);
+    this.finalizeInstanced(chunk.trunkInst, treeCount);
+    this.finalizeInstanced(chunk.foliageInst, treeCount, true);
+    this.finalizeInstanced(chunk.cactusInst, cactusCount, true);
+    this.finalizeInstanced(chunk.iceInst, iceCount, true);
+    this.finalizeInstanced(chunk.basaltInst, basaltCount, true);
+    this.finalizeInstanced(chunk.rockInst, rockCount, true);
 
     if (!isTunnel && !isBridge) {
       this.roadsideProps.populateChunk({
-        chunkGroup,
+        extrasGroup: chunk.extrasGroup,
+        slot: chunk.roadsideSlot,
         startIndex,
         count,
         guardrailOffset: GUARDRAIL_OFFSET,
@@ -1426,57 +1645,45 @@ export class RoadSystem {
         hasRoadClearance: (worldP, minDist) =>
           this.hasRoadClearance(worldP, minDist),
       });
+    } else {
+      this.roadsideProps.clearChunkSlot(chunk.roadsideSlot);
     }
 
-    // Freeze matrices on all static chunk descendants and collect all InstancedMeshes for GPU disposal
-    const instancedMeshes: THREE.InstancedMesh[] = [];
-    chunkGroup.updateMatrixWorld(true);
-    chunkGroup.traverse((obj) => {
-      if (obj instanceof THREE.InstancedMesh) {
-        instancedMeshes.push(obj);
-      }
-      if (obj === chunkGroup || obj.userData.isTurbineRotor) return;
-      if (obj.parent && obj.parent.userData.isTurbineRotor) return;
-      obj.matrixAutoUpdate = false;
-    });
+    // Freeze static descendants added to extrasGroup and track any rare extra InstancedMeshes for cleanup
+    if (chunk.extrasGroup.children.length > 0) {
+      chunk.extrasGroup.updateMatrixWorld(true);
+      chunk.extrasGroup.traverse((obj) => {
+        if (obj instanceof THREE.InstancedMesh) {
+          chunk.extraInstanced.push(obj);
+        }
+        if (obj === chunk.extrasGroup || obj.userData.isTurbineRotor) return;
+        if (obj.parent && obj.parent.userData.isTurbineRotor) return;
+        obj.matrixAutoUpdate = false;
+      });
+    }
 
-    this.group.add(chunkGroup);
-    return {
-      startIndex,
-      endIndex,
-      startS: this.getSample(startIndex).s,
-      endS: this.getSample(endIndex).s,
-      group: chunkGroup,
-      disposables,
-      instancedMeshes,
-    };
+    chunk.startIndex = startIndex;
+    chunk.endIndex = endIndex;
+    chunk.startS = this.getSample(startIndex).s;
+    chunk.endS = this.getSample(endIndex).s;
   }
 
-  private createRibbonGeometry(
+  private updateRoadRibbonInPlace(
+    geo: THREE.BufferGeometry,
     startIndex: number,
     count: number,
-    leftOffset: number,
-    rightOffset: number,
-    yLift: number,
-    vScale: number,
-    flipU = false,
-  ): THREE.BufferGeometry {
-    const positions = new Float32Array(count * 2 * 3);
-    const uvs = new Float32Array(count * 2 * 2);
-    const indices = new Uint16Array((count - 1) * 6);
-    let idxPtr = 0;
-
+  ): void {
+    const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+    const uvAttr = geo.getAttribute('uv') as THREE.BufferAttribute;
+    const positions = posAttr.array as Float32Array;
+    const uvs = uvAttr.array as Float32Array;
     const v0 = _chunkV0;
     const v1 = _chunkV1;
 
     for (let i = 0; i < count; i++) {
       const s = this.getSample(startIndex + i);
-      v0.copy(s.pos)
-        .addScaledVector(s.right, leftOffset)
-        .addScaledVector(s.normal, yLift);
-      v1.copy(s.pos)
-        .addScaledVector(s.right, rightOffset)
-        .addScaledVector(s.normal, yLift);
+      v0.copy(s.pos).addScaledVector(s.right, -ROAD_HALF_WIDTH);
+      v1.copy(s.pos).addScaledVector(s.right, ROAD_HALF_WIDTH);
 
       const pBase = i * 6;
       positions[pBase] = v0.x;
@@ -1487,101 +1694,127 @@ export class RoadSystem {
       positions[pBase + 5] = v1.z;
 
       const uBase = i * 4;
-      const vCoord = s.s / vScale;
-      uvs[uBase] = flipU ? 1 : 0;
+      const vCoord = s.s / 14;
+      uvs[uBase] = 0;
       uvs[uBase + 1] = vCoord;
-      uvs[uBase + 2] = flipU ? 0 : 1;
+      uvs[uBase + 2] = 1;
       uvs[uBase + 3] = vCoord;
+    }
 
-      if (i < count - 1) {
-        const idx = i * 2;
-        indices[idxPtr++] = idx;
-        indices[idxPtr++] = idx + 1;
-        indices[idxPtr++] = idx + 2;
-        indices[idxPtr++] = idx + 1;
-        indices[idxPtr++] = idx + 3;
-        indices[idxPtr++] = idx + 2;
+    posAttr.needsUpdate = true;
+    uvAttr.needsUpdate = true;
+    geo.computeVertexNormals();
+    (geo.getAttribute('normal') as THREE.BufferAttribute).needsUpdate = true;
+    geo.computeBoundingSphere();
+  }
+
+  private updateShouldersInPlace(
+    geo: THREE.BufferGeometry,
+    startIndex: number,
+    count: number,
+  ): void {
+    const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+    const uvAttr = geo.getAttribute('uv') as THREE.BufferAttribute;
+    const positions = posAttr.array as Float32Array;
+    const uvs = uvAttr.array as Float32Array;
+    const halfVerts = count * 2;
+    const v0 = _chunkV0;
+    const v1 = _chunkV1;
+
+    for (let half = 0; half < 2; half++) {
+      const isRight = half === 1;
+      const leftOffset = isRight
+        ? ROAD_HALF_WIDTH
+        : -(ROAD_HALF_WIDTH + SHOULDER_WIDTH);
+      const rightOffset = isRight
+        ? ROAD_HALF_WIDTH + SHOULDER_WIDTH
+        : -ROAD_HALF_WIDTH;
+      const pStart = half * halfVerts * 3;
+      const uStart = half * halfVerts * 2;
+
+      for (let i = 0; i < count; i++) {
+        const s = this.getSample(startIndex + i);
+        v0.copy(s.pos)
+          .addScaledVector(s.right, leftOffset)
+          .addScaledVector(s.normal, 0.005);
+        v1.copy(s.pos)
+          .addScaledVector(s.right, rightOffset)
+          .addScaledVector(s.normal, 0.005);
+
+        const pBase = pStart + i * 6;
+        positions[pBase] = v0.x;
+        positions[pBase + 1] = v0.y;
+        positions[pBase + 2] = v0.z;
+        positions[pBase + 3] = v1.x;
+        positions[pBase + 4] = v1.y;
+        positions[pBase + 5] = v1.z;
+
+        const uBase = uStart + i * 4;
+        const vCoord = s.s / 8;
+        uvs[uBase] = isRight ? 1 : 0;
+        uvs[uBase + 1] = vCoord;
+        uvs[uBase + 2] = isRight ? 0 : 1;
+        uvs[uBase + 3] = vCoord;
       }
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+    posAttr.needsUpdate = true;
+    uvAttr.needsUpdate = true;
     geo.computeVertexNormals();
-    return geo;
+    (geo.getAttribute('normal') as THREE.BufferAttribute).needsUpdate = true;
+    geo.computeBoundingSphere();
   }
 
-  private createGuardrailRibbon(
+  private updateRailsInPlace(
+    geo: THREE.BufferGeometry,
     startIndex: number,
     count: number,
-    lateralOffset: number,
-  ): THREE.BufferGeometry {
-    const positions = new Float32Array(count * 4 * 3);
-    const indices = new Uint16Array((count - 1) * 18);
-    let idxPtr = 0;
-    const innerDir = lateralOffset < 0 ? 1 : -1;
-
+  ): void {
+    const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+    const positions = posAttr.array as Float32Array;
+    const halfVerts = count * 4;
     const pLow = _chunkV0;
     const pHigh = _chunkV1;
 
-    for (let i = 0; i < count; i++) {
-      const s = this.getSample(startIndex + i);
-      pLow
-        .copy(s.pos)
-        .addScaledVector(s.right, lateralOffset)
-        .addScaledVector(s.normal, 0.52);
-      pHigh
-        .copy(s.pos)
-        .addScaledVector(s.right, lateralOffset)
-        .addScaledVector(s.normal, 0.86);
+    for (let half = 0; half < 2; half++) {
+      const lateralOffset = half === 0 ? -GUARDRAIL_OFFSET : GUARDRAIL_OFFSET;
+      const innerDir = half === 0 ? 1 : -1;
+      const pStart = half * halfVerts * 3;
 
-      const pBase = i * 12;
-      positions[pBase] = pLow.x;
-      positions[pBase + 1] = pLow.y;
-      positions[pBase + 2] = pLow.z;
+      for (let i = 0; i < count; i++) {
+        const s = this.getSample(startIndex + i);
+        pLow
+          .copy(s.pos)
+          .addScaledVector(s.right, lateralOffset)
+          .addScaledVector(s.normal, 0.52);
+        pHigh
+          .copy(s.pos)
+          .addScaledVector(s.right, lateralOffset)
+          .addScaledVector(s.normal, 0.86);
 
-      positions[pBase + 3] = pHigh.x;
-      positions[pBase + 4] = pHigh.y;
-      positions[pBase + 5] = pHigh.z;
+        const pBase = pStart + i * 12;
+        positions[pBase] = pLow.x;
+        positions[pBase + 1] = pLow.y;
+        positions[pBase + 2] = pLow.z;
 
-      positions[pBase + 6] = pHigh.x - s.right.x * innerDir * 0.1;
-      positions[pBase + 7] = pHigh.y;
-      positions[pBase + 8] = pHigh.z - s.right.z * innerDir * 0.1;
+        positions[pBase + 3] = pHigh.x;
+        positions[pBase + 4] = pHigh.y;
+        positions[pBase + 5] = pHigh.z;
 
-      positions[pBase + 9] = pLow.x - s.right.x * innerDir * 0.1;
-      positions[pBase + 10] = pLow.y;
-      positions[pBase + 11] = pLow.z - s.right.z * innerDir * 0.1;
+        positions[pBase + 6] = pHigh.x - s.right.x * innerDir * 0.1;
+        positions[pBase + 7] = pHigh.y;
+        positions[pBase + 8] = pHigh.z - s.right.z * innerDir * 0.1;
 
-      if (i < count - 1) {
-        const a = i * 4;
-        const b = (i + 1) * 4;
-        indices[idxPtr++] = a;
-        indices[idxPtr++] = a + 1;
-        indices[idxPtr++] = b;
-        indices[idxPtr++] = a + 1;
-        indices[idxPtr++] = b + 1;
-        indices[idxPtr++] = b;
-        indices[idxPtr++] = a + 1;
-        indices[idxPtr++] = a + 2;
-        indices[idxPtr++] = b + 1;
-        indices[idxPtr++] = a + 2;
-        indices[idxPtr++] = b + 2;
-        indices[idxPtr++] = b + 1;
-        indices[idxPtr++] = a + 2;
-        indices[idxPtr++] = a + 3;
-        indices[idxPtr++] = b + 2;
-        indices[idxPtr++] = a + 3;
-        indices[idxPtr++] = b + 3;
-        indices[idxPtr++] = b + 2;
+        positions[pBase + 9] = pLow.x - s.right.x * innerDir * 0.1;
+        positions[pBase + 10] = pLow.y;
+        positions[pBase + 11] = pLow.z - s.right.z * innerDir * 0.1;
       }
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+    posAttr.needsUpdate = true;
     geo.computeVertexNormals();
-    return geo;
+    (geo.getAttribute('normal') as THREE.BufferAttribute).needsUpdate = true;
+    geo.computeBoundingSphere();
   }
 
   private computeEmbankmentHeight(
@@ -1944,99 +2177,83 @@ export class RoadSystem {
     return geo;
   }
 
-  private createTerrainSkirt(
+  private updateTerrainInPlace(
+    geo: THREE.BufferGeometry,
     startIndex: number,
     count: number,
-    side: number,
     zone: RoadZoneId = 'open',
-  ): THREE.BufferGeometry {
+  ): void {
     const widths = [ROAD_HALF_WIDTH + SHOULDER_WIDTH, 14, 28, 54, 98];
     const cols = widths.length;
-    const positions = new Float32Array(count * cols * 3);
-    const colors = new Float32Array(count * cols * 3);
-    const indices = new Uint16Array((count - 1) * (cols - 1) * 6);
-    let idxPtr = 0;
+    const halfVerts = count * cols;
+    const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+    const colAttr = geo.getAttribute('color') as THREE.BufferAttribute;
+    const positions = posAttr.array as Float32Array;
+    const colors = colAttr.array as Float32Array;
 
     const biomeSample = _chunkBiome;
     const tmpColor = _chunkTmpColor;
     const riverColor = _chunkRiverColor;
 
-    for (let i = 0; i < count; i++) {
-      const sample = this.getSample(startIndex + i);
-      sampleBiomeAtDistance(sample.s, biomeSample);
-      const isInsideCurve = sample.curvature * side > 0.0005;
-      const maxInsideWidth = isInsideCurve
-        ? Math.max(widths[0] + 2, (1 / Math.abs(sample.curvature)) * 0.62)
-        : 98;
+    // Half 0 = left (-1), Half 1 = right (+1)
+    for (let half = 0; half < 2; half++) {
+      const side = half === 0 ? -1 : 1;
+      const vStart = half * halfVerts;
 
-      for (let j = 0; j < cols; j++) {
-        const w = j === 0 ? widths[0] : Math.min(widths[j], maxInsideWidth);
-        let elev =
-          j === 0 ? -0.02 : this.computeEmbankmentHeight(sample.s, side, w);
-        if (zone === 'bridge') {
-          // Deep river/canyon gorge underneath suspension bridge
-          elev = j === 0 ? -21.5 : j <= 2 ? -22.5 : -14.0 + (j - 2) * 8.5;
-        } else if (zone === 'tunnel') {
-          // Mountain slope rising tightly around tunnel vault
-          elev = j === 0 ? 0.1 : 6.2 + j * 4.4;
-        }
-        const px = sample.pos.x + sample.right.x * (side * w);
-        const py = sample.pos.y + elev;
-        const pz = sample.pos.z + sample.right.z * (side * w);
+      for (let i = 0; i < count; i++) {
+        const sample = this.getSample(startIndex + i);
+        sampleBiomeAtDistance(sample.s, biomeSample);
+        const isInsideCurve = sample.curvature * side > 0.0005;
+        const maxInsideWidth = isInsideCurve
+          ? Math.max(widths[0] + 2, (1 / Math.abs(sample.curvature)) * 0.62)
+          : 98;
 
-        const idx = (i * cols + j) * 3;
-        positions[idx] = px;
-        positions[idx + 1] = py;
-        positions[idx + 2] = pz;
-
-        if (zone === 'bridge' && j <= 2) {
-          tmpColor.copy(riverColor).lerp(biomeSample.ridgeColor, j === 2 ? 0.35 : 0);
-        } else if (zone === 'tunnel') {
-          tmpColor.copy(biomeSample.ridgeColor).multiplyScalar(0.84);
-        } else if (j === 0) tmpColor.copy(biomeSample.shoulderColor);
-        else if (j <= 2) tmpColor.copy(biomeSample.groundColor);
-        else tmpColor.copy(biomeSample.ridgeColor);
-        colors[idx] = tmpColor.r;
-        colors[idx + 1] = tmpColor.g;
-        colors[idx + 2] = tmpColor.b;
-      }
-
-      if (i < count - 1) {
-        for (let j = 0; j < cols - 1; j++) {
-          const a = i * cols + j;
-          const b = a + 1;
-          const c = (i + 1) * cols + j;
-          const d = c + 1;
-          if (side > 0) {
-            indices[idxPtr++] = a;
-            indices[idxPtr++] = b;
-            indices[idxPtr++] = c;
-            indices[idxPtr++] = b;
-            indices[idxPtr++] = d;
-            indices[idxPtr++] = c;
-          } else {
-            indices[idxPtr++] = a;
-            indices[idxPtr++] = c;
-            indices[idxPtr++] = b;
-            indices[idxPtr++] = b;
-            indices[idxPtr++] = c;
-            indices[idxPtr++] = d;
+        for (let j = 0; j < cols; j++) {
+          const w = j === 0 ? widths[0] : Math.min(widths[j], maxInsideWidth);
+          let elev =
+            j === 0 ? -0.02 : this.computeEmbankmentHeight(sample.s, side, w);
+          if (zone === 'bridge') {
+            // Deep river/canyon gorge underneath suspension bridge
+            elev = j === 0 ? -21.5 : j <= 2 ? -22.5 : -14.0 + (j - 2) * 8.5;
+          } else if (zone === 'tunnel') {
+            // Mountain slope rising tightly around tunnel vault
+            elev = j === 0 ? 0.1 : 6.2 + j * 4.4;
           }
+          const px = sample.pos.x + sample.right.x * (side * w);
+          const py = sample.pos.y + elev;
+          const pz = sample.pos.z + sample.right.z * (side * w);
+
+          const idx = (vStart + i * cols + j) * 3;
+          positions[idx] = px;
+          positions[idx + 1] = py;
+          positions[idx + 2] = pz;
+
+          if (zone === 'bridge' && j <= 2) {
+            tmpColor
+              .copy(riverColor)
+              .lerp(biomeSample.ridgeColor, j === 2 ? 0.35 : 0);
+          } else if (zone === 'tunnel') {
+            tmpColor.copy(biomeSample.ridgeColor).multiplyScalar(0.84);
+          } else if (j === 0) tmpColor.copy(biomeSample.shoulderColor);
+          else if (j <= 2) tmpColor.copy(biomeSample.groundColor);
+          else tmpColor.copy(biomeSample.ridgeColor);
+          colors[idx] = tmpColor.r;
+          colors[idx + 1] = tmpColor.g;
+          colors[idx + 2] = tmpColor.b;
         }
       }
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+    posAttr.needsUpdate = true;
+    colAttr.needsUpdate = true;
     geo.computeVertexNormals();
-    return geo;
+    (geo.getAttribute('normal') as THREE.BufferAttribute).needsUpdate = true;
+    geo.computeBoundingSphere();
   }
 
   public dispose(): void {
     for (const chunk of this.chunks) {
-      this.disposeChunk(chunk);
+      this.destroyPooledChunk(chunk);
     }
     this.chunks = [];
     this.asphaltMat.dispose();

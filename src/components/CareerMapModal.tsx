@@ -85,7 +85,6 @@ function buildSmoothRoadPath(coords: { x: number; y: number }[]): string {
 
 function getRoadRuleLabel(rule: CareerLevelSpec['roadRule']): string {
   if (rule === 'twoway') return 'Çift Yön Trafik';
-  if (rule === 'pursuit') return 'Polis Takibi';
   return 'Klasik Otoyol';
 }
 

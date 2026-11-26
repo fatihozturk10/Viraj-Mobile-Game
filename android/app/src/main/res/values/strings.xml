@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Viraj — Sonsuz Otoyol</string>
-    <string name="title_activity_main">Viraj — Sonsuz Otoyol</string>
+    <string name="app_name">Viraj Drift</string>
+    <string name="title_activity_main">Viraj Drift</string>
     <string name="package_name">com.viraj.sonsuzotoyol</string>
     <string name="custom_url_scheme">com.viraj.sonsuzotoyol</string>
     <!-- Google AdMob Android App ID -->

@@ -127,9 +127,13 @@ export const SpeedLinesOverlay: React.FC<SpeedLinesOverlayProps> = React.memo(
 
         if (smoothedIntensity <= 0.015 && targetIntensity <= 0.015) {
           smoothedIntensity = 0;
+          canvas.style.display = 'none';
           running = false;
           rafId = 0;
           return;
+        }
+        if (canvas.style.display === 'none') {
+          canvas.style.display = 'block';
         }
 
         // 1. Cached radial edge speed vignette (zero gradient allocations per frame)
@@ -215,6 +219,7 @@ export const SpeedLinesOverlay: React.FC<SpeedLinesOverlayProps> = React.memo(
       <canvas
         ref={canvasRef}
         aria-hidden="true"
+        style={{ display: 'none' }}
         className="pointer-events-none fixed inset-0 z-[5] h-full w-full"
       />
     );

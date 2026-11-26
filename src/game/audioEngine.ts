@@ -330,11 +330,9 @@ export class AudioEngine {
   private driftGain: GainNode | null = null;
   private rainFilter: BiquadFilterNode | null = null;
   private rainGain: GainNode | null = null;
-  private sirenOsc: OscillatorNode | null = null;
-  private sirenFilter: BiquadFilterNode | null = null;
-  private sirenGain: GainNode | null = null;
   private explosionNoiseBuffer: AudioBuffer | null = null;
-  private sirenPhase = 0;
+  private lastEngineUpdateMs = 0;
+  private lastEngineActive = false;
   private rainWanted = false;
   private muted = false;
   private sfxVolume = 0.85;
@@ -448,24 +446,6 @@ export class AudioEngine {
       this.engineSubGain = subGain;
       this.engineFilter = filter;
       this.engineGain = engineGain;
-
-      // Police Siren Oscillator (wail/yelp modulated dynamically by proximity)
-      const sirenOsc = ctx.createOscillator();
-      sirenOsc.type = 'triangle';
-      sirenOsc.frequency.value = 680;
-      const sirenFilter = ctx.createBiquadFilter();
-      sirenFilter.type = 'bandpass';
-      sirenFilter.frequency.value = 960;
-      sirenFilter.Q.value = 1.6;
-      const sirenGain = ctx.createGain();
-      sirenGain.gain.value = 0;
-      sirenOsc.connect(sirenFilter);
-      sirenFilter.connect(sirenGain);
-      sirenGain.connect(sfxGain);
-      sirenOsc.start();
-      this.sirenOsc = sirenOsc;
-      this.sirenFilter = sirenFilter;
-      this.sirenGain = sirenGain;
 
       // Wind & Tire Drift Noise Buffer
       const bufferSize = ctx.sampleRate * 2;
@@ -687,6 +667,13 @@ export class AudioEngine {
     driftIntensity = 0,
   ): void {
     if (!this.initialized || !this.ctx) return;
+    const nowMs = performance.now();
+    // Throttle continuous AudioParam updates to ~30Hz (indistinguishable with 50-80ms smoothing, saves 120Hz overhead)
+    if (active === this.lastEngineActive && nowMs - this.lastEngineUpdateMs < 32) {
+      return;
+    }
+    this.lastEngineUpdateMs = nowMs;
+    this.lastEngineActive = active;
     const now = this.ctx.currentTime;
     const profile = ENGINE_PROFILES[this.carModelId];
 
@@ -1112,59 +1099,6 @@ export class AudioEngine {
     });
   }
 
-  public updatePoliceSiren(
-    proximity: number,
-    heatLevel: number,
-    active: boolean,
-    dt = 0.016,
-  ): void {
-    if (
-      !this.initialized ||
-      !this.ctx ||
-      !this.sirenOsc ||
-      !this.sirenGain ||
-      !this.sirenFilter
-    ) {
-      return;
-    }
-    const now = this.ctx.currentTime;
-    if (!active || this.muted || proximity <= 0.01) {
-      this.sirenGain.gain.setTargetAtTime(0, now, 0.09);
-      return;
-    }
-    // Yelp mode at Heat 3+, classic wail at Heat 1-2
-    const cycleSpeed = heatLevel >= 3 ? 2.6 : 1.15;
-    this.sirenPhase = (this.sirenPhase + dt * cycleSpeed) % 1;
-    const wave = 0.5 - 0.5 * Math.cos(this.sirenPhase * Math.PI * 2);
-    const freq = 640 + wave * 560;
-    const targetGain = Math.min(0.14, 0.025 + proximity * 0.115);
-
-    this.sirenOsc.frequency.setTargetAtTime(freq, now, 0.03);
-    this.sirenFilter.frequency.setTargetAtTime(freq * 1.15, now, 0.04);
-    this.sirenGain.gain.setTargetAtTime(targetGain, now, 0.08);
-  }
-
-  public playPoliceAlert(): void {
-    if (!this.initialized || !this.ctx || !this.sfxGain || this.muted) return;
-    const now = this.ctx.currentTime;
-    const freqs = [920, 690, 920];
-    freqs.forEach((freq, idx) => {
-      if (!this.ctx || !this.sfxGain) return;
-      const t = now + idx * 0.095;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(0.001, t);
-      gain.gain.linearRampToValueAtTime(0.13, t + 0.012);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.085);
-      osc.connect(gain);
-      gain.connect(this.sfxGain);
-      osc.start(t);
-      osc.stop(t + 0.092);
-    });
-  }
-
   public playCheckpoint(): void {
     if (!this.initialized || !this.ctx || !this.sfxGain || this.muted) return;
     const now = this.ctx.currentTime;
@@ -1207,7 +1141,6 @@ export class AudioEngine {
       this.music.dispose();
       this.engineOsc1?.stop();
       this.engineOsc2?.stop();
-      this.sirenOsc?.stop();
       this.windNoise?.stop();
       void this.ctx?.close();
     } catch {

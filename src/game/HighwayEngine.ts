@@ -100,10 +100,8 @@ import {
   CockpitRig,
   createCockpitRig,
   createPlayerCar,
-  createPoliceCarRig,
   createTrafficAssetPool,
   PlayerCarRig,
-  PoliceCarRig,
   TrafficAssetPool,
   TrafficKind,
   TrafficRig,
@@ -140,18 +138,6 @@ interface TrafficVehicle {
   speedMs: number;
   direction: 1 | -1;
   nearMissed: boolean;
-  hitCooldown: number;
-}
-
-interface PoliceUnit {
-  rig: PoliceCarRig;
-  active: boolean;
-  s: number;
-  lateral: number;
-  targetLateral: number;
-  speedMs: number;
-  role: 'chaser' | 'flanker' | 'roadblock';
-  laneBias: number;
   hitCooldown: number;
 }
 
@@ -426,16 +412,6 @@ const _colorMix = new THREE.Color();
 const _biomeTintMix = new THREE.Color();
 const _biomeSample = createBiomeSample();
 const _vecNegRight = new THREE.Vector3();
-const _policeSample: EvaluatedRoadPoint = {
-  s: 0,
-  pos: new THREE.Vector3(),
-  tangent: new THREE.Vector3(),
-  right: new THREE.Vector3(),
-  normal: new THREE.Vector3(),
-  heading: 0,
-  curvature: 0,
-  bank: 0,
-};
 
 const _roadSample: EvaluatedRoadPoint = {
   s: 0,
@@ -598,7 +574,11 @@ export class HighwayEngine {
   private playerCar: PlayerCarRig;
   private cockpit: CockpitRig;
   private trafficPool: TrafficAssetPool;
-  private trafficRecyclePool = new Map<string, TrafficRig[]>();
+  private trafficRecyclePool: Record<TrafficKind, TrafficRig[]> = {
+    sedan: [],
+    suv: [],
+    truck: [],
+  };
   private progressionDirty = false;
   private lastDeferredSaveMs = 0;
   public readonly audio = new AudioEngine();
@@ -724,16 +704,7 @@ export class HighwayEngine {
   private licensePlate = 'VİRAJ 34';
   private cameraMode: CameraMode = 'chase';
 
-  // Police Pursuit & Game Modes State
-  private policeUnits: PoliceUnit[] = [];
-  private policeHeat = 0;
-  private policeHeatScore = 0;
-  private policeProximity = 0;
-  private bustedProgress = 0;
-  private evadeProgress = 0;
-  private policeEvadedCount = 0;
-  private policeSirenClock = 0;
-  private policeWaveCooldown = 0;
+  // Game Modes State
   private inOncomingLane = false;
   private timeLeftSec = 45;
   private nextCheckpointMeters = 750;
@@ -880,6 +851,7 @@ export class HighwayEngine {
   private driftGraceTimer = 0;
   private readonly driftGraceDuration = 1.15;
   private totalDriftScore = 0;
+  private missionDriftAccum = 0;
   private calloutId = 1;
   private lastHudPush = 0;
   private scrapeCooldown = 0;
@@ -995,6 +967,7 @@ export class HighwayEngine {
   private frameId = 0;
   private disposed = false;
   private lastTime = performance.now();
+  private lastShadowUpdateMs = 0;
   private envMapTexture: THREE.Texture | null = null;
 
   constructor(container: HTMLElement, callbacks: EngineCallbacks) {
@@ -1452,7 +1425,7 @@ export class HighwayEngine {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.08;
-    const maxDpr = this.isMobileDevice ? 2.0 : 1.75;
+    const maxDpr = 1.75;
     this.basePixelRatio = this.isSoftwareGl
       ? 1
       : Math.min(window.devicePixelRatio || 1, maxDpr);
@@ -1463,6 +1436,11 @@ export class HighwayEngine {
     this.renderer.shadowMap.type = this.isMobileDevice
       ? THREE.PCFShadowMap
       : THREE.PCFSoftShadowMap;
+    if (this.isMobileDevice && this.renderer.shadowMap.enabled) {
+      // Keep full dynamic shadows at 60Hz on 120Hz phones instead of double-rendering depth passes every 8.3ms
+      this.renderer.shadowMap.autoUpdate = false;
+      this.renderer.shadowMap.needsUpdate = true;
+    }
     this.renderer.domElement.style.display = 'block';
     this.renderer.domElement.style.width = '100%';
     this.renderer.domElement.style.height = '100%';
@@ -1987,30 +1965,26 @@ export class HighwayEngine {
     this.finishLineGroup.visible = false;
     this.scene.add(this.finishLineGroup);
 
-    // Pre-allocate 3 Police Interceptor Units for Police Pursuit Mode
-    const policeRoles: Array<'chaser' | 'flanker' | 'roadblock'> = [
-      'chaser',
-      'flanker',
-      'roadblock',
+    // Pre-warm kind-only Traffic Pool once at startup (8 Sedan, 6 SUV, 4 Truck)
+    // so zero traffic vehicles are ever allocated during gameplay (color swaps in O(1))
+    const trafficWarmPalette = [
+      0xf8fafc, 0x334155, 0x991b1b, 0x1e40af, 0x71717a, 0xd97706, 0x065f46,
     ];
-    for (let i = 0; i < 3; i++) {
-      const rig = createPoliceCarRig(
-        this.textures.contactShadowMap,
-        this.isSoftwareGl,
-      );
-      rig.root.visible = false;
-      this.scene.add(rig.root);
-      this.policeUnits.push({
-        rig,
-        active: false,
-        s: -200,
-        lateral: 0,
-        targetLateral: 0,
-        speedMs: 0,
-        role: policeRoles[i],
-        laneBias: i === 1 ? 1 : -1,
-        hitCooldown: 0,
-      });
+    const warmPlan: Array<[TrafficKind, number]> = [
+      ['sedan', 8],
+      ['suv', 6],
+      ['truck', 4],
+    ];
+    for (const [kind, count] of warmPlan) {
+      for (let i = 0; i < count; i++) {
+        const rig = this.trafficPool.createVehicle(
+          kind,
+          trafficWarmPalette[i % trafficWarmPalette.length],
+        );
+        rig.root.visible = false;
+        this.trafficGroup.add(rig.root);
+        this.trafficRecyclePool[kind].push(rig);
+      }
     }
 
     try {
@@ -2043,9 +2017,17 @@ export class HighwayEngine {
     window.addEventListener('pagehide', this.handlePageHide);
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
 
-    // Skip synchronous full-scene shader precompilation on mobile & software GL so startup never stalls
-    if (!this.isSoftwareGl && !this.isMobileDevice) {
-      this.renderer.compile(this.scene, this.camera);
+    // Warm shaders immediately on desktop, or deferred after first menu paint on mobile to avoid mid-race GLSL compile stalls
+    if (!this.isSoftwareGl) {
+      if (!this.isMobileDevice) {
+        this.renderer.compile(this.scene, this.camera);
+      } else {
+        window.setTimeout(() => {
+          if (!this.disposed && this.phase === 'menu') {
+            this.renderer.compile(this.scene, this.camera);
+          }
+        }, 220);
+      }
     }
 
     this.lastTime = performance.now();
@@ -2084,7 +2066,7 @@ export class HighwayEngine {
     this.camera.updateProjectionMatrix();
     this.basePixelRatio = this.isSoftwareGl
       ? 1
-      : Math.min(window.devicePixelRatio || 1, this.isMobileDevice ? 2.0 : 1.75);
+      : Math.min(window.devicePixelRatio || 1, 1.75);
     const dprMult = this.perfTier === 0 ? 1 : this.perfTier === 1 ? 0.9 : 0.8;
     const minDpr = this.isMobileDevice
       ? Math.min(this.basePixelRatio, 1.5)
@@ -3245,14 +3227,7 @@ export class HighwayEngine {
     }
 
     // Reset mode failure pressure on revive
-    this.bustedProgress = 0;
     this.gameOverReason = 'crash';
-    for (const pu of this.policeUnits) {
-      if (pu.active && Math.abs(pu.s - this.playerS) < 60) {
-        pu.s = this.playerS - 55;
-        pu.hitCooldown = 1.5;
-      }
-    }
     if (this.gameMode === 'timeattack') {
       this.timeLeftSec = Math.max(this.timeLeftSec, 18);
     } else if (this.gameMode === 'bomb') {
@@ -3994,7 +3969,6 @@ export class HighwayEngine {
     this.rentedCarModel = null;
     this.phase = 'garage';
     this.audio.updateEngine(0, 0, false);
-    this.audio.updatePoliceSiren(0, 0, false);
     this.audio.pauseMusic();
     this.audio.setRainActive(false);
     this.road.group.visible = false;
@@ -4004,10 +3978,6 @@ export class HighwayEngine {
     this.finishLineGroup.visible = false;
     for (const tv of this.traffic) {
       tv.rig.root.visible = false;
-    }
-    for (const pu of this.policeUnits) {
-      pu.rig.root.visible = false;
-      pu.rig.updateSirenLights(0, false);
     }
     this.garageGroup.visible = true;
     this.sparksMesh.count = 0;
@@ -4192,12 +4162,7 @@ export class HighwayEngine {
     }
     this.activeCareerLevel = level;
     setForcedBiome(level.biome);
-    this.gameMode =
-      level.roadRule === 'twoway'
-        ? 'twoway'
-        : level.roadRule === 'pursuit'
-          ? 'pursuit'
-          : 'endless';
+    this.gameMode = level.roadRule === 'twoway' ? 'twoway' : 'endless';
     this.atmosphereId = level.atmosphere;
     this.careerElapsedSec = 0;
     this.careerPeakSpeedKmh = 0;
@@ -4313,7 +4278,6 @@ export class HighwayEngine {
       }
       this.flushDeferredSaves(true);
       this.audio.updateEngine(0, 0, false);
-      this.audio.updatePoliceSiren(0, 0, false);
       this.audio.pauseMusic();
       this.audio.setRainActive(false);
       this.callbacks.onPhaseChange('paused');
@@ -4370,7 +4334,6 @@ export class HighwayEngine {
     this.phase = 'menu';
     this.resetWorld();
     this.audio.updateEngine(0, 0, false);
-    this.audio.updatePoliceSiren(0, 0, false);
     this.audio.pauseMusic();
     this.audio.setRainActive(false);
     this.callbacks.onPhaseChange('menu');
@@ -4497,6 +4460,7 @@ export class HighwayEngine {
     this.driftDuration = 0;
     this.driftGraceTimer = 0;
     this.totalDriftScore = 0;
+    this.missionDriftAccum = 0;
     while (this.sparks.length > 0) this.sparkPool.push(this.sparks.pop()!);
     while (this.smokes.length > 0) this.smokePool.push(this.smokes.pop()!);
     while (this.damageSmokes.length > 0) {
@@ -4528,16 +4492,8 @@ export class HighwayEngine {
     this.damageRegenDelay = 0;
     this.reviveInvulnTimer = 0;
 
-    // Reset Police Pursuit & Game Modes State
+    // Reset Game Modes State
     this.gameOverReason = 'crash';
-    this.policeHeat = 0;
-    this.policeHeatScore = 0;
-    this.policeProximity = 0;
-    this.bustedProgress = 0;
-    this.evadeProgress = 0;
-    this.policeEvadedCount = 0;
-    this.policeSirenClock = 0;
-    this.policeWaveCooldown = 0;
     this.inOncomingLane = false;
     this.timeLeftSec = 45;
     this.nextCheckpointMeters = 750;
@@ -4548,15 +4504,6 @@ export class HighwayEngine {
     this.bombGraceTimer = 3.2;
     this.bombFuseTimer = 5.0;
     this.bombBeepAccum = 0;
-    for (const pu of this.policeUnits) {
-      pu.active = false;
-      pu.s = -200;
-      pu.speedMs = 0;
-      pu.hitCooldown = 0;
-      pu.rig.root.visible = false;
-      pu.rig.updateSirenLights(0, false);
-    }
-    this.audio.updatePoliceSiren(0, 0, false);
 
     this.sparksMesh.count = 0;
     this.smokeMesh.count = 0;
@@ -5320,10 +5267,10 @@ export class HighwayEngine {
   }
 
   private acquireTrafficRig(kind: TrafficKind, colorHex: number): TrafficRig {
-    const key = `${kind}:${colorHex}`;
-    const bucket = this.trafficRecyclePool.get(key);
-    if (bucket && bucket.length > 0) {
+    const bucket = this.trafficRecyclePool[kind];
+    if (bucket.length > 0) {
       const recycled = bucket.pop()!;
+      this.trafficPool.setVehicleColor(recycled, colorHex);
       recycled.root.visible = true;
       return recycled;
     }
@@ -5334,13 +5281,8 @@ export class HighwayEngine {
 
   private releaseTrafficRig(tv: TrafficVehicle): void {
     tv.rig.root.visible = false;
-    const key = `${tv.rig.kind}:${tv.colorHex}`;
-    let bucket = this.trafficRecyclePool.get(key);
-    if (!bucket) {
-      bucket = [];
-      this.trafficRecyclePool.set(key, bucket);
-    }
-    if (bucket.length < 8) {
+    const bucket = this.trafficRecyclePool[tv.rig.kind];
+    if (bucket.length < 16) {
       bucket.push(tv.rig);
     } else {
       this.trafficGroup.remove(tv.rig.root);
@@ -5634,17 +5576,20 @@ export class HighwayEngine {
     const rawFrameMs = now - this.lastTime;
     this.lastTime = now;
 
-    // Smooth cold-start & uneven mobile rAF frame deltas so the car never stutters or vibrates
-    const clampedRawDt = Math.min(0.04, Math.max(0.004, rawFrameMs / 1000));
+    // 120Hz-native frame pacing: support 2.5ms..36ms (up to 400Hz) with zero 60Hz EMA rubber-banding;
+    // only damp isolated single-frame outlier spikes (> 2.2x rolling average).
+    const clampedRawDt = Math.min(0.036, Math.max(0.0025, rawFrameMs / 1000));
     let dt: number;
-    if (this.startupFrameCount < 4) {
+    if (this.startupFrameCount < 3) {
       this.startupFrameCount++;
-      this.smoothedDt = 1 / 60;
-      dt = 1 / 60;
+      this.smoothedDt = clampedRawDt;
+      dt = clampedRawDt;
+    } else if (clampedRawDt > this.smoothedDt * 2.2 && clampedRawDt > 0.022) {
+      dt = Math.min(0.034, this.smoothedDt * 1.45);
+      this.smoothedDt = this.smoothedDt * 0.85 + clampedRawDt * 0.15;
     } else {
-      const dtBlend = this.isMobileDevice ? 0.3 : 0.45;
-      this.smoothedDt = this.smoothedDt * (1 - dtBlend) + clampedRawDt * dtBlend;
-      dt = Math.min(0.038, Math.max(0.004, this.smoothedDt));
+      this.smoothedDt = this.smoothedDt * 0.88 + clampedRawDt * 0.12;
+      dt = clampedRawDt;
     }
 
     // Keep native HiDPI resolution & full particle density locked to avoid mid-run WebGL backbuffer resize stalls.
@@ -5681,7 +5626,6 @@ export class HighwayEngine {
       if (this.resumeCountdownTimer > 0) {
         this.resumeCountdownTimer = Math.max(0, this.resumeCountdownTimer - dt);
         this.audio.updateEngine(0.24, 0.24, false);
-        this.audio.updatePoliceSiren(0, 0, false);
         this.stepRain(dt * 0.25);
         if (this.resumeCountdownTimer > 0) {
           const step = Math.min(
@@ -5853,6 +5797,15 @@ export class HighwayEngine {
       8,
       dt,
     );
+
+    if (
+      this.isMobileDevice &&
+      this.renderer.shadowMap.enabled &&
+      now - this.lastShadowUpdateMs >= 16
+    ) {
+      this.lastShadowUpdateMs = now;
+      this.renderer.shadowMap.needsUpdate = true;
+    }
 
     if (
       this.composer &&
@@ -6449,8 +6402,7 @@ export class HighwayEngine {
       score: this.score,
       nearMissCount: this.nearMissCount,
       peakSpeedKmh: Math.max(this.careerPeakSpeedKmh, this.speedMs * 3.6),
-      driftPoints:
-        this.totalDriftScore + Math.round(this.driftScore * this.driftMultiplier),
+      driftPoints: Math.round(this.totalDriftScore),
       runGold: this.runGold,
       cleanCurvesCount: this.cleanCurvesCount,
       integrityPercent: Math.round((this.integrity / maxInt) * 100),
@@ -6516,17 +6468,14 @@ export class HighwayEngine {
     const level = this.activeCareerLevel;
     if (!level) return;
 
-    if (this.driftScore > 0) {
-      const banked = Math.round(this.driftScore * this.driftMultiplier);
-      if (banked >= 25) {
-        this.score += banked;
-        this.totalDriftScore += banked;
-      }
-      this.driftScore = 0;
-      this.driftMultiplier = 1;
-      this.driftDuration = 0;
-      this.driftGraceTimer = 0;
+    if (this.missionDriftAccum >= 1) {
+      this.missions.recordDelta('driftPoints', Math.floor(this.missionDriftAccum));
+      this.missionDriftAccum = 0;
     }
+    this.driftScore = 0;
+    this.driftMultiplier = 1;
+    this.driftDuration = 0;
+    this.driftGraceTimer = 0;
 
     const metrics = this.collectCareerMetrics();
     const outcome = this.careerManager.recordVictory(level, metrics);
@@ -6574,7 +6523,6 @@ export class HighwayEngine {
     this.audio.playAchievementUnlock();
     this.audio.playCheckpoint();
     this.audio.updateEngine(0, 0, false);
-    this.audio.updatePoliceSiren(0, 0, false);
     this.audio.pauseMusic();
     this.emitSparks(this.playerCar.root.position, 0, 32);
 
@@ -7464,8 +7412,9 @@ export class HighwayEngine {
         2.0,
       );
       const wetDriftBonus = isAirborneDriftBoost ? 1 : 1 + roadWet * 0.22;
-      this.driftScore +=
+      const driftGain =
         145 * driftIntensity * driftSpeedFactor * wetDriftBonus * dt;
+      this.driftScore += driftGain;
 
       const { mult: nextDriftMult } = this.getDriftMultiplierState();
       if (nextDriftMult > this.driftMultiplier) {
@@ -7478,37 +7427,26 @@ export class HighwayEngine {
         this.comboTimer = Math.max(this.comboTimer, 2.0);
       }
 
-      this.score += 20 * this.combo * dt;
+      // Bank drift points continuously so straightaways can hold the streak constant without losing credit
+      const bankedDelta = driftGain * this.driftMultiplier;
+      this.score += 20 * this.combo * dt + bankedDelta;
+      this.totalDriftScore += bankedDelta;
+      this.missionDriftAccum += bankedDelta;
+      if (this.missionDriftAccum >= 120) {
+        const wholeDrift = Math.floor(this.missionDriftAccum);
+        this.missionDriftAccum -= wholeDrift;
+        this.handleMissionRewards(
+          this.missions.recordDelta('driftPoints', wholeDrift),
+        );
+      }
+
       this.nitro = Math.min(
         nitroMax,
         this.nitro + (5.5 + upgrades.nitroPower * 0.6) * dt,
       );
     } else if (this.driftScore > 0) {
-      this.driftGraceTimer -= dt;
-      if (this.driftGraceTimer <= 0) {
-        const banked = Math.round(this.driftScore * this.driftMultiplier);
-        const bankedMult = this.driftMultiplier;
-        this.driftScore = 0;
-        this.driftMultiplier = 1;
-        this.driftDuration = 0;
-        this.driftGraceTimer = 0;
-
-        if (banked >= 25) {
-          this.score += banked;
-          this.totalDriftScore += banked;
-          this.handleMissionRewards(
-            this.missions.recordDelta('driftPoints', banked),
-          );
-          if (banked >= 150) {
-            this.boostCombo(bankedMult >= 6 ? 3 : bankedMult >= 3 ? 2 : 1);
-            this.emitCallout(
-              bankedMult > 1 ? `DRİFT ×${bankedMult}` : 'DRİFT',
-              `+${banked.toLocaleString('tr-TR')}`,
-              'amber',
-            );
-          }
-        }
-      }
+      // Hold drift score & multiplier constant while driving straight (only resets on collision)
+      this.driftGraceTimer = this.driftGraceDuration;
     }
 
     // Guardrail contact (meaningful initial impact + heavy grinding drain)
@@ -7772,7 +7710,8 @@ export class HighwayEngine {
           0.85,
           2.0,
         );
-        this.driftScore += Math.round(140 * rampDriftSpeed);
+        const rampDriftGain = Math.round(140 * rampDriftSpeed);
+        this.driftScore += rampDriftGain;
         const { mult: rampNextMult } = this.getDriftMultiplierState();
         if (rampNextMult > this.driftMultiplier) {
           this.driftMultiplier = rampNextMult;
@@ -7780,6 +7719,10 @@ export class HighwayEngine {
             this.boostCombo(1);
           }
         }
+        const rampBanked = rampDriftGain * this.driftMultiplier;
+        this.score += rampBanked;
+        this.totalDriftScore += rampBanked;
+        this.missionDriftAccum += rampBanked;
 
         this.audio.playNitroIgnite();
         this.emitSparks(this.playerCar.root.position, 0, 16);
@@ -8573,7 +8516,6 @@ export class HighwayEngine {
   private updateGameModeMechanics(dt: number, speedKmh: number): boolean {
     // 1) TIME ATTACK MODE
     if (this.gameMode === 'timeattack') {
-      this.audio.updatePoliceSiren(0, 0, false);
       this.timeLeftSec = Math.max(0, this.timeLeftSec - dt);
 
       if (this.distanceMeters >= this.nextCheckpointMeters) {
@@ -8613,7 +8555,6 @@ export class HighwayEngine {
 
     // 2) SPEED BOMB MODE
     if (this.gameMode === 'bomb') {
-      this.audio.updatePoliceSiren(0, 0, false);
       this.bombMinSpeedKmh = Math.min(
         210,
         Math.round(130 + (this.distanceMeters / 120) * 2),
@@ -8622,7 +8563,7 @@ export class HighwayEngine {
         this.bombGraceTimer -= dt;
         if (this.bombGraceTimer <= 0 || speedKmh >= 134) {
           this.bombArmed = true;
-          this.audio.playPoliceAlert();
+          this.audio.playBombBeep(true);
           this.emitCallout(
             'BOMBA AKTİF!',
             `${this.bombMinSpeedKmh} km/s altına düşme!`,
@@ -8653,334 +8594,7 @@ export class HighwayEngine {
       return false;
     }
 
-    // 3) POLICE PURSUIT MODE
-    if (this.gameMode !== 'pursuit') {
-      this.audio.updatePoliceSiren(0, 0, false);
-      return false;
-    }
-
-    this.policeSirenClock += dt;
-
-    // Trigger pursuit after 85 m warm-up
-    if (this.policeHeat === 0) {
-      if (this.distanceMeters >= 85) {
-        this.policeHeat = 1;
-        this.policeHeatScore = 100;
-        this.audio.playPoliceAlert();
-        this.emitCallout('POLİS TAKİBİ!', '1★ Aranma · Durma!', 'rose');
-        this.spawnPoliceWave();
-      }
-      return false;
-    }
-
-    // Escalate Heat 1★ -> 5★ based on pursuit duration & high speed
-    this.policeHeatScore += dt * (4.2 + (speedKmh > 175 ? 2.4 : 0));
-    const desiredHeat =
-      this.policeHeatScore >= 520
-        ? 5
-        : this.policeHeatScore >= 390
-          ? 4
-          : this.policeHeatScore >= 270
-            ? 3
-            : this.policeHeatScore >= 175
-              ? 2
-              : 1;
-    if (desiredHeat > this.policeHeat) {
-      this.policeHeat = desiredHeat;
-      this.audio.playPoliceAlert();
-      this.emitCallout(
-        `ARANMA ${'★'.repeat(this.policeHeat)}`,
-        'Takviye Ekipler Yolda!',
-        'rose',
-      );
-      this.spawnPoliceWave();
-    }
-
-    if (this.policeWaveCooldown > 0) {
-      this.policeWaveCooldown -= dt;
-      if (this.policeWaveCooldown <= 0) {
-        this.spawnPoliceWave();
-      }
-    }
-
-    let nearestDist = 999;
-    let pinningPlayer = false;
-    let activeChasers = 0;
-
-    for (let idx = 0; idx < this.policeUnits.length; idx++) {
-      const pu = this.policeUnits[idx];
-      if (!pu.active) {
-        pu.rig.root.visible = false;
-        pu.rig.updateSirenLights(this.policeSirenClock, false);
-        continue;
-      }
-
-      if (pu.hitCooldown > 0) pu.hitCooldown -= dt;
-
-      if (pu.role === 'roadblock') {
-        // Roadblock cruiser rolls slowly ahead so player can weave or jump past
-        pu.speedMs = 10 + this.policeHeat * 1.4;
-        pu.s += pu.speedMs * dt;
-        if (pu.s < this.playerS - 32) {
-          // Passed roadblock cleanly -> recycle ahead later
-          pu.active = false;
-          pu.rig.root.visible = false;
-          pu.rig.updateSirenLights(this.policeSirenClock, false);
-          const pts = Math.round(180 * this.policeHeat);
-          this.score += pts;
-          this.emitCallout('BARİKAT AŞILDI!', `+${pts}`, 'cyan');
-          this.policeWaveCooldown = Math.max(this.policeWaveCooldown, 5.5);
-          continue;
-        }
-      } else {
-        activeChasers++;
-        // Chaser & Flanker pursue dynamically with rubber-banding that nitro can outrun
-        const maxPoliceMs = 53 + this.policeHeat * 4.4;
-        const desiredOffsetS = pu.role === 'chaser' ? -2.2 : 1.6;
-        const gapToSlot = this.playerS + desiredOffsetS - pu.s;
-
-        let targetSpeed = this.speedMs + THREE.MathUtils.clamp(gapToSlot * 0.85, -14, 18);
-        if (this.nitroActive) {
-          // Nitro reliably pulls away from interceptors
-          targetSpeed = Math.min(targetSpeed, this.speedMs - 8.5);
-        }
-        targetSpeed = THREE.MathUtils.clamp(targetSpeed, 14, maxPoliceMs);
-        pu.speedMs = THREE.MathUtils.lerp(pu.speedMs, targetSpeed, Math.min(1, dt * 3.8));
-        pu.s += pu.speedMs * dt;
-
-        // Lateral steering AI
-        if (pu.role === 'chaser') {
-          pu.targetLateral = THREE.MathUtils.clamp(
-            this.playerLateral,
-            -MAX_PLAYER_LATERAL + 0.4,
-            MAX_PLAYER_LATERAL - 0.4,
-          );
-        } else {
-          // Flanker tries to pull alongside in the adjacent lane to box player in
-          const sideSign = this.playerLateral >= 0 ? -1 : 1;
-          pu.targetLateral = THREE.MathUtils.clamp(
-            this.playerLateral + sideSign * 3.3,
-            -MAX_PLAYER_LATERAL + 0.4,
-            MAX_PLAYER_LATERAL - 0.4,
-          );
-        }
-
-        // Avoid smashing directly into civil traffic in front of the police unit
-        for (const tv of this.traffic) {
-          const tvGap = tv.s - pu.s;
-          if (tvGap > -1 && tvGap < 18 && Math.abs(tv.lateral - pu.lateral) < 2.2) {
-            pu.targetLateral = tv.lateral > 0 ? -4.1 : 4.1;
-            break;
-          }
-        }
-
-        pu.lateral = THREE.MathUtils.lerp(
-          pu.lateral,
-          pu.targetLateral,
-          Math.min(1, dt * (2.6 + this.policeHeat * 0.22)),
-        );
-
-        // If fallen far behind (> 125m), reposition for next wave unless player is actively evading
-        if (this.playerS - pu.s > 130 && this.evadeProgress <= 0.05) {
-          pu.s = this.playerS - 46;
-        }
-      }
-
-      // Position police rig on road spline
-      if (this.road.sampleAtS(pu.s, _policeSample)) {
-        _vecC.copy(_policeSample.tangent).negate();
-        _matBasis.makeBasis(
-          _policeSample.right,
-          _policeSample.normal,
-          _vecC,
-        );
-        _quatA.setFromRotationMatrix(_matBasis);
-
-        pu.rig.root.position
-          .copy(_policeSample.pos)
-          .addScaledVector(_policeSample.right, pu.lateral)
-          .addScaledVector(_policeSample.normal, 0.02);
-        pu.rig.root.quaternion.copy(_quatA);
-        pu.rig.root.visible = true;
-        pu.rig.updateSirenLights(this.policeSirenClock + idx * 0.27, true);
-
-        const spinDelta = (pu.speedMs / 0.36) * dt;
-        for (const wm of pu.rig.wheelMeshes) {
-          wm.rotation.x -= spinDelta;
-        }
-      } else {
-        pu.rig.root.visible = false;
-      }
-
-      const dsPolice = pu.s - this.playerS;
-      const dlPolice = Math.abs(pu.lateral - this.playerLateral);
-      const dist = Math.hypot(dsPolice, dlPolice);
-      if (dist < nearestDist) nearestDist = dist;
-
-      // Pinning / Busted proximity check
-      if (Math.abs(dsPolice) < 8.4 && dlPolice < 3.05 && speedKmh < 88) {
-        pinningPlayer = true;
-      }
-
-      // Collision check with police interceptor
-      const halfSumLen = (4.15 + pu.rig.length) * 0.45;
-      const halfSumWidth = (1.76 + pu.rig.width) * 0.43;
-      if (
-        pu.rig.root.visible &&
-        pu.hitCooldown <= 0 &&
-        this.playerHeight < 0.72 &&
-        Math.abs(dsPolice) < halfSumLen &&
-        dlPolice < halfSumWidth
-      ) {
-        if (this.rampageTimer > 0) {
-          this.spawnCarExplosion(pu.rig.root.position, 0x1d4ed8);
-          pu.active = false;
-          pu.s = -200;
-          pu.rig.root.visible = false;
-          pu.rig.updateSirenLights(0, false);
-          this.boostCombo(1);
-          const pts = Math.round(750 * this.combo * this.getActiveModeMultiplier());
-          this.score += pts;
-          this.nitro = Math.min(this.getActiveNitroMax(), this.nitro + 16);
-          this.cameraShake = Math.max(this.cameraShake, 0.75);
-          this.callbacks.onImpact?.(0.8);
-          this.emitCallout('POLİS PATLATILDI!', `+${pts.toLocaleString('tr-TR')}`, 'amber');
-          continue;
-        }
-        if (this.reviveInvulnTimer > 0) {
-          continue;
-        }
-        if (pu.role === 'roadblock' && halfSumWidth - dlPolice >= 0.82) {
-          this.triggerCrash('crash');
-          return true;
-        }
-        pu.hitCooldown = 0.85;
-        this.guardrailHitCooldown = Math.max(this.guardrailHitCooldown, 0.35);
-        this.damageRegenDelay = 3.5;
-        const pushSign = Math.sign(this.playerLateral - pu.lateral) || 1;
-        this.playerLateral = THREE.MathUtils.clamp(
-          this.playerLateral + pushSign * 0.78,
-          -MAX_PLAYER_LATERAL + 0.25,
-          MAX_PLAYER_LATERAL - 0.25,
-        );
-        this.targetLateral = this.playerLateral;
-        pu.lateral = THREE.MathUtils.clamp(
-          pu.lateral - pushSign * 1.25,
-          -MAX_PLAYER_LATERAL + 0.3,
-          MAX_PLAYER_LATERAL - 0.3,
-        );
-        this.speedMs = Math.max(15, this.speedMs * 0.78);
-        this.integrity = Math.max(0, this.integrity - 22);
-        this.cameraShake = 0.8;
-        this.audio.playScrape();
-        this.callbacks.onImpact?.(0.7);
-        this.emitSparks(this.playerCar.root.position, -pushSign, 24);
-        this.emitDamageSmoke(this.playerCar.root.position, 8, true);
-        const dmgPct = Math.max(
-          1,
-          Math.round((22 / this.carSpec.maxIntegrity) * 100),
-        );
-        this.emitCallout('POLİS TEMASI!', `-${dmgPct}% Gövde`, 'rose');
-        if (this.integrity <= 0) {
-          this.triggerCrash('crash');
-          return true;
-        }
-      }
-    }
-
-    // Ensure at least one chaser stays dispatched when wave cooldown is clear
-    if (activeChasers === 0 && this.policeWaveCooldown <= 0) {
-      this.spawnPoliceWave();
-    }
-
-    // Update proximity & siren audio
-    this.policeProximity = THREE.MathUtils.clamp(1 - nearestDist / 85, 0, 1);
-    this.audio.updatePoliceSiren(
-      this.policeProximity,
-      this.policeHeat,
-      true,
-      dt,
-    );
-
-    // Busted meter logic
-    if (pinningPlayer) {
-      this.bustedProgress = Math.min(1, this.bustedProgress + dt * 0.3);
-      if (this.bustedProgress >= 1) {
-        this.triggerCrash('busted');
-        return true;
-      }
-    } else {
-      this.bustedProgress = Math.max(0, this.bustedProgress - dt * 0.42);
-    }
-
-    // Evade bonus logic: high speed & opening gap > 48m from active pursuers
-    if (activeChasers > 0 && nearestDist > 48 && (speedKmh > 185 || this.nitroActive)) {
-      this.evadeProgress = Math.min(1, this.evadeProgress + dt * 0.28);
-      if (this.evadeProgress >= 1) {
-        this.evadeProgress = 0;
-        this.policeEvadedCount++;
-        const evadeGold = 15 * this.policeHeat;
-        const evadePts = Math.round(450 * this.policeHeat * this.combo);
-        this.score += evadePts;
-        this.runGold += evadeGold;
-        this.totalGold += evadeGold;
-        this.nitro = Math.min(this.getActiveNitroMax(), this.nitro + 22);
-        this.markProgressionDirty();
-        this.audio.playCheckpoint();
-        this.emitCallout(
-          'POLİS ATLATILDI!',
-          `+${evadePts} · +${evadeGold} Altın`,
-          'emerald',
-        );
-        // Temporarily clear current wave then dispatch next stronger wave
-        for (const pu of this.policeUnits) {
-          pu.active = false;
-          pu.rig.root.visible = false;
-          pu.rig.updateSirenLights(0, false);
-        }
-        this.policeWaveCooldown = 3.2;
-      }
-    } else {
-      this.evadeProgress = Math.max(0, this.evadeProgress - dt * 0.14);
-    }
-
     return false;
-  }
-
-  private spawnPoliceWave(): void {
-    const chaser = this.policeUnits[0];
-    if (chaser && !chaser.active) {
-      chaser.active = true;
-      chaser.role = 'chaser';
-      chaser.s = this.playerS - 36;
-      chaser.lateral = this.playerLateral;
-      chaser.targetLateral = this.playerLateral;
-      chaser.speedMs = Math.max(36, this.speedMs + 10);
-      chaser.hitCooldown = 0.5;
-    }
-
-    const flanker = this.policeUnits[1];
-    if (flanker && this.policeHeat >= 2 && !flanker.active) {
-      flanker.active = true;
-      flanker.role = 'flanker';
-      flanker.s = this.playerS - 54;
-      flanker.lateral = this.playerLateral >= 0 ? -4.1 : 4.1;
-      flanker.targetLateral = flanker.lateral;
-      flanker.speedMs = Math.max(38, this.speedMs + 12);
-      flanker.hitCooldown = 0.5;
-    }
-
-    const roadblock = this.policeUnits[2];
-    if (roadblock && this.policeHeat >= 3 && !roadblock.active) {
-      const laneIdx = Math.floor(Math.random() * LANE_CENTERS.length);
-      roadblock.active = true;
-      roadblock.role = 'roadblock';
-      roadblock.s = this.playerS + 190;
-      roadblock.lateral = LANE_CENTERS[laneIdx];
-      roadblock.targetLateral = LANE_CENTERS[laneIdx];
-      roadblock.speedMs = 11;
-      roadblock.hitCooldown = 0.5;
-    }
   }
 
   private updateTraffic(dt: number, checkCollisions: boolean): boolean {
@@ -9204,9 +8818,6 @@ export class HighwayEngine {
             this.getActiveNitroMax(),
             this.nitro + (isOncomingMiss ? 20 : 14),
           );
-          if (this.gameMode === 'pursuit' && this.policeHeat > 0) {
-            this.policeHeatScore += 14;
-          }
           this.audio.playNearMiss();
           this.emitCallout(
             isOncomingMiss
@@ -9722,12 +9333,12 @@ export class HighwayEngine {
     this.driftMultiplier = 1;
     this.driftDuration = 0;
     this.driftGraceTimer = 0;
-    this.cameraShake = reason === 'timeout' || reason === 'busted' ? 0.45 : 1.25;
+    this.cameraShake = reason === 'timeout' ? 0.45 : 1.25;
 
     this.road.sampleAtS(this.playerS, _roadSample);
     this.crashElapsed = 0;
     this.crashSparkTimer = 0;
-    const softStop = reason === 'timeout' || reason === 'busted';
+    const softStop = reason === 'timeout';
     this.crashSlideSpeed = softStop
       ? Math.max(8, this.speedMs * 0.45)
       : Math.max(12, this.speedMs * 0.58);
@@ -9757,15 +9368,12 @@ export class HighwayEngine {
       0.048;
     this.cockpit.root.visible = false;
     this.playerCar.root.visible = true;
-    if (reason === 'busted') {
-      this.audio.playPoliceAlert();
-    } else if (reason === 'timeout') {
+    if (reason === 'timeout') {
       this.audio.playBombBeep(true);
     } else {
       this.audio.playCrash();
     }
     this.audio.updateEngine(0, 0, false);
-    this.audio.updatePoliceSiren(0, 0, false);
     this.audio.pauseMusic();
     this.callbacks.onImpact?.(softStop ? 0.5 : 1.0);
     if (!softStop) {
@@ -9791,6 +9399,10 @@ export class HighwayEngine {
     }
     this.commitRunXp();
 
+    if (this.missionDriftAccum >= 1) {
+      this.missions.recordDelta('driftPoints', Math.floor(this.missionDriftAccum));
+      this.missionDriftAccum = 0;
+    }
     if (this.missionDistAccum >= 1) {
       this.missions.recordDelta('distance', Math.floor(this.missionDistAccum));
       this.missionDistAccum = 0;
@@ -9841,11 +9453,6 @@ export class HighwayEngine {
       this.camera.position.sub(offset);
       for (const tv of this.traffic) {
         tv.rig.root.position.sub(offset);
-      }
-      for (const pu of this.policeUnits) {
-        if (pu.active) {
-          pu.rig.root.position.sub(offset);
-        }
       }
       for (const sp of this.sparks) {
         sp.pos.sub(offset);
@@ -9961,16 +9568,9 @@ export class HighwayEngine {
       driftScore: Math.round(this.driftScore),
       driftMultiplier: this.driftMultiplier,
       driftProgress,
-      driftGraceRatio:
-        this.driftScore > 0 && !this.drifting
-          ? THREE.MathUtils.clamp(
-              this.driftGraceTimer / this.driftGraceDuration,
-              0,
-              1,
-            )
-          : 1,
+      driftGraceRatio: 1,
       driftAngleDeg: Math.round(Math.min(42, Math.abs(this.driftSlip) * 175)),
-      driftTotalRun: this.totalDriftScore,
+      driftTotalRun: Math.round(this.totalDriftScore),
       goldCoins: this.totalGold,
       runGold: this.runGold,
       magnetTimer: this.magnetTimer,
@@ -9994,15 +9594,6 @@ export class HighwayEngine {
       onSlick: this.slickTimer > 0,
       gameMode: this.gameMode,
       gameOverReason: this.gameOverReason,
-      policeHeat: this.policeHeat,
-      policeActiveCount: this.policeUnits.reduce(
-        (acc, pu) => acc + (pu.active ? 1 : 0),
-        0,
-      ),
-      policeProximity: this.policeProximity,
-      bustedProgress: this.bustedProgress,
-      evadeProgress: this.evadeProgress,
-      policeEvadedCount: this.policeEvadedCount,
       inOncomingLane: this.inOncomingLane,
       timeLeftSec: this.timeLeftSec,
       nextCheckpointMeters: Math.max(
@@ -10052,10 +9643,9 @@ export class HighwayEngine {
     this.clearGarageCarCache();
     this.playerCar.dispose();
     this.cockpit.dispose();
-    for (const pu of this.policeUnits) {
-      pu.rig.dispose();
-    }
-    this.trafficRecyclePool.clear();
+    this.trafficRecyclePool.sedan.length = 0;
+    this.trafficRecyclePool.suv.length = 0;
+    this.trafficRecyclePool.truck.length = 0;
     this.trafficPool.dispose();
     this.textures.dispose();
     this.sparksMesh.geometry.dispose();

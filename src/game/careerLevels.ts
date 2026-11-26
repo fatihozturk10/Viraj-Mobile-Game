@@ -1,7 +1,7 @@
 import { AtmosphereId, BiomeId } from '../types/game';
 import { CrateTierId } from '../services/storeCatalog';
 
-export type CareerRoadRule = 'classic' | 'twoway' | 'pursuit';
+export type CareerRoadRule = 'classic' | 'twoway';
 
 export type CareerObjectiveKind =
   | 'nearMiss'
@@ -729,24 +729,21 @@ function buildCareerLevels(): CareerLevelSpec[] {
             : 'mist';
     }
 
-    // Introduce Two-Way early (Lv.6+) and Police Pursuit early (Lv.10+) for high intensity
+    // Introduce Two-Way early (Lv.6+) and ramp up high-intensity two-way stages later
     let roadRule: CareerRoadRule = 'classic';
     if (
       id >= 6 &&
-      (id % 4 === 2 || (chapterIndex === 1 && localIdx % 3 === 1))
+      (id % 4 === 2 ||
+        (chapterIndex === 1 && localIdx % 3 === 1) ||
+        (id >= 10 &&
+          (id % 10 === 0 ||
+            (chapterIndex >= 2 && localIdx % 5 === 3) ||
+            (chapterIndex === 3 && localIdx % 4 === 3))))
     ) {
       roadRule = 'twoway';
     }
-    if (
-      id >= 10 &&
-      (id % 10 === 0 ||
-        (chapterIndex >= 2 && localIdx % 5 === 3) ||
-        (chapterIndex === 3 && localIdx % 4 === 3))
-    ) {
-      roadRule = 'pursuit';
-    }
     if (id === 100) {
-      roadRule = 'pursuit';
+      roadRule = 'twoway';
       atmosphere = 'rainy';
     }
 

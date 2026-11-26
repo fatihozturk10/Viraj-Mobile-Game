@@ -157,11 +157,8 @@ export const DriftTelemetryHud: React.FC<DriftTelemetryHudProps> = React.memo(
       Math.max(1, Math.round(driftMultiplier)),
     );
     const isMax = clampedMult >= MAX_DRIFT_MULT;
-    const targetRatio = drifting
-      ? isMax
-        ? 1
-        : clamp01(driftProgress)
-      : clamp01(driftGraceRatio);
+    // Hold bar steady at current tier progress when driving straight (never drain)
+    const targetRatio = isMax ? 1 : clamp01(driftProgress);
     const palette = getDriftTierPalette(clampedMult, drifting);
 
     // Direct DOM refs driven at native 60/120fps (decoupled from 10-15Hz React telemetry)

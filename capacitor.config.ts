@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.viraj.sonsuzotoyol',
-  appName: 'Viraj — Sonsuz Otoyol',
+  appName: 'Viraj Drift',
   webDir: 'dist',
   backgroundColor: '#09090b',
   server: {

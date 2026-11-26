@@ -15,9 +15,9 @@ export type GarageCameraFocus =
   | 'steering'
   | 'mirror';
 
-export type GameModeId = 'endless' | 'pursuit' | 'twoway' | 'timeattack' | 'bomb';
+export type GameModeId = 'endless' | 'twoway' | 'timeattack' | 'bomb';
 
-export type GameOverReason = 'crash' | 'busted' | 'timeout' | 'bomb' | 'career_win';
+export type GameOverReason = 'crash' | 'timeout' | 'bomb' | 'career_win';
 
 export interface GameModeSpec {
   id: GameModeId;
@@ -5847,12 +5847,6 @@ export interface HudStats {
   onSlick: boolean;
   gameMode: GameModeId;
   gameOverReason: GameOverReason;
-  policeHeat: number; // 0 - 5
-  policeActiveCount: number;
-  policeProximity: number; // 0 - 1
-  bustedProgress: number; // 0 - 1
-  evadeProgress: number; // 0 - 1
-  policeEvadedCount: number;
   inOncomingLane: boolean;
   timeLeftSec: number;
   nextCheckpointMeters: number;

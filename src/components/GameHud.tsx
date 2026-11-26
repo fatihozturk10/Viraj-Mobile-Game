@@ -38,7 +38,6 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
-  Siren,
   Smartphone,
   Snowflake,
   Star,
@@ -468,22 +467,6 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
 
   return (
     <div className="pointer-events-none fixed inset-0 z-10 flex flex-col justify-between">
-      {/* Subtle Police Siren Split Edge Glow during active chase */}
-      {isPlaying &&
-        stats.gameMode === 'pursuit' &&
-        stats.policeHeat > 0 &&
-        stats.policeProximity > 0.08 && (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none fixed inset-0 -z-10 transition-opacity duration-150"
-            style={{
-              opacity: Math.min(0.65, stats.policeProximity * 0.62),
-              background:
-                'linear-gradient(90deg, rgba(239,68,68,0.34) 0%, rgba(239,68,68,0) 18%, rgba(37,99,235,0) 82%, rgba(37,99,235,0.36) 100%)',
-            }}
-          />
-        )}
-
       {/* Animated Geometric Triangle Edge Vignette during Lightning / Rampage Mode */}
       {isPlaying && stats.rampageTimer > 0 && (() => {
         const ending = stats.rampageTimer <= 3;
@@ -933,70 +916,6 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                       </span>
                     </div>
                   )}
-              </div>
-            )}
-
-            {/* PURSUIT MODE LIVE HUD */}
-            {stats.gameMode === 'pursuit' && (
-              <div className="flex flex-col items-center gap-1">
-                <div className="flex items-center gap-2 rounded-xl border border-blue-400/45 bg-zinc-950/90 px-2.5 py-1 shadow-lg sm:px-3 sm:py-1.5">
-                  <Siren className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-rose-400 shrink-0" />
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((starIdx) => (
-                      <Star
-                        key={starIdx}
-                        className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${
-                          starIdx <= stats.policeHeat
-                            ? 'fill-amber-400 text-amber-400'
-                            : 'text-zinc-600'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="font-mono-num text-[11px] font-bold text-sky-300 whitespace-nowrap">
-                    {stats.policeHeat === 0
-                      ? 'Devriye Yakın'
-                      : `${stats.policeActiveCount} Ekip`}
-                  </span>
-                </div>
-
-                {stats.bustedProgress > 0.02 && (
-                  <div className="flex w-44 flex-col gap-0.5 rounded-lg border border-rose-500/70 bg-zinc-950/92 px-2.5 py-1">
-                    <div className="flex items-center justify-between text-[10px] font-extrabold tracking-wide text-rose-400">
-                      <span>YAKALANIYORSUN!</span>
-                      <span className="font-mono-num">
-                        %{Math.round(stats.bustedProgress * 100)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
-                      <div
-                        className="h-full bg-rose-500 transition-[width] duration-75"
-                        style={{
-                          width: `${Math.round(stats.bustedProgress * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {stats.bustedProgress <= 0.02 && stats.evadeProgress > 0.05 && (
-                  <div className="flex w-44 flex-col gap-0.5 rounded-lg border border-emerald-400/55 bg-zinc-950/92 px-2.5 py-1">
-                    <div className="flex items-center justify-between text-[10px] font-extrabold tracking-wide text-emerald-300">
-                      <span>İZ KAYBETTİRME</span>
-                      <span className="font-mono-num">
-                        %{Math.round(stats.evadeProgress * 100)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
-                      <div
-                        className="h-full bg-emerald-400 transition-[width] duration-75"
-                        style={{
-                          width: `${Math.round(stats.evadeProgress * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -1759,13 +1678,11 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
           const runModeSpec =
             GAME_MODES.find((m) => m.id === stats.gameMode) || GAME_MODES[0];
           const gameOverHeadline =
-            stats.gameOverReason === 'busted'
-              ? 'Yakalandın · Polis Takibi'
-              : stats.gameOverReason === 'timeout'
-                ? 'Süre Doldu · Zamana Karşı'
-                : stats.gameOverReason === 'bomb'
-                  ? 'Bomba Patladı · Hız Bombası'
-                  : `Kaza · ${runModeSpec.label}`;
+            stats.gameOverReason === 'timeout'
+              ? 'Süre Doldu · Zamana Karşı'
+              : stats.gameOverReason === 'bomb'
+                ? 'Bomba Patladı · Hız Bombası'
+                : `Kaza · ${runModeSpec.label}`;
 
           return (
             <div
@@ -1855,18 +1772,14 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                   </div>
                   <div>
                     <div className="text-xs text-zinc-400">
-                      {stats.gameMode === 'pursuit'
-                        ? 'Atlatılan Polis'
-                        : stats.gameMode === 'timeattack'
-                          ? 'Kontrol Noktası'
-                          : 'Yakın Geçiş'}
+                      {stats.gameMode === 'timeattack'
+                        ? 'Kontrol Noktası'
+                        : 'Yakın Geçiş'}
                     </div>
                     <div className="mt-1 font-mono-num text-base font-bold text-emerald-300">
-                      {stats.gameMode === 'pursuit'
-                        ? `${stats.policeEvadedCount} (${stats.policeHeat}★)`
-                        : stats.gameMode === 'timeattack'
-                          ? stats.checkpointsCleared
-                          : stats.nearMissCount}
+                      {stats.gameMode === 'timeattack'
+                        ? stats.checkpointsCleared
+                        : stats.nearMissCount}
                     </div>
                   </div>
                 </div>

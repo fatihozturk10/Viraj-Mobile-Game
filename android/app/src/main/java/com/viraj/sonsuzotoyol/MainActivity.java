@@ -2,8 +2,10 @@ package com.viraj.sonsuzotoyol;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.WebView;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -20,7 +22,41 @@ public class MainActivity extends BridgeActivity {
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
             getWindow().setAttributes(lp);
         }
+        requestHighRefreshRate();
+        if (this.bridge != null && this.bridge.getWebView() != null) {
+            WebView webView = this.bridge.getWebView();
+            webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        }
         applyImmersiveFullscreen();
+    }
+
+    private void requestHighRefreshRate() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
+        try {
+            Display display =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                    ? getDisplay()
+                    : getWindowManager().getDefaultDisplay();
+            if (display == null) return;
+            Display.Mode current = display.getMode();
+            Display.Mode best = current;
+            for (Display.Mode mode : display.getSupportedModes()) {
+                if (
+                    mode.getPhysicalWidth() == current.getPhysicalWidth() &&
+                    mode.getPhysicalHeight() == current.getPhysicalHeight() &&
+                    mode.getRefreshRate() > best.getRefreshRate()
+                ) {
+                    best = mode;
+                }
+            }
+            if (best != null && best.getModeId() != current.getModeId()) {
+                WindowManager.LayoutParams lp = getWindow().getAttributes();
+                lp.preferredDisplayModeId = best.getModeId();
+                getWindow().setAttributes(lp);
+            }
+        } catch (Exception ignored) {
+            // Fall back to system default refresh rate
+        }
     }
 
     @Override
