@@ -1,5 +1,7 @@
 import {
   AchievementCategory,
+  AchievementIconId,
+  AchievementTier,
   AchievementView,
   ActiveMissionView,
   MissionsSnapshot,
@@ -8,11 +10,15 @@ import {
 export type MetricType =
   | 'distance'
   | 'nearMiss'
+  | 'highSpeedNearMiss'
   | 'cleanCurve'
   | 'gold'
   | 'nitroPickup'
   | 'repairPickup'
   | 'magnetPickup'
+  | 'rampageSmash'
+  | 'noHitDistance'
+  | 'cockpitDistance'
   | 'maxSpeedKmh'
   | 'maxCombo'
   | 'driftPoints'
@@ -52,6 +58,8 @@ interface ActiveMissionState {
 interface AchievementTemplate {
   id: string;
   category: AchievementCategory;
+  tier: AchievementTier;
+  icon: AchievementIconId;
   metric: MetricType;
   mode: 'cumulative' | 'peak' | 'singleRun';
   title: string;
@@ -209,10 +217,134 @@ function nextSeededRand(state: { s: number }): number {
 }
 
 const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
-  // ── 1. HIZ & MESAFE (8) ────────────────────────────────────────────────
+  // ── 1. ZORLU & EFSANEVİ MEYDAN OKUMALAR (10) ───────────────────────────
+  {
+    id: 'ach_nohit_3000',
+    category: 'extreme',
+    tier: 'gold',
+    icon: 'shield',
+    metric: 'noHitDistance',
+    mode: 'singleRun',
+    title: 'Dokunulmaz',
+    description: 'Tek sürüşte hiç hasar almadan 3.000 m git',
+    target: 3000,
+    rewardGold: 140,
+  },
+  {
+    id: 'ach_nohit_7500',
+    category: 'extreme',
+    tier: 'diamond',
+    icon: 'shield',
+    metric: 'noHitDistance',
+    mode: 'singleRun',
+    title: 'Kusursuz Sürüş',
+    description: 'Tek sürüşte hiç hasar almadan 7.500 m git',
+    target: 7500,
+    rewardGold: 320,
+  },
+  {
+    id: 'ach_nohit_15000',
+    category: 'extreme',
+    tier: 'mythic',
+    icon: 'skull',
+    metric: 'noHitDistance',
+    mode: 'singleRun',
+    title: 'Ölümsüz Pilot',
+    description: 'Tek sürüşte hiç hasar almadan 15.000 m git',
+    target: 15000,
+    rewardGold: 650,
+  },
+  {
+    id: 'ach_cockpit_2500',
+    category: 'extreme',
+    tier: 'silver',
+    icon: 'eye',
+    metric: 'cockpitDistance',
+    mode: 'singleRun',
+    title: 'Kokpit Ustası',
+    description: '1. şahıs kokpit kamerasında tek sürüşte 2.500 m sür',
+    target: 2500,
+    rewardGold: 110,
+  },
+  {
+    id: 'ach_cockpit_8000',
+    category: 'extreme',
+    tier: 'diamond',
+    icon: 'eye',
+    metric: 'cockpitDistance',
+    mode: 'singleRun',
+    title: 'Gerçek Pilot',
+    description: '1. şahıs kokpit kamerasında tek sürüşte 8.000 m sür',
+    target: 8000,
+    rewardGold: 300,
+  },
+  {
+    id: 'ach_fast_makas_15',
+    category: 'extreme',
+    tier: 'gold',
+    icon: 'bolt',
+    metric: 'highSpeedNearMiss',
+    mode: 'cumulative',
+    title: 'Mermi Makas',
+    description: '300+ km/h hızda toplam 15 yakın geçiş yap',
+    target: 15,
+    rewardGold: 160,
+  },
+  {
+    id: 'ach_fast_makas_50',
+    category: 'extreme',
+    tier: 'mythic',
+    icon: 'skull',
+    metric: 'highSpeedNearMiss',
+    mode: 'cumulative',
+    title: 'Ölüm Dansı',
+    description: '300+ km/h hızda toplam 50 yakın geçiş yap',
+    target: 50,
+    rewardGold: 420,
+  },
+  {
+    id: 'ach_smash_run_12',
+    category: 'extreme',
+    tier: 'diamond',
+    icon: 'flame',
+    metric: 'rampageSmash',
+    mode: 'singleRun',
+    title: 'Kaotik Fırtına',
+    description: 'Tek sürüşte Yıkım Modunda 12 araç patlat',
+    target: 12,
+    rewardGold: 280,
+  },
+  {
+    id: 'ach_curve_run_25',
+    category: 'extreme',
+    tier: 'diamond',
+    icon: 'wind',
+    metric: 'cleanCurve',
+    mode: 'singleRun',
+    title: 'Kesintisiz Viraj',
+    description: 'Tek sürüşte 25 temiz virajı hatasız dön',
+    target: 25,
+    rewardGold: 250,
+  },
+  {
+    id: 'ach_ramp_run_6',
+    category: 'extreme',
+    tier: 'gold',
+    icon: 'rocket',
+    metric: 'rampJump',
+    mode: 'singleRun',
+    title: 'Akrobasi Şovu',
+    description: 'Tek sürüşte 6 kez rampadan zıpla',
+    target: 6,
+    rewardGold: 180,
+  },
+
+  // ── 2. HIZ & MESAFE (11) ───────────────────────────────────────────────
   {
     id: 'ach_speed_250',
     category: 'speed',
+    tier: 'bronze',
+    icon: 'gauge',
     metric: 'maxSpeedKmh',
     mode: 'peak',
     title: 'Ses Duvarı',
@@ -223,6 +355,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_speed_300',
     category: 'speed',
+    tier: 'silver',
+    icon: 'gauge',
     metric: 'maxSpeedKmh',
     mode: 'peak',
     title: 'Üç Yüz Kulübü',
@@ -233,6 +367,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_speed_360',
     category: 'speed',
+    tier: 'gold',
+    icon: 'zap',
     metric: 'maxSpeedKmh',
     mode: 'peak',
     title: 'Hiper Hız',
@@ -243,6 +379,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_speed_420',
     category: 'speed',
+    tier: 'diamond',
+    icon: 'rocket',
     metric: 'maxSpeedKmh',
     mode: 'peak',
     title: 'Işık Hızı',
@@ -251,8 +389,22 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     rewardGold: 220,
   },
   {
+    id: 'ach_speed_470',
+    category: 'speed',
+    tier: 'mythic',
+    icon: 'crown',
+    metric: 'maxSpeedKmh',
+    mode: 'peak',
+    title: 'Süpersonik',
+    description: '470 km/h maksimum hıza ulaş',
+    target: 470,
+    rewardGold: 450,
+  },
+  {
     id: 'ach_dist_3500',
     category: 'speed',
+    tier: 'bronze',
+    icon: 'route',
     metric: 'distance',
     mode: 'singleRun',
     title: 'Uzun Yol Kaptanı',
@@ -263,6 +415,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_dist_run_8000',
     category: 'speed',
+    tier: 'gold',
+    icon: 'route',
     metric: 'distance',
     mode: 'singleRun',
     title: 'Otoyol Maratonu',
@@ -271,8 +425,22 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     rewardGold: 110,
   },
   {
+    id: 'ach_dist_run_15000',
+    category: 'speed',
+    tier: 'diamond',
+    icon: 'route',
+    metric: 'distance',
+    mode: 'singleRun',
+    title: 'Bitmeyen Otoyol',
+    description: 'Tek sürüşte 15.000 m yol kat et',
+    target: 15000,
+    rewardGold: 290,
+  },
+  {
     id: 'ach_dist_total_25k',
     category: 'speed',
+    tier: 'silver',
+    icon: 'globe',
     metric: 'distance',
     mode: 'cumulative',
     title: 'Yolun Efendisi',
@@ -283,6 +451,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_dist_total_100k',
     category: 'speed',
+    tier: 'diamond',
+    icon: 'globe',
     metric: 'distance',
     mode: 'cumulative',
     title: 'Dünya Turu',
@@ -290,11 +460,25 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     target: 100000,
     rewardGold: 240,
   },
+  {
+    id: 'ach_dist_total_250k',
+    category: 'speed',
+    tier: 'mythic',
+    icon: 'globe',
+    metric: 'distance',
+    mode: 'cumulative',
+    title: 'Kıta Fatihi',
+    description: 'Toplam 250.000 m sürüş yap',
+    target: 250000,
+    rewardGold: 520,
+  },
 
-  // ── 2. MAKAS, KOMBO & SKOR (8) ─────────────────────────────────────────
+  // ── 3. MAKAS, KOMBO & SKOR (11) ────────────────────────────────────────
   {
     id: 'ach_makas_10',
     category: 'skill',
+    tier: 'bronze',
+    icon: 'sparkles',
     metric: 'nearMiss',
     mode: 'cumulative',
     title: 'İlk Kıvılcım',
@@ -305,6 +489,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_makas_75',
     category: 'skill',
+    tier: 'silver',
+    icon: 'zap',
     metric: 'nearMiss',
     mode: 'cumulative',
     title: 'Trafik Büyücüsü',
@@ -315,6 +501,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_makas_250',
     category: 'skill',
+    tier: 'gold',
+    icon: 'ghost',
     metric: 'nearMiss',
     mode: 'cumulative',
     title: 'Hayalet Sürücü',
@@ -323,8 +511,22 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     rewardGold: 165,
   },
   {
+    id: 'ach_makas_750',
+    category: 'skill',
+    tier: 'mythic',
+    icon: 'crown',
+    metric: 'nearMiss',
+    mode: 'cumulative',
+    title: 'Trafik Tanrısı',
+    description: 'Toplam 750 yakın geçiş (Makas) yap',
+    target: 750,
+    rewardGold: 440,
+  },
+  {
     id: 'ach_makas_run_20',
     category: 'skill',
+    tier: 'silver',
+    icon: 'target',
     metric: 'nearMiss',
     mode: 'singleRun',
     title: 'Kıl Payı Şov',
@@ -333,8 +535,22 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     rewardGold: 75,
   },
   {
+    id: 'ach_makas_run_50',
+    category: 'skill',
+    tier: 'diamond',
+    icon: 'target',
+    metric: 'nearMiss',
+    mode: 'singleRun',
+    title: 'İğne Deliği',
+    description: 'Tek sürüşte 50 yakın geçiş yap',
+    target: 50,
+    rewardGold: 260,
+  },
+  {
     id: 'ach_combo_5',
     category: 'skill',
+    tier: 'bronze',
+    icon: 'star',
     metric: 'maxCombo',
     mode: 'peak',
     title: 'Kombo Kralı',
@@ -345,6 +561,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_score_25k',
     category: 'skill',
+    tier: 'silver',
+    icon: 'trophy',
     metric: 'runScore',
     mode: 'peak',
     title: 'Skor Avcısı',
@@ -355,6 +573,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_score_75k',
     category: 'skill',
+    tier: 'gold',
+    icon: 'trophy',
     metric: 'runScore',
     mode: 'peak',
     title: 'Otoyol Efsanesi',
@@ -365,6 +585,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_score_200k',
     category: 'skill',
+    tier: 'diamond',
+    icon: 'crown',
     metric: 'runScore',
     mode: 'peak',
     title: 'Kırılmaz Rekor',
@@ -372,11 +594,25 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     target: 200000,
     rewardGold: 280,
   },
+  {
+    id: 'ach_score_500k',
+    category: 'skill',
+    tier: 'mythic',
+    icon: 'crown',
+    metric: 'runScore',
+    mode: 'peak',
+    title: 'Yarım Milyon',
+    description: 'Tek sürüşte 500.000 puana ulaş',
+    target: 500000,
+    rewardGold: 550,
+  },
 
-  // ── 3. DRİFT & VİRAJ (8) ───────────────────────────────────────────────
+  // ── 4. DRİFT & VİRAJ (9) ───────────────────────────────────────────────
   {
     id: 'ach_curve_20',
     category: 'drift',
+    tier: 'bronze',
+    icon: 'wind',
     metric: 'cleanCurve',
     mode: 'cumulative',
     title: 'Viraj Ustası',
@@ -387,6 +623,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_curve_80',
     category: 'drift',
+    tier: 'silver',
+    icon: 'wind',
     metric: 'cleanCurve',
     mode: 'cumulative',
     title: 'Apex Avcısı',
@@ -397,6 +635,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_curve_200',
     category: 'drift',
+    tier: 'gold',
+    icon: 'target',
     metric: 'cleanCurve',
     mode: 'cumulative',
     title: 'Çizgi Mühendisi',
@@ -407,6 +647,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_drift_2500',
     category: 'drift',
+    tier: 'bronze',
+    icon: 'flame',
     metric: 'driftPoints',
     mode: 'cumulative',
     title: 'Lastik Dumanı',
@@ -417,6 +659,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_drift_15000',
     category: 'drift',
+    tier: 'silver',
+    icon: 'flame',
     metric: 'driftPoints',
     mode: 'cumulative',
     title: 'Yanlama Sanatçısı',
@@ -427,6 +671,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_drift_50000',
     category: 'drift',
+    tier: 'gold',
+    icon: 'crown',
     metric: 'driftPoints',
     mode: 'cumulative',
     title: 'Drift İmparatoru',
@@ -437,6 +683,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_drift_run_4000',
     category: 'drift',
+    tier: 'silver',
+    icon: 'flame',
     metric: 'driftPoints',
     mode: 'singleRun',
     title: 'Asfaltı Eriten',
@@ -447,6 +695,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_drift_run_12000',
     category: 'drift',
+    tier: 'diamond',
+    icon: 'flame',
     metric: 'driftPoints',
     mode: 'singleRun',
     title: 'Duman Perdesi',
@@ -454,11 +704,25 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     target: 12000,
     rewardGold: 175,
   },
+  {
+    id: 'ach_drift_run_30000',
+    category: 'drift',
+    tier: 'mythic',
+    icon: 'skull',
+    metric: 'driftPoints',
+    mode: 'singleRun',
+    title: 'Asfalt Yanıyor',
+    description: 'Tek sürüşte 30.000 drift puanı topla',
+    target: 30000,
+    rewardGold: 420,
+  },
 
-  // ── 4. YOL OLAYLARI & GÜÇLENDİRMELER (8) ───────────────────────────────
+  // ── 5. YOL OLAYLARI & GÜÇLENDİRMELER (10) ──────────────────────────────
   {
     id: 'ach_nitro_5',
     category: 'events',
+    tier: 'bronze',
+    icon: 'flame',
     metric: 'nitroPickup',
     mode: 'cumulative',
     title: 'Turbo Şarj',
@@ -469,6 +733,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_nitro_30',
     category: 'events',
+    tier: 'silver',
+    icon: 'flame',
     metric: 'nitroPickup',
     mode: 'cumulative',
     title: 'Mavi Alev',
@@ -479,6 +745,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_repair_3',
     category: 'events',
+    tier: 'bronze',
+    icon: 'wrench',
     metric: 'repairPickup',
     mode: 'cumulative',
     title: 'Tamirci Dostu',
@@ -489,6 +757,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_repair_15',
     category: 'events',
+    tier: 'silver',
+    icon: 'shield',
     metric: 'repairPickup',
     mode: 'cumulative',
     title: 'Çelik Gövde',
@@ -499,6 +769,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_magnet_10',
     category: 'events',
+    tier: 'silver',
+    icon: 'magnet',
     metric: 'magnetPickup',
     mode: 'cumulative',
     title: 'Altın Mıknatısı',
@@ -507,8 +779,34 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     rewardGold: 60,
   },
   {
+    id: 'ach_smash_15',
+    category: 'events',
+    tier: 'silver',
+    icon: 'zap',
+    metric: 'rampageSmash',
+    mode: 'cumulative',
+    title: 'Yıkım Ekibi',
+    description: 'Yıkım Modunda toplam 15 araç patlat',
+    target: 15,
+    rewardGold: 100,
+  },
+  {
+    id: 'ach_smash_60',
+    category: 'events',
+    tier: 'gold',
+    icon: 'bolt',
+    metric: 'rampageSmash',
+    mode: 'cumulative',
+    title: 'Durdurulamaz',
+    description: 'Yıkım Modunda toplam 60 araç patlat',
+    target: 60,
+    rewardGold: 240,
+  },
+  {
     id: 'ach_ramp_10',
     category: 'events',
+    tier: 'silver',
+    icon: 'rocket',
     metric: 'rampJump',
     mode: 'cumulative',
     title: 'Gökyüzü Pilotu',
@@ -519,6 +817,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_boostpad_15',
     category: 'events',
+    tier: 'silver',
+    icon: 'zap',
     metric: 'boostPad',
     mode: 'cumulative',
     title: 'Turbo Şeritçisi',
@@ -529,6 +829,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_roadwork_15',
     category: 'events',
+    tier: 'gold',
+    icon: 'shield',
     metric: 'roadworkPass',
     mode: 'cumulative',
     title: 'Engel Cambazı',
@@ -537,10 +839,12 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
     rewardGold: 80,
   },
 
-  // ── 5. GARAJ, KOLEKSİYON & KARİYER (8) ─────────────────────────────────
+  // ── 6. GARAJ, KOLEKSİYON & KARİYER (10) ────────────────────────────────
   {
     id: 'ach_gold_60',
     category: 'garage',
+    tier: 'bronze',
+    icon: 'coins',
     metric: 'gold',
     mode: 'cumulative',
     title: 'Altın Avcısı',
@@ -551,6 +855,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_gold_400',
     category: 'garage',
+    tier: 'gold',
+    icon: 'coins',
     metric: 'gold',
     mode: 'cumulative',
     title: 'Hazine Toplayıcı',
@@ -561,6 +867,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_cars_4',
     category: 'garage',
+    tier: 'silver',
+    icon: 'car',
     metric: 'carsUnlocked',
     mode: 'peak',
     title: 'Garaj Koleksiyoneri',
@@ -571,6 +879,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_cars_10',
     category: 'garage',
+    tier: 'gold',
+    icon: 'car',
     metric: 'carsUnlocked',
     mode: 'peak',
     title: 'Süper Filo',
@@ -581,16 +891,32 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_cars_17',
     category: 'garage',
+    tier: 'diamond',
+    icon: 'trophy',
+    metric: 'carsUnlocked',
+    mode: 'peak',
+    title: 'Elit Galeri',
+    description: 'Garajda 17 farklı aracın kilidini aç',
+    target: 17,
+    rewardGold: 450,
+  },
+  {
+    id: 'ach_cars_20',
+    category: 'garage',
+    tier: 'mythic',
+    icon: 'crown',
     metric: 'carsUnlocked',
     mode: 'peak',
     title: 'Tam Koleksiyon',
-    description: 'Garajdaki 17 aracın tamamını aç',
-    target: 17,
-    rewardGold: 500,
+    description: 'Garajdaki 20 aracın tamamını aç',
+    target: 20,
+    rewardGold: 750,
   },
   {
     id: 'ach_upgrades_10',
     category: 'garage',
+    tier: 'silver',
+    icon: 'wrench',
     metric: 'upgradesBought',
     mode: 'cumulative',
     title: 'Modifiye Ustası',
@@ -601,6 +927,8 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_level_10',
     category: 'garage',
+    tier: 'silver',
+    icon: 'star',
     metric: 'playerLevel',
     mode: 'peak',
     title: 'Pro Sürücü',
@@ -611,12 +939,26 @@ const ACHIEVEMENT_CATALOG: AchievementTemplate[] = [
   {
     id: 'ach_level_50',
     category: 'garage',
+    tier: 'diamond',
+    icon: 'award',
     metric: 'playerLevel',
     mode: 'peak',
     title: 'Altın Efsane',
     description: "Sürücü Seviyesi 50'ye ulaş",
     target: 50,
     rewardGold: 320,
+  },
+  {
+    id: 'ach_level_100',
+    category: 'garage',
+    tier: 'mythic',
+    icon: 'crown',
+    metric: 'playerLevel',
+    mode: 'peak',
+    title: 'Zirvenin Hükümdarı',
+    description: "Sürücü Seviyesi 100'e ulaş",
+    target: 100,
+    rewardGold: 800,
   },
 ];
 
@@ -700,7 +1042,6 @@ export class MissionManager {
       if (Array.isArray(parsed.claimedAchievements)) {
         this.claimedAchievements = new Set(parsed.claimedAchievements);
       } else {
-        // Legacy save migration: previously unlocked achievements were auto-paid.
         this.claimedAchievements = new Set(this.unlockedAchievements);
       }
     } catch {
@@ -753,7 +1094,6 @@ export class MissionManager {
       return false;
     }
 
-    // New day (or migration from old infinite active missions): generate 3 fresh daily missions
     this.dailyDateKey = todayKey;
     const pool = [...DAILY_MISSION_TEMPLATES];
     const rng = { s: hashDateSeed(todayKey) || 1337 };
@@ -763,7 +1103,6 @@ export class MissionManager {
     for (let slot = 0; slot < 3 && pool.length > 0; slot++) {
       const idx = Math.floor(nextSeededRand(rng) * pool.length);
       const tpl = pool.splice(idx, 1)[0];
-      // Escalate difficulty slightly across the 3 daily slots (easy / medium / challenge)
       const tier = Math.min(3, baseTier + (slot === 2 ? 1 : 0));
       picked.push(createDailyMissionFromTemplate(tpl, tier, todayKey, slot));
     }
@@ -773,10 +1112,6 @@ export class MissionManager {
     return true;
   }
 
-  /**
-   * Silently syncs pre-existing garage/career stats (unlocked cars, level, best score, upgrades)
-   * on startup so returning players immediately see accurate progress on newly added achievements.
-   */
   public syncInitialPeaks(
     peaks: Partial<Record<MetricType, number>>,
   ): void {
@@ -804,7 +1139,6 @@ export class MissionManager {
 
   public startRun(): void {
     this.ensureDailyMissions(true);
-    // Daily missions accumulate across all runs of the day; only single-run achievements reset.
     for (const ach of ACHIEVEMENT_CATALOG) {
       if (ach.mode === 'singleRun' && !this.unlockedAchievements.has(ach.id)) {
         this.achievementProgress[ach.id] = 0;
@@ -1014,6 +1348,9 @@ export class MissionManager {
       return {
         id: ach.id,
         category: ach.category,
+        tier: ach.tier,
+        icon: ach.icon,
+        singleRun: ach.mode === 'singleRun',
         title: ach.title,
         description: ach.description,
         target: ach.target,

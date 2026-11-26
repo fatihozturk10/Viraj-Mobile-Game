@@ -778,10 +778,6 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                   chest.starsRequired,
                 );
                 const ready = !claimed && progress.totalStars >= chest.starsRequired;
-                const pct = Math.min(
-                  100,
-                  Math.round((progress.totalStars / chest.starsRequired) * 100),
-                );
                 const crateSpec = chest.crateTierId
                   ? getCrateByTier(chest.crateTierId)
                   : null;
@@ -835,23 +831,7 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                           </span>
                         )}
                       </div>
-                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                        <div
-                          className={`h-full ${
-                            claimed || ready
-                              ? 'bg-emerald-400'
-                              : chest.crateTierId === 'legendary'
-                                ? 'bg-amber-400'
-                                : chest.crateTierId === 'pro'
-                                  ? 'bg-fuchsia-400'
-                                  : chest.crateTierId === 'street'
-                                    ? 'bg-sky-400'
-                                    : 'bg-amber-400'
-                          }`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold font-mono-num">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-bold font-mono-num">
                         {crateSpec && (
                           <span
                             className={`flex items-center gap-1 ${

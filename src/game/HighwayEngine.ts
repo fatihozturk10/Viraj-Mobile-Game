@@ -963,6 +963,9 @@ export class HighwayEngine {
   };
   private readonly missions = new MissionManager();
   private missionDistAccum = 0;
+  private missionCockpitDistAccum = 0;
+  private noHitDistMeters = 0;
+  private noHitDistLastReported = 0;
   private missionSpeedCheckAccum = 0;
 
   private frameId = 0;
@@ -4541,6 +4544,9 @@ export class HighwayEngine {
       this.explosionPool.push(this.explosions.pop()!);
     }
     this.missionDistAccum = 0;
+    this.missionCockpitDistAccum = 0;
+    this.noHitDistMeters = 0;
+    this.noHitDistLastReported = 0;
     this.missionSpeedCheckAccum = 0;
     this.damageSmokeTimer = 0;
     this.guardrailHitCooldown = 0;
@@ -7543,6 +7549,8 @@ export class HighwayEngine {
           );
           const impactDmg = Math.round(16 + 15 * speedFactor * slamFactor);
           this.integrity = Math.max(0, this.integrity - impactDmg);
+          this.noHitDistMeters = 0;
+          this.noHitDistLastReported = 0;
           this.guardrailHitCooldown = 0.55;
           this.damageRegenDelay = 3.5;
 
@@ -7575,6 +7583,8 @@ export class HighwayEngine {
             0,
             this.integrity - (32 + speedFactor * 16) * dt,
           );
+          this.noHitDistMeters = 0;
+          this.noHitDistLastReported = 0;
           this.damageRegenDelay = Math.max(this.damageRegenDelay, 2.5);
 
           if (this.scrapeCooldown <= 0) {
@@ -7707,6 +7717,28 @@ export class HighwayEngine {
       this.handleMissionRewards(this.missions.recordDelta('distance', whole));
     }
 
+    this.noHitDistMeters += ds;
+    if (this.noHitDistMeters - this.noHitDistLastReported >= 100) {
+      this.noHitDistLastReported = this.noHitDistMeters;
+      this.handleMissionRewards(
+        this.missions.recordPeak(
+          'noHitDistance',
+          Math.floor(this.noHitDistMeters),
+        ),
+      );
+    }
+
+    if (this.cameraMode === 'cockpit') {
+      this.missionCockpitDistAccum += ds;
+      if (this.missionCockpitDistAccum >= 100) {
+        const wholeC = Math.floor(this.missionCockpitDistAccum);
+        this.missionCockpitDistAccum -= wholeC;
+        this.handleMissionRewards(
+          this.missions.recordDelta('cockpitDistance', wholeC),
+        );
+      }
+    }
+
     this.road.update(this.playerS, dt);
     this.roadEvents.spawnAhead(this.playerS + 380);
     this.spawnTrafficAhead(this.playerS + 380);
@@ -7816,6 +7848,8 @@ export class HighwayEngine {
           this.emitCallout('BARİYER PARÇALANDI!', `+${pts}`, 'amber');
         } else if (this.reviveInvulnTimer <= 0) {
           this.integrity = Math.max(0, this.integrity - 26);
+          this.noHitDistMeters = 0;
+          this.noHitDistLastReported = 0;
           this.damageRegenDelay = 3.5;
           this.speedMs = Math.max(17, this.speedMs * 0.76);
           this.combo = 1;
@@ -8799,6 +8833,9 @@ export class HighwayEngine {
               `+${pts.toLocaleString('tr-TR')} · YIKIM`,
               'amber',
             );
+            this.handleMissionRewards(
+              this.missions.recordDelta('rampageSmash', 1),
+            );
             continue;
           }
           if (this.reviveInvulnTimer > 0) {
@@ -8876,6 +8913,8 @@ export class HighwayEngine {
               : this.speedMs * speedMult,
           );
           this.integrity = Math.max(0, this.integrity - dmg);
+          this.noHitDistMeters = 0;
+          this.noHitDistLastReported = 0;
           this.combo = 1;
           this.comboTimer = 0;
           this.driftScore = 0;
@@ -8943,6 +8982,11 @@ export class HighwayEngine {
             isOncomingMiss ? 'rose' : 'amber',
           );
           this.handleMissionRewards(this.missions.recordDelta('nearMiss', 1));
+          if (this.speedMs * 3.6 >= 300) {
+            this.handleMissionRewards(
+              this.missions.recordDelta('highSpeedNearMiss', 1),
+            );
+          }
         }
       }
     }

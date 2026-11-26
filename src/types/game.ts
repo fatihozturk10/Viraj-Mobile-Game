@@ -5788,11 +5788,46 @@ export type AchievementCategory =
   | 'skill'
   | 'drift'
   | 'events'
-  | 'garage';
+  | 'garage'
+  | 'extreme';
+
+export type AchievementTier =
+  | 'bronze'
+  | 'silver'
+  | 'gold'
+  | 'diamond'
+  | 'mythic';
+
+export type AchievementIconId =
+  | 'gauge'
+  | 'zap'
+  | 'flame'
+  | 'route'
+  | 'globe'
+  | 'sparkles'
+  | 'target'
+  | 'ghost'
+  | 'trophy'
+  | 'crown'
+  | 'wind'
+  | 'wrench'
+  | 'magnet'
+  | 'rocket'
+  | 'shield'
+  | 'coins'
+  | 'car'
+  | 'star'
+  | 'skull'
+  | 'eye'
+  | 'award'
+  | 'bolt';
 
 export interface AchievementView {
   id: string;
   category: AchievementCategory;
+  tier: AchievementTier;
+  icon: AchievementIconId;
+  singleRun?: boolean;
   title: string;
   description: string;
   target: number;

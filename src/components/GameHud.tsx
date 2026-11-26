@@ -70,6 +70,7 @@ import {
 import { NitroWingBar } from './NitroWingBar';
 import { DriftTelemetryHud } from './DriftTelemetryHud';
 import { GarageView } from './GarageView';
+import { AchievementsPanel } from './AchievementsPanel';
 import {
   AchievementCategory,
   BODY_KITS,
@@ -1938,7 +1939,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
             className="pointer-events-auto fixed inset-0 z-30 flex items-end justify-center bg-black/78 p-0 sm:items-center sm:p-4"
           >
             <div
-              className="animate-sheet-up flex max-h-[90dvh] w-full flex-col rounded-t-3xl border-t border-white/14 bg-zinc-950 px-4 pt-3 shadow-2xl sm:max-h-[84vh] sm:w-[min(94vw,540px)] sm:rounded-2xl sm:border sm:p-5"
+              className="animate-sheet-up flex max-h-[90dvh] w-full flex-col rounded-t-3xl border-t border-white/14 bg-zinc-950 px-4 pt-3 shadow-2xl sm:max-h-[86vh] sm:w-[min(95vw,580px)] sm:rounded-2xl sm:border sm:p-5"
               style={{
                 paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
               }}
@@ -2078,78 +2079,15 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                 );
               })()}
 
-              {missionsTab === 'achievements' && (
-                <div className="mt-2.5 space-y-2.5">
-                  <div className="flex items-center gap-2.5 px-0.5">
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 transition-all"
-                        style={{
-                          width: `${Math.round((unlockedAchCount / Math.max(1, totalAchCount)) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-amber-300 font-mono-num shrink-0">
-                      {Math.round(
-                        (unlockedAchCount / Math.max(1, totalAchCount)) * 100,
-                      )}
-                      % Tamamlandı
-                    </span>
-                  </div>
-                  <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto pb-0.5">
-                    {(
-                      [
-                        { id: 'all', label: 'Tümü' },
-                        { id: 'speed', label: 'Hız' },
-                        { id: 'skill', label: 'Makas' },
-                        { id: 'drift', label: 'Drift' },
-                        { id: 'events', label: 'Yol' },
-                        { id: 'garage', label: 'Garaj' },
-                      ] as { id: 'all' | AchievementCategory; label: string }[]
-                    ).map((cat) => {
-                      const catItems =
-                        cat.id === 'all'
-                          ? missions.achievements
-                          : missions.achievements.filter(
-                              (a) => a.category === cat.id,
-                            );
-                      const catUnlocked = catItems.filter(
-                        (a) => a.unlocked,
-                      ).length;
-                      const catClaimable = catItems.filter(
-                        (a) => a.unlocked && !a.claimed,
-                      ).length;
-                      const active = achCategory === cat.id;
-                      return (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => setAchCategory(cat.id)}
-                          className={`inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                            active
-                              ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
-                              : 'border-white/10 bg-zinc-900 text-zinc-400 hover:border-white/20 hover:text-white'
-                          }`}
-                        >
-                          <span>{cat.label}</span>
-                          <span className="font-mono-num opacity-80">
-                            {catUnlocked}/{catItems.length}
-                          </span>
-                          {catClaimable > 0 && (
-                            <span
-                              className="h-2 w-2 rounded-full bg-emerald-400"
-                              aria-label={`${catClaimable} toplanabilir ödül`}
-                            />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-3 flex-1 space-y-2.5 overflow-y-auto pr-1 custom-scroll">
-                {missionsTab === 'missions' ? (
+              {missionsTab === 'achievements' ? (
+                <AchievementsPanel
+                  achievements={missions.achievements}
+                  selectedCategory={achCategory}
+                  onSelectCategory={setAchCategory}
+                  onClaimAchievement={onClaimAchievement}
+                />
+              ) : (
+                <div className="mt-3 flex-1 space-y-2.5 overflow-y-auto pr-1 custom-scroll">
                   <>
                     {[...missions.activeMissions]
                       .sort((a, b) => {
@@ -2265,119 +2203,8 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                         </div>
                       )}
                   </>
-                ) : missions.achievements
-                      .filter(
-                        (ach) =>
-                          achCategory === 'all' || ach.category === achCategory,
-                      )
-                      .slice()
-                      .sort((a, b) => {
-                        const aRank = a.unlocked && !a.claimed ? 0 : !a.unlocked ? 1 : 2;
-                        const bRank = b.unlocked && !b.claimed ? 0 : !b.unlocked ? 1 : 2;
-                        return aRank - bRank;
-                      })
-                      .map((ach) => {
-                        const pct = Math.min(
-                          100,
-                          Math.round(
-                            (ach.progress / Math.max(1, ach.target)) * 100,
-                          ),
-                        );
-                        const canClaim = ach.unlocked && !ach.claimed;
-
-                        if (canClaim) {
-                          return (
-                            <button
-                              key={ach.id}
-                              type="button"
-                              onClick={() => onClaimAchievement(ach.id)}
-                              className="w-full rounded-xl border border-amber-400/70 bg-amber-500/14 p-3.5 text-left transition-all hover:bg-amber-500/22 active:scale-[0.99] cursor-pointer"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <Trophy className="h-4 w-4 text-amber-400 shrink-0" />
-                                    <span className="font-display text-sm font-bold text-white">
-                                      {ach.title}
-                                    </span>
-                                  </div>
-                                  <p className="mt-0.5 text-xs text-amber-100/80">
-                                    {ach.description}
-                                  </p>
-                                </div>
-                                <span className="inline-flex items-center gap-1 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-extrabold text-zinc-950 font-mono-num shrink-0 shadow-sm">
-                                  <Coins className="h-3.5 w-3.5" />
-                                  <span>Ödülü Al +{ach.rewardGold}</span>
-                                </span>
-                              </div>
-                              <div className="mt-2.5 flex items-center gap-3">
-                                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/12">
-                                  <div className="h-full w-full bg-amber-400" />
-                                </div>
-                                <span className="text-xs font-semibold text-amber-300 font-mono-num">
-                                  {ach.target.toLocaleString('tr-TR')} /{' '}
-                                  {ach.target.toLocaleString('tr-TR')}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        }
-
-                        return (
-                          <div
-                            key={ach.id}
-                            className={`rounded-xl border p-3.5 ${
-                              ach.claimed
-                                ? 'border-emerald-400/28 bg-emerald-500/8'
-                                : 'border-white/10 bg-zinc-900/75'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="flex items-center gap-1.5">
-                                  {ach.claimed && (
-                                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                                  )}
-                                  <span className="font-display text-sm font-bold text-white">
-                                    {ach.title}
-                                  </span>
-                                </div>
-                                <p className="mt-0.5 text-xs text-zinc-400">
-                                  {ach.description}
-                                </p>
-                              </div>
-                              {ach.claimed ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-300 shrink-0">
-                                  <CheckCircle2 className="h-3.5 w-3.5" />
-                                  <span>Alındı</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-300 font-mono-num shrink-0">
-                                  <Coins className="h-3.5 w-3.5" />
-                                  <span>+{ach.rewardGold}</span>
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-2.5 flex items-center gap-3">
-                              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-                                <div
-                                  className={`h-full ${
-                                    ach.claimed
-                                      ? 'bg-emerald-400'
-                                      : 'bg-sky-400'
-                                  }`}
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-zinc-300 font-mono-num">
-                                {ach.progress.toLocaleString('tr-TR')} /{' '}
-                                {ach.target.toLocaleString('tr-TR')}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         )}
