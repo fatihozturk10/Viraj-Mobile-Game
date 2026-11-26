@@ -1066,7 +1066,10 @@ export const GarageView: React.FC<GarageViewProps> = ({
     PLATE_STYLES.find((p) => p.id === inspectedCustom.plateStyle) ||
     PLATE_STYLES[0];
 
-  const activeNitroDurationSec = getNitroDurationSec(activeUpgrades.nitroTank);
+  const activeNitroDurationSec = getNitroDurationSec(
+    activeUpgrades.nitroTank,
+    powerUpUpgrades.nitro?.secondary ?? 0,
+  );
   const activeTuningClass = getTuningClassForUpgrades(activeUpgrades);
   const modelRarity = RARITY_STYLE[activeModel.rarity];
 

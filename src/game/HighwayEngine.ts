@@ -41,7 +41,6 @@ import {
   getMagnetRangeMeters,
   getMaxNitroCapacity,
   getNitroDrainRatePerSec,
-  getNitroPickupFreeBurnSec,
   getNitroPickupSpeedBonusKmh,
   getPowerUpSpec,
   getPowerUpUnlockLevel,
@@ -646,7 +645,6 @@ export class HighwayEngine {
   private nextNitroSpawnS = 125;
   private nitroSpin = 0;
   private nitroPickupBoostTimer = 0;
-  private nitroFreeBurnTimer = 0;
 
   // Road Repair Kit Pickups pool
   private repairMesh: THREE.InstancedMesh;
@@ -2325,7 +2323,10 @@ export class HighwayEngine {
   private getActiveNitroMax(): number {
     const upgrades =
       this.carUpgrades[this.carModelId] || DEFAULT_CAR_UPGRADES();
-    return getMaxNitroCapacity(upgrades.nitroTank);
+    return getMaxNitroCapacity(
+      upgrades.nitroTank,
+      this.powerUpUpgrades.nitro.secondary,
+    );
   }
 
   private getLivePlayerLevel(): PlayerLevelInfo {
@@ -4529,7 +4530,6 @@ export class HighwayEngine {
     this.coins = [];
     this.nitros = [];
     this.nitroPickupBoostTimer = 0;
-    this.nitroFreeBurnTimer = 0;
     this.repairs = [];
     this.magnets = [];
     this.magnetTimer = 0;
@@ -4849,21 +4849,16 @@ export class HighwayEngine {
         const speedBonusKmh = getNitroPickupSpeedBonusKmh(
           this.powerUpUpgrades.nitro.primary,
         );
-        const freeBurnSec = getNitroPickupFreeBurnSec(
-          this.powerUpUpgrades.nitro.secondary,
-        );
         if (speedBonusKmh > 0) {
           this.nitroPickupBoostTimer = Math.max(this.nitroPickupBoostTimer, 3.0);
           this.speedMs = Math.min(130, this.speedMs + speedBonusKmh / 3.6);
         }
-        if (freeBurnSec > 0) {
-          this.nitroFreeBurnTimer = Math.max(this.nitroFreeBurnTimer, freeBurnSec);
-        }
         this.score += 100 * this.combo;
         this.audio.playNitroPickup();
-        const nitroDetailParts = [`%100`];
+        const nitroDetailParts = [
+          nitroMax > 100 ? `${nitroMax}/${nitroMax}` : '%100',
+        ];
         if (speedBonusKmh > 0) nitroDetailParts.push(`+${speedBonusKmh} km/s`);
-        if (freeBurnSec > 0) nitroDetailParts.push(`${freeBurnSec} sn Serbest`);
         this.emitCallout('NİTRO DOLDU!', nitroDetailParts.join(' · '), 'cyan');
         this.handleMissionRewards(this.missions.recordDelta('nitroPickup', 1));
         this.pushHud(true);
@@ -7195,9 +7190,6 @@ export class HighwayEngine {
     if (this.nitroPickupBoostTimer > 0) {
       this.nitroPickupBoostTimer = Math.max(0, this.nitroPickupBoostTimer - dt);
     }
-    if (this.nitroFreeBurnTimer > 0) {
-      this.nitroFreeBurnTimer = Math.max(0, this.nitroFreeBurnTimer - dt);
-    }
 
     if (this.rampageTimer > 0) {
       this.rampageTimer = Math.max(0, this.rampageTimer - dt);
@@ -7220,14 +7212,11 @@ export class HighwayEngine {
 
     const upgrades =
       this.carUpgrades[this.carModelId] || DEFAULT_CAR_UPGRADES();
-    const nitroMax = getMaxNitroCapacity(upgrades.nitroTank);
+    const nitroMax = this.getActiveNitroMax();
 
-    // Nitro Boost handling: strictly 0-100% tank; drains to 0, then forces deactivation.
-    // Higher Nitro Tank levels slow drain rate (4s -> 8s full burn); Nitro Level boosts power & recharge.
-    const nitroDrainRate =
-      this.nitroFreeBurnTimer > 0
-        ? 0
-        : getNitroDrainRatePerSec(upgrades.nitroTank);
+    // Nitro Boost handling: 0..nitroMax (100..200) tank; drains to 0, then forces deactivation.
+    // Higher Nitro Tank levels slow drain rate; Nitro Max Capacity power-up expands total tank size level by level.
+    const nitroDrainRate = getNitroDrainRatePerSec(upgrades.nitroTank);
     if (this.nitroRequested) {
       if (this.nitro > 0) {
         this.nitroActive = true;
@@ -9681,8 +9670,8 @@ export class HighwayEngine {
       ),
       curvature: _roadSample.curvature,
       integrity: Math.round((this.integrity / maxInt) * 100),
-      nitro: Math.min(100, Math.max(0, Math.round(clampedNitro))),
-      nitroMax: 100,
+      nitro: Math.min(nitroMax, Math.max(0, Math.round(clampedNitro))),
+      nitroMax,
       nitroPercent: Math.min(
         100,
         Math.max(0, (clampedNitro / Math.max(1, nitroMax)) * 100),

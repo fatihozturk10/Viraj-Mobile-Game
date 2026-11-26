@@ -2455,6 +2455,7 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
           {/* BAR 1 (UPPER FULL-WIDTH): NİTRO — Silky 60/120fps Afterburner Turbo-Wing Ribbon */}
           <NitroWingBar
             nitroPercent={stats.nitroPercent}
+            nitroMax={stats.nitroMax}
             nitroActive={stats.nitroActive}
             onNitroToggle={onNitroToggle}
           />

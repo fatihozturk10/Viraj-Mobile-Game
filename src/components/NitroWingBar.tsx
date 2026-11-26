@@ -4,6 +4,7 @@ import { Flame } from 'lucide-react';
 interface NitroWingBarProps {
   /** Exact floating-point nitro percentage (0..100) */
   nitroPercent: number;
+  nitroMax?: number;
   nitroActive: boolean;
   onNitroToggle: (clientX: number, clientY: number) => void;
 }
@@ -22,8 +23,11 @@ const IS_COARSE_MOBILE =
     Boolean(window.matchMedia?.('(pointer: coarse)').matches));
 
 export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
-  ({ nitroPercent, nitroActive, onNitroToggle }) => {
+  ({ nitroPercent, nitroMax = 100, nitroActive, onNitroToggle }) => {
     const safePct = clampPct(nitroPercent);
+    const safeMax = Math.max(100, Math.round(nitroMax || 100));
+    const nitroMaxRef = useRef(safeMax);
+    nitroMaxRef.current = safeMax;
     const roundedPct = Math.round(safePct);
     const isReady = safePct >= 14;
 
@@ -107,13 +111,19 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
         edgeGroupRef.current.setAttribute('opacity', edgeOpacity.toFixed(3));
       }
 
-      const nextInt = Math.min(100, Math.max(0, Math.round(displayPct)));
+      const maxCap = nitroMaxRef.current;
+      const nextInt =
+        maxCap > 100
+          ? Math.min(maxCap, Math.max(0, Math.round((displayPct / 100) * maxCap)))
+          : Math.min(100, Math.max(0, Math.round(displayPct)));
+      const encodedDisplay = nextInt * 1000 + maxCap;
       if (
         pctTextRef.current &&
-        nextInt !== animRef.current.lastRenderedInt
+        encodedDisplay !== animRef.current.lastRenderedInt
       ) {
-        animRef.current.lastRenderedInt = nextInt;
-        pctTextRef.current.textContent = `%${nextInt}`;
+        animRef.current.lastRenderedInt = encodedDisplay;
+        pctTextRef.current.textContent =
+          maxCap > 100 ? `${nextInt}/${maxCap}` : `%${nextInt}`;
       }
     };
 

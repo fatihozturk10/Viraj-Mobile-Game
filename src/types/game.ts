@@ -280,16 +280,27 @@ export const UPGRADE_SPECS: UpgradeSpec[] = [
   },
 ];
 
-export function getMaxNitroCapacity(_nitroTankLevel = 0): number {
-  return 100;
+export function getMaxNitroCapacity(
+  _nitroTankLevel = 0,
+  nitroCapacityLevel = 0,
+): number {
+  return 100 + getNitroMaxCapacityBonus(nitroCapacityLevel);
 }
 
-export function getNitroDurationSec(nitroTankLevel: number): number {
-  return 4 + Math.max(0, Math.min(MAX_UPGRADE_LEVEL, nitroTankLevel));
+export function getNitroDurationSec(
+  nitroTankLevel: number,
+  nitroCapacityLevel = 0,
+): number {
+  const baseDuration =
+    4 + Math.max(0, Math.min(MAX_UPGRADE_LEVEL, nitroTankLevel));
+  const capacityScale = getMaxNitroCapacity(nitroTankLevel, nitroCapacityLevel) / 100;
+  return Number((baseDuration * capacityScale).toFixed(1));
 }
 
 export function getNitroDrainRatePerSec(nitroTankLevel: number): number {
-  return 100 / getNitroDurationSec(nitroTankLevel);
+  const baseDuration =
+    4 + Math.max(0, Math.min(MAX_UPGRADE_LEVEL, nitroTankLevel));
+  return 100 / baseDuration;
 }
 
 export type PowerUpId = 'nitro' | 'repair' | 'magnet' | 'rampage';
@@ -339,8 +350,8 @@ export function getNitroPickupSpeedBonusKmh(level: number): number {
   return clampPowerUpLevel(level) * 6; // 0, +6, +12, +18, +24, +30 km/s
 }
 
-export function getNitroPickupFreeBurnSec(level: number): number {
-  return clampPowerUpLevel(level) * 1.0; // 0, 1, 2, 3, 4, 5 sn
+export function getNitroMaxCapacityBonus(level: number): number {
+  return clampPowerUpLevel(level) * 20; // 0, +20, +40, +60, +80, +100 (100 -> 200)
 }
 
 export function getRepairHealRatio(level: number): number {
@@ -374,7 +385,7 @@ export const POWERUP_SPECS: PowerUpSpec[] = [
     id: 'nitro',
     name: 'Nitro Paketi',
     shortName: 'Nitro',
-    description: 'Nitro deposunu %100 doldurur; geliştirilince anlık hız itişi ve ücretsiz yakım verir.',
+    description: 'Nitro deposunu %100 doldurur; geliştirilince anlık hız itişi ve maksimum nitro kapasitesi artar.',
     unlockLevel: 2,
     costs: [140, 280, 480, 780, 1200],
     accentTextClass: 'text-cyan-300',
@@ -388,9 +399,8 @@ export const POWERUP_SPECS: PowerUpSpec[] = [
     },
     secondary: {
       key: 'secondary',
-      label: 'Serbest Turbo Süresi',
-      formatValue: (lvl) =>
-        lvl === 0 ? '0 sn' : `${getNitroPickupFreeBurnSec(lvl).toFixed(0)} sn`,
+      label: 'Maksimum Kapasite',
+      formatValue: (lvl) => `${getMaxNitroCapacity(0, lvl)}`,
     },
   },
   {
@@ -5815,7 +5825,7 @@ export interface HudStats {
   curvature: number;
   integrity: number;
   nitro: number; // 0 - 100
-  nitroMax: number; // always 100
+  nitroMax: number; // 100..200 based on Nitro Max Capacity power-up level
   nitroPercent: number; // 0 - 100
   nitroActive: boolean;
   combo: number; // 1 - 5
