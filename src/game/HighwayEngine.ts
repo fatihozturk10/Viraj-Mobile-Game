@@ -796,6 +796,9 @@ export class HighwayEngine {
   private keyDown = false;
 
   private wheelSpin = 0;
+  private visualSteer = 0;
+  private touchSteerImpulse = 0;
+  private touchSteerHoldTimer = 0;
   private carRelYaw = 0;
   private driftSlip = 0;
   private chassisRoll = 0;
@@ -4413,6 +4416,28 @@ export class HighwayEngine {
       -MAX_PLAYER_LATERAL,
       MAX_PLAYER_LATERAL,
     );
+
+    // Feed a smooth visual steering-wheel intent that bridges 60Hz touch gaps on 120Hz displays
+    const impulse = THREE.MathUtils.clamp((deltaPx / refWidth) * 14.5, -1, 1);
+    if (Math.abs(impulse) > 0.01) {
+      if (impulse * this.touchSteerImpulse < 0) {
+        // Immediate response when counter-steering
+        this.touchSteerImpulse = THREE.MathUtils.lerp(
+          this.touchSteerImpulse,
+          impulse,
+          0.72,
+        );
+      } else {
+        const blend =
+          Math.abs(impulse) > Math.abs(this.touchSteerImpulse) ? 0.65 : 0.35;
+        this.touchSteerImpulse = THREE.MathUtils.lerp(
+          this.touchSteerImpulse,
+          impulse,
+          blend,
+        );
+      }
+      this.touchSteerHoldTimer = 0.13;
+    }
   }
 
   public setThrottleInput(value: number): void {
@@ -4440,6 +4465,9 @@ export class HighwayEngine {
     this.playerLateral = 0;
     this.targetLateral = 0;
     this.lateralVel = 0;
+    this.visualSteer = 0;
+    this.touchSteerImpulse = 0;
+    this.touchSteerHoldTimer = 0;
     this.playerHeight = 0;
     this.playerVelY = 0;
     this.slickTimer = 0;
@@ -8016,6 +8044,73 @@ export class HighwayEngine {
 
     const steerNorm = THREE.MathUtils.clamp(this.lateralVel / 10.5, -1, 1);
 
+    // Smooth, realistic steering-wheel angle (prevents 60Hz touch-gap snapping back to 0° at 120 FPS)
+    if (snap) {
+      this.touchSteerImpulse = 0;
+      this.touchSteerHoldTimer = 0;
+      this.visualSteer = 0;
+    } else {
+      if (this.touchSteerHoldTimer > 0) {
+        this.touchSteerHoldTimer = Math.max(0, this.touchSteerHoldTimer - dt);
+        this.touchSteerImpulse = THREE.MathUtils.damp(
+          this.touchSteerImpulse,
+          0,
+          2.0,
+          dt,
+        );
+      } else {
+        this.touchSteerImpulse = THREE.MathUtils.damp(
+          this.touchSteerImpulse,
+          0,
+          7.5,
+          dt,
+        );
+      }
+
+      const keySteer = (this.keyRight ? 0.92 : 0) - (this.keyLeft ? 0.92 : 0);
+      const directInput = THREE.MathUtils.clamp(
+        keySteer + this.tiltSteerInput + this.touchSteerImpulse,
+        -1,
+        1,
+      );
+      let driverSteer: number;
+      if (Math.abs(directInput) > 0.03) {
+        if (directInput * steerNorm > 0) {
+          driverSteer =
+            Math.sign(directInput) *
+            Math.max(Math.abs(directInput), Math.abs(steerNorm));
+        } else {
+          driverSteer = directInput * 0.78 + steerNorm * 0.22;
+        }
+      } else {
+        driverSteer = steerNorm * 0.85;
+      }
+
+      // Natural turn-in along highway curves so the wheel stays engaged through sweeping bends
+      const curveSteer = THREE.MathUtils.clamp(
+        _roadSample.curvature * 16.5,
+        -0.36,
+        0.36,
+      );
+      const targetVisualSteer = THREE.MathUtils.clamp(
+        driverSteer + curveSteer,
+        -1,
+        1,
+      );
+
+      // Asymmetric power-steering response: brisk turn-in / counter-steer, calm weighted self-centering
+      const turningInOrReversing =
+        Math.abs(targetVisualSteer) >= Math.abs(this.visualSteer) ||
+        targetVisualSteer * this.visualSteer < 0;
+      const wheelDamp = turningInOrReversing ? 14.5 : 5.0;
+      this.visualSteer = THREE.MathUtils.damp(
+        this.visualSteer,
+        targetVisualSteer,
+        wheelDamp,
+        dt,
+      );
+    }
+
     // Realistic drift slip angle: on sharp curves + steering (amplified on wet asphalt!)
     const wetSlipBoost = 1 + this.getEffectiveRoadWetness() * 0.38;
     const curveSlip = THREE.MathUtils.clamp(
@@ -8072,7 +8167,7 @@ export class HighwayEngine {
     for (const w of this.playerCar.wheelSpinGroups) {
       w.rotation.x = -this.wheelSpin;
     }
-    const frontWheelAngle = -steerNorm * 0.45;
+    const frontWheelAngle = -this.visualSteer * 0.45;
     this.playerCar.frontLeftPivot.rotation.y = frontWheelAngle;
     this.playerCar.frontRightPivot.rotation.y = frontWheelAngle;
 
@@ -8135,7 +8230,7 @@ export class HighwayEngine {
       this.camLookCurrent.copy(_vecB);
 
       this.cockpit.cabinOffset.position.set(0, 0, 0);
-      this.cockpit.wheelGroup.rotation.z = -steerNorm * 0.88;
+      this.cockpit.wheelGroup.rotation.z = -this.visualSteer * 1.05;
       this.cockpit.cabinOffset.rotation.z = -this.chassisRoll * 0.28;
       this.cockpit.cabinOffset.rotation.x = this.chassisPitch * 0.45;
 
