@@ -368,15 +368,27 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
   );
 
   const isPlaying = phase === 'playing';
-  const activeModel =
-    CAR_MODELS.find((m) => m.id === carModel) || CAR_MODELS[0];
-  const playerRankTier = getDriverRankTier(playerLevel.level);
-  const unlockedAchCount = missions.achievements.filter((a) => a.unlocked).length;
+  const activeModel = useMemo(
+    () => CAR_MODELS.find((m) => m.id === carModel) || CAR_MODELS[0],
+    [carModel],
+  );
+  const playerRankTier = useMemo(
+    () => getDriverRankTier(playerLevel.level),
+    [playerLevel.level],
+  );
+  const unlockedAchCount = useMemo(
+    () => missions.achievements.filter((a) => a.unlocked).length,
+    [missions.achievements],
+  );
   const totalAchCount = missions.achievements.length;
-  const activeCameraLabel =
-    CAMERA_MODES.find((c) => c.id === cameraMode)?.label ?? 'Takip';
-  const activeColorOpt =
-    CAR_COLORS.find((c) => c.id === carColor) || CAR_COLORS[0];
+  const activeCameraLabel = useMemo(
+    () => CAMERA_MODES.find((c) => c.id === cameraMode)?.label ?? 'Takip',
+    [cameraMode],
+  );
+  const activeColorOpt = useMemo(
+    () => CAR_COLORS.find((c) => c.id === carColor) || CAR_COLORS[0],
+    [carColor],
+  );
   const activeColorSwatch = activeColorOpt.swatch;
 
   const clampedIntegrity = Math.min(
@@ -390,9 +402,11 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
         ? 'warn'
         : 'critical';
 
-  const activeGameModeSpec =
-    GAME_MODES.find((m) => m.id === (isPlaying ? stats.gameMode : gameMode)) ||
-    GAME_MODES[0];
+  const activeGameModeId = isPlaying ? stats.gameMode : gameMode;
+  const activeGameModeSpec = useMemo(
+    () => GAME_MODES.find((m) => m.id === activeGameModeId) || GAME_MODES[0],
+    [activeGameModeId],
+  );
 
   if (phase === 'garage') {
     return (

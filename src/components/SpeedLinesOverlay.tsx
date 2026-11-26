@@ -95,9 +95,19 @@ export const SpeedLinesOverlay: React.FC<SpeedLinesOverlayProps> = React.memo(
       let running = false;
       let lastTs = 0;
       let smoothedIntensity = 0;
+      const isCoarseMobile =
+        typeof window !== 'undefined' &&
+        (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ||
+          Boolean(window.matchMedia?.('(pointer: coarse)').matches));
+      const minRedrawMs = isCoarseMobile ? 32 : 0;
 
       const draw = (now: number) => {
-        const dt = Math.min(0.05, Math.max(0.001, (now - lastTs) / 1000));
+        const elapsedMs = now - lastTs;
+        if (minRedrawMs > 0 && elapsedMs < minRedrawMs) {
+          rafId = requestAnimationFrame(draw);
+          return;
+        }
+        const dt = Math.min(0.06, Math.max(0.001, elapsedMs / 1000));
         lastTs = now;
 
         const {

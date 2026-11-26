@@ -174,6 +174,7 @@ const _chunkV1 = new THREE.Vector3();
 const _chunkMatM = new THREE.Matrix4();
 const _chunkTrunkOffset = new THREE.Matrix4().makeTranslation(0, 1.2, 0);
 const _chunkConeOffset = new THREE.Matrix4().makeTranslation(0, 4.1, 0);
+const _sampleRightBase = new THREE.Vector3();
 const _chunkBiome = createBiomeSample();
 const _chunkTmpColor = new THREE.Color();
 const _chunkRiverColor = new THREE.Color(0x164e63);
@@ -185,6 +186,7 @@ const _chunkBasaltColorB = new THREE.Color(0x472822);
 export class RoadSystem {
   public readonly group = new THREE.Group();
   private samples: RoadSample[] = [];
+  private samplePool: RoadSample[] = [];
   private chunks: RoadChunk[] = [];
   private baseIndex = 0;
   private readonly isMobile: boolean;
@@ -776,13 +778,16 @@ export class RoadSystem {
       const oldChunk = this.chunks.shift()!;
       this.disposeChunk(oldChunk);
 
+      const dropCount = CHUNK_SAMPLES;
+      const dropped = this.samples.splice(0, dropCount);
+      for (let i = 0; i < dropped.length; i++) {
+        this.samplePool.push(dropped[i]);
+      }
+      this.baseIndex += dropCount;
+
       for (let i = 0; i < CHUNK_SAMPLES; i++) {
         this.appendSample();
       }
-
-      const dropCount = CHUNK_SAMPLES;
-      this.samples.splice(0, dropCount);
-      this.baseIndex += dropCount;
 
       const lastChunk = this.chunks[this.chunks.length - 1];
       const newStartIdx = lastChunk.endIndex;
@@ -793,44 +798,61 @@ export class RoadSystem {
 
   private appendSample(): void {
     const last = this.samples[this.samples.length - 1];
-    const nextPos = last.pos.clone().addScaledVector(last.tangent, SAMPLE_STEP);
     const nextHeading = last.heading + last.curvature * SAMPLE_STEP;
     const nextS = last.s + SAMPLE_STEP;
 
     const { curvature, slope } = this.evaluateSectionParams(nextS);
     const pitch = Math.atan(slope);
     const bank = THREE.MathUtils.clamp(curvature * 9.8, -0.245, 0.245);
+    const cosPitch = Math.cos(pitch);
+    const cosBank = Math.cos(bank);
+    const sinBank = Math.sin(bank);
 
-    const tangent = new THREE.Vector3(
-      Math.sin(nextHeading) * Math.cos(pitch),
-      Math.sin(pitch),
-      -Math.cos(nextHeading) * Math.cos(pitch),
-    ).normalize();
+    const recycled = this.samplePool.pop();
+    const pos = recycled ? recycled.pos : new THREE.Vector3();
+    const tangent = recycled ? recycled.tangent : new THREE.Vector3();
+    const right = recycled ? recycled.right : new THREE.Vector3();
+    const normal = recycled ? recycled.normal : new THREE.Vector3();
 
-    const rightBase = new THREE.Vector3(
-      Math.cos(nextHeading),
-      0,
-      Math.sin(nextHeading),
-    );
-    const right = rightBase
-      .clone()
-      .multiplyScalar(Math.cos(bank))
-      .addScaledVector(WORLD_UP, -Math.sin(bank))
+    pos.copy(last.pos).addScaledVector(last.tangent, SAMPLE_STEP);
+    tangent
+      .set(
+        Math.sin(nextHeading) * cosPitch,
+        Math.sin(pitch),
+        -Math.cos(nextHeading) * cosPitch,
+      )
       .normalize();
-    const normal = new THREE.Vector3().crossVectors(right, tangent).normalize();
 
-    this.samples.push({
-      index: last.index + 1,
-      s: nextS,
-      pos: nextPos,
-      heading: nextHeading,
-      pitch,
-      curvature,
-      bank,
-      tangent,
-      right,
-      normal,
-    });
+    _sampleRightBase.set(Math.cos(nextHeading), 0, Math.sin(nextHeading));
+    right
+      .copy(_sampleRightBase)
+      .multiplyScalar(cosBank)
+      .addScaledVector(WORLD_UP, -sinBank)
+      .normalize();
+    normal.crossVectors(right, tangent).normalize();
+
+    if (recycled) {
+      recycled.index = last.index + 1;
+      recycled.s = nextS;
+      recycled.heading = nextHeading;
+      recycled.pitch = pitch;
+      recycled.curvature = curvature;
+      recycled.bank = bank;
+      this.samples.push(recycled);
+    } else {
+      this.samples.push({
+        index: last.index + 1,
+        s: nextS,
+        pos,
+        heading: nextHeading,
+        pitch,
+        curvature,
+        bank,
+        tangent,
+        right,
+        normal,
+      });
+    }
   }
 
   public sampleAtS(s: number, out: EvaluatedRoadPoint): boolean {
@@ -1641,20 +1663,17 @@ export class RoadSystem {
       this.tunnelLightMat,
       lightCount,
     );
-    const dummy = new THREE.Object3D();
-    const basisMat = new THREE.Matrix4();
-    const negTangent = new THREE.Vector3();
     let idx = 0;
     for (let i = 1; i < count; i += 2) {
       if (idx >= lightCount) break;
       const s = this.getSample(startIndex + i);
-      negTangent.copy(s.tangent).negate();
-      basisMat.makeBasis(s.right, s.normal, negTangent);
-      dummy.position.copy(s.pos).addScaledVector(s.normal, 6.72);
-      dummy.quaternion.setFromRotationMatrix(basisMat);
-      dummy.scale.set(1, 1, 1);
-      dummy.updateMatrix();
-      lightInst.setMatrixAt(idx++, dummy.matrix);
+      _chunkNegTangent.copy(s.tangent).negate();
+      _chunkBasisMat.makeBasis(s.right, s.normal, _chunkNegTangent);
+      _chunkDummy.position.copy(s.pos).addScaledVector(s.normal, 6.72);
+      _chunkDummy.quaternion.setFromRotationMatrix(_chunkBasisMat);
+      _chunkDummy.scale.set(1, 1, 1);
+      _chunkDummy.updateMatrix();
+      lightInst.setMatrixAt(idx++, _chunkDummy.matrix);
     }
     lightInst.instanceMatrix.needsUpdate = true;
     lightInst.computeBoundingSphere();
@@ -1663,10 +1682,10 @@ export class RoadSystem {
     const addPortal = (sampleIdx: number) => {
       const s = this.getSample(sampleIdx);
       const portal = new THREE.Group();
-      negTangent.copy(s.tangent).negate();
-      basisMat.makeBasis(s.right, s.normal, negTangent);
+      _chunkNegTangent.copy(s.tangent).negate();
+      _chunkBasisMat.makeBasis(s.right, s.normal, _chunkNegTangent);
       portal.position.copy(s.pos);
-      portal.quaternion.setFromRotationMatrix(basisMat);
+      portal.quaternion.setFromRotationMatrix(_chunkBasisMat);
 
       const lintel = new THREE.Mesh(
         this.tunnelPortalLintelGeo,

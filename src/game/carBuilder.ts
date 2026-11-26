@@ -5086,7 +5086,18 @@ export function createPlayerCar(
     }
   };
 
+  let cachedLiverySpec =
+    LIVERIES.find((l) => l.id === currentCustom.livery) || LIVERIES[0];
+  let cachedUnderglowSpec =
+    UNDERGLOWS.find((u) => u.id === currentCustom.underglow) || UNDERGLOWS[0];
+  let cachedHeadlightSpec =
+    HEADLIGHTS.find((h) => h.id === currentCustom.headlight) || HEADLIGHTS[0];
+  let cachedNitroSpec =
+    NITRO_FLAMES.find((f) => f.id === currentCustom.nitroFlame) || NITRO_FLAMES[0];
+
   const applyPaintAndLivery = (): void => {
+    cachedLiverySpec =
+      LIVERIES.find((l) => l.id === currentCustom.livery) || LIVERIES[0];
     if (activeLiveryTex) {
       activeLiveryTex.dispose();
       activeLiveryTex = null;
@@ -5162,8 +5173,7 @@ export function createPlayerCar(
   };
 
   const syncHeadlightOpticalStrength = (): void => {
-    const hlSpec =
-      HEADLIGHTS.find((h) => h.id === currentCustom.headlight) || HEADLIGHTS[0];
+    const hlSpec = cachedHeadlightSpec;
     const isCustom = hlSpec.id !== 'stock';
     const gScale = THREE.MathUtils.clamp(headlightGlowScale, 0, 1.25);
 
@@ -5187,6 +5197,7 @@ export function createPlayerCar(
     // 1. Underbody Neon (2-layer organic spill + real PointLight bounce + recessed LED strip)
     const ugSpec =
       UNDERGLOWS.find((u) => u.id === currentCustom.underglow) || UNDERGLOWS[0];
+    cachedUnderglowSpec = ugSpec;
     underglowGroup.visible = ugSpec.mode !== 'off';
     if (ugSpec.mode !== 'off') {
       underglowOuterMat.color.setHex(ugSpec.hex);
@@ -5203,6 +5214,7 @@ export function createPlayerCar(
     // 2. Headlights (Bulb, DRL, SpotLight Beam, Anamorphic Flare & Ground Projection)
     const hlSpec =
       HEADLIGHTS.find((h) => h.id === currentCustom.headlight) || HEADLIGHTS[0];
+    cachedHeadlightSpec = hlSpec;
     headLightMaterial.color.setHex(hlSpec.bulbHex);
     headLightMaterial.emissive.setHex(hlSpec.emissiveHex);
     drlMat.color.setHex(hlSpec.bulbHex);
@@ -5217,6 +5229,7 @@ export function createPlayerCar(
     const nfSpec =
       NITRO_FLAMES.find((f) => f.id === currentCustom.nitroFlame) ||
       NITRO_FLAMES[0];
+    cachedNitroSpec = nfSpec;
     flameMat.color.setHex(nfSpec.coneHex);
 
     // 4. License Plate Frame & Style
@@ -5227,6 +5240,7 @@ export function createPlayerCar(
   };
 
   const setHeadlightGlowScale = (scale: number): void => {
+    if (Math.abs(scale - headlightGlowScale) < 0.004) return;
     headlightGlowScale = scale;
     syncHeadlightOpticalStrength();
   };
@@ -10191,10 +10205,9 @@ export function createPlayerCar(
     speedMs = 0,
     steerNorm = 0,
   ): void => {
-    // 1. Animated Underglow (Pulse or RGB Rainbow)
+    // 1. Animated Underglow (Pulse or RGB Rainbow — cached spec, zero per-frame Array.find)
     if (underglowGroup.visible) {
-      const ugSpec =
-        UNDERGLOWS.find((u) => u.id === currentCustom.underglow) || UNDERGLOWS[0];
+      const ugSpec = cachedUnderglowSpec;
       if (ugSpec.mode === 'pulse') {
         const wave = 0.5 + 0.5 * Math.sin(timeSec * 3.6);
         underglowOuterMat.opacity = 0.16 + wave * 0.24;
@@ -10275,8 +10288,7 @@ export function createPlayerCar(
 
     // 2. Animated Chameleon & Holographic Prism Color Shift
     // Full-body artwork wraps keep crisp artwork colors while retaining physical iridescence sheen
-    const activeLiverySpec = LIVERIES.find((l) => l.id === currentCustom.livery);
-    const isFullWrap = Boolean(activeLiverySpec?.overridesBaseColor);
+    const isFullWrap = Boolean(cachedLiverySpec?.overridesBaseColor);
     if (currentCustom.paintFinish === 'chameleon') {
       if (isFullWrap) {
         paintMaterial.color.copy(_whiteColor);
@@ -10676,9 +10688,8 @@ export function createPlayerCar(
       wheelGlowSecondaryMat.emissiveIntensity = 1.3 + (1 - pulse) * 1.4;
     }
 
-    // 2d. Animated Nitro Exhaust Cone Color (Rainbow / Police Strobe / Aurora)
-    const activeNitroSpec =
-      NITRO_FLAMES.find((f) => f.id === currentCustom.nitroFlame) || NITRO_FLAMES[0];
+    // 2d. Animated Nitro Exhaust Cone Color (Rainbow / Police Strobe / Aurora — cached spec)
+    const activeNitroSpec = cachedNitroSpec;
     if (activeNitroSpec.animatedMode === 'rainbow') {
       _fxColor.setHSL((timeSec * 0.65) % 1, 0.98, 0.58);
       flameMat.color.copy(_fxColor);

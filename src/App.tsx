@@ -2295,6 +2295,17 @@ export default function App() {
     [openRewardedAd],
   );
 
+  const showcaseCarConfig = useMemo(
+    () => ({
+      modelId: carModel,
+      colorId: carColor,
+      wheelConfig: carWheels[carModel],
+      customConfig: carCustom[carModel],
+      licensePlate,
+    }),
+    [carModel, carColor, carWheels, carCustom, licensePlate],
+  );
+
   const streakStatus = useMemo(
     () => adManager.getStreakStatus(),
     // Re-evaluate only when ad state changes or user opens/closes wheel or switches phases
@@ -2468,22 +2479,26 @@ export default function App() {
         onOpenLevelRoad={handleOpenLevelRoad}
       />
 
-      <LevelRoadModal
-        open={levelRoadOpen}
-        playerLevel={playerLevel}
-        claimedLevels={claimedLevelRewards}
-        focusLevel={levelRoadFocusLevel}
-        onClose={handleCloseLevelRoad}
-        onClaimLevel={handleClaimLevelRoad}
-        onClaimAll={handleClaimAllLevelRoad}
-      />
+      {levelRoadOpen && (
+        <LevelRoadModal
+          open={levelRoadOpen}
+          playerLevel={playerLevel}
+          claimedLevels={claimedLevelRewards}
+          focusLevel={levelRoadFocusLevel}
+          onClose={handleCloseLevelRoad}
+          onClaimLevel={handleClaimLevelRoad}
+          onClaimAll={handleClaimAllLevelRoad}
+        />
+      )}
 
-      <LevelUpCelebrationOverlay
-        event={activeLevelUp}
-        inDriveMode={phase === 'playing'}
-        onDismiss={handleDismissLevelUp}
-        onOpenLevelRoad={handleOpenLevelRoadFromCelebration}
-      />
+      {activeLevelUp && (
+        <LevelUpCelebrationOverlay
+          event={activeLevelUp}
+          inDriveMode={phase === 'playing'}
+          onDismiss={handleDismissLevelUp}
+          onOpenLevelRoad={handleOpenLevelRoadFromCelebration}
+        />
+      )}
 
       {levelRoadCrateSession && (
         <CrateOpeningCeremony
@@ -2495,13 +2510,7 @@ export default function App() {
           crateTitle={levelRoadCrateSession.crateTitle}
           lootItems={levelRoadCrateSession.lootItems}
           unlockedCarNames={levelRoadCrateSession.unlockedCarNames}
-          showcaseCar={{
-            modelId: carModel,
-            colorId: carColor,
-            wheelConfig: carWheels[carModel],
-            customConfig: carCustom[carModel],
-            licensePlate,
-          }}
+          showcaseCar={showcaseCarConfig}
           animateCrate
           onOpenGarage={() => {
             setLevelRoadCrateSession(null);
@@ -2512,83 +2521,89 @@ export default function App() {
         />
       )}
 
-      <CareerMapModal
-        open={careerMapOpen}
-        progress={careerProgress}
-        goldCoins={goldCoins}
-        onClose={handleCloseCareerMap}
-        onStartLevel={handleStartCareerLevel}
-        onClaimStarChest={handleClaimCareerStarChest}
-      />
+      {careerMapOpen && (
+        <CareerMapModal
+          open={careerMapOpen}
+          progress={careerProgress}
+          goldCoins={goldCoins}
+          onClose={handleCloseCareerMap}
+          onStartLevel={handleStartCareerLevel}
+          onClaimStarChest={handleClaimCareerStarChest}
+        />
+      )}
 
-      <LeaderboardModal
-        open={leaderboardOpen}
-        currentUser={currentUser}
-        onClose={handleCloseLeaderboard}
-      />
+      {leaderboardOpen && (
+        <LeaderboardModal
+          open={leaderboardOpen}
+          currentUser={currentUser}
+          onClose={handleCloseLeaderboard}
+        />
+      )}
 
-      <DailyWheelModal
-        open={dailyWheelOpen}
-        freeAvailable={freeWheelAvailableToday}
-        extraAdAvailable={extraWheelAdAvailableToday}
-        streakStatus={streakStatus}
-        onSpinFree={handleSpinFreeWheel}
-        onWatchAdForExtraSpin={handleWatchAdForExtraSpin}
-        onClaimSlice={handleClaimWheelSlice}
-        onClaimStreakFree={handleClaimStreakFree}
-        onWatchAdDoubleStreak={handleWatchAdDoubleStreak}
-        onClose={handleCloseDailyWheel}
-      />
+      {dailyWheelOpen && (
+        <DailyWheelModal
+          open={dailyWheelOpen}
+          freeAvailable={freeWheelAvailableToday}
+          extraAdAvailable={extraWheelAdAvailableToday}
+          streakStatus={streakStatus}
+          onSpinFree={handleSpinFreeWheel}
+          onWatchAdForExtraSpin={handleWatchAdForExtraSpin}
+          onClaimSlice={handleClaimWheelSlice}
+          onClaimStreakFree={handleClaimStreakFree}
+          onWatchAdDoubleStreak={handleWatchAdDoubleStreak}
+          onClose={handleCloseDailyWheel}
+        />
+      )}
 
-      <AdOverlayModal
-        session={activeAdSession}
-        iapModalOpen={false}
-        adFreePurchased={adState.adFreePurchased}
-        onCompleteRewarded={handleCompleteRewardedAd}
-        onCancelRewarded={handleCancelRewardedAd}
-        onCloseInterstitial={handleCloseInterstitial}
-        onOpenIapFromInterstitial={handleOpenStoreFromInterstitial}
-        onConfirmPurchaseAdFree={handleConfirmPurchaseAdFree}
-        onCloseIap={handleCloseStore}
-      />
+      {activeAdSession && (
+        <AdOverlayModal
+          session={activeAdSession}
+          iapModalOpen={false}
+          adFreePurchased={adState.adFreePurchased}
+          onCompleteRewarded={handleCompleteRewardedAd}
+          onCancelRewarded={handleCancelRewardedAd}
+          onCloseInterstitial={handleCloseInterstitial}
+          onOpenIapFromInterstitial={handleOpenStoreFromInterstitial}
+          onConfirmPurchaseAdFree={handleConfirmPurchaseAdFree}
+          onCloseIap={handleCloseStore}
+        />
+      )}
 
-      <StoreModal
-        open={storeOpen}
-        initialTab={storeInitialTab}
-        goldCoins={goldCoins}
-        adFreePurchased={adState.adFreePurchased}
-        entitlements={storeEntitlements}
-        currentUser={currentUser}
-        showcaseCar={{
-          modelId: carModel,
-          colorId: carColor,
-          wheelConfig: carWheels[carModel],
-          customConfig: carCustom[carModel],
-          licensePlate,
-        }}
-        onFulfillPurchase={handleFulfillStorePurchase}
-        onRedeemPromoCode={handleRedeemPromoCode}
-        onRestorePurchases={handleRestorePurchases}
-        onOpenGarageFromStore={launchGarage}
-        onClose={handleCloseStore}
-      />
+      {storeOpen && (
+        <StoreModal
+          open={storeOpen}
+          initialTab={storeInitialTab}
+          goldCoins={goldCoins}
+          adFreePurchased={adState.adFreePurchased}
+          entitlements={storeEntitlements}
+          currentUser={currentUser}
+          showcaseCar={showcaseCarConfig}
+          onFulfillPurchase={handleFulfillStorePurchase}
+          onRedeemPromoCode={handleRedeemPromoCode}
+          onRestorePurchases={handleRestorePurchases}
+          onOpenGarageFromStore={launchGarage}
+          onClose={handleCloseStore}
+        />
+      )}
 
-      <SettingsModal
-        open={settingsOpen}
-        audioSettings={audioSettings}
-        hapticsEnabled={hapticsEnabled}
-        steeringSettings={steeringSettings}
-        notificationSettings={notificationSettings}
-        onChangeSfxVolume={handleChangeSfxVolume}
-        onPreviewSfxVolume={handlePreviewSfxVolume}
-        onChangeMusicVolume={handleChangeMusicVolume}
-        onToggleMute={handleToggleMute}
-        onToggleHaptics={handleToggleHaptics}
-        onChangeSteeringSettings={handleChangeSteeringSettings}
-        onCalibrateTilt={handleCalibrateTilt}
-        onChangeNotificationSettings={setNotificationSettings}
-        onClose={handleCloseSettings}
-      />
+      {settingsOpen && (
+        <SettingsModal
+          open={settingsOpen}
+          audioSettings={audioSettings}
+          hapticsEnabled={hapticsEnabled}
+          steeringSettings={steeringSettings}
+          notificationSettings={notificationSettings}
+          onChangeSfxVolume={handleChangeSfxVolume}
+          onPreviewSfxVolume={handlePreviewSfxVolume}
+          onChangeMusicVolume={handleChangeMusicVolume}
+          onToggleMute={handleToggleMute}
+          onToggleHaptics={handleToggleHaptics}
+          onChangeSteeringSettings={handleChangeSteeringSettings}
+          onCalibrateTilt={handleCalibrateTilt}
+          onChangeNotificationSettings={setNotificationSettings}
+          onClose={handleCloseSettings}
+        />
+      )}
 
       <OfflineIndicator />
     </main>

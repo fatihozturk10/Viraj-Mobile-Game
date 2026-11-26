@@ -490,6 +490,10 @@ const _fireTipColor = new THREE.Color(0xdc2626);
 const _nitroCoreColor = new THREE.Color(0xe0f2fe);
 const _nitroMidColor = new THREE.Color(0x38bdf8);
 const _nitroTipColor = new THREE.Color(0x0369a1);
+const GEAR_THRESHOLDS = [0, 44, 82, 124, 168, 214, 285] as const;
+const DRIFT_MULT_THRESHOLDS = [0, 0.5, 1.5, 3.5, 7.5, 15.5, 31.5, 63.5, 127.5, 255.5] as const;
+const _gearRpmOut = { gear: 1, rpmRatio: 0.28 };
+const _driftMultOut = { mult: 1, progress: 0 };
 
 const RadialMotionBlurShader = {
   uniforms: {
@@ -574,6 +578,15 @@ export class HighwayEngine {
   private smoothedDt = 1 / 60;
   private lastAppliedAtmId: AtmosphereId | null = null;
   private lastAppliedAtmDist = -999;
+  private cycleAtmAccumSec = 1;
+  private pausedNeedsRender = true;
+  private cachedBonusCarId: CarModelId | null = null;
+  private cachedBonusWheelStyle: WheelStyleId | null = null;
+  private cachedBonusKitId: BodyKitId | null = null;
+  private cachedBonusSpoilerId: SpoilerId | null = null;
+  private cachedWheelSpec = WHEEL_STYLES[0];
+  private cachedKitSpec = BODY_KITS[0];
+  private cachedSpoilerSpec = SPOILERS[0];
 
   private textures: ProceduralTextureSet;
   private road: RoadSystem;
@@ -1409,11 +1422,15 @@ export class HighwayEngine {
       this.renderer = new THREE.WebGLRenderer({
         antialias: !this.isSoftwareGl,
         powerPreference: 'high-performance',
+        alpha: false,
+        stencil: false,
       });
     } catch {
       this.renderer = new THREE.WebGLRenderer({
         antialias: false,
         powerPreference: 'default',
+        alpha: false,
+        stencil: false,
       });
     }
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -2067,6 +2084,7 @@ export class HighwayEngine {
         );
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(this.currentPixelRatio);
+    this.pausedNeedsRender = true;
     if (this.composer) {
       this.composer.setPixelRatio(Math.min(this.currentPixelRatio, 1.25));
       this.composer.setSize(width, height);
@@ -5442,11 +5460,26 @@ export class HighwayEngine {
 
     // Keep native HiDPI resolution & full particle density locked to avoid mid-run WebGL backbuffer resize stalls.
 
-    if (this.phase !== 'garage' && this.phase !== 'paused') {
+    if (this.phase === 'paused') {
+      if (this.pausedNeedsRender) {
+        this.pausedNeedsRender = false;
+        this.renderer.render(this.scene, this.camera);
+      }
+      this.scheduleNextTick();
+      return;
+    }
+    this.pausedNeedsRender = true;
+
+    if (this.phase !== 'garage') {
       if (this.atmosphereId === 'cycle') {
         this.stepDynamicWeather(dt);
         this.cycleTime = (this.cycleTime + dt / 92) % 1;
-        this.applyCycleAtmosphere(this.cycleTime);
+        this.cycleAtmAccumSec += dt;
+        if (this.cycleAtmAccumSec >= 0.066 || this.lastAppliedAtmId !== 'cycle') {
+          this.cycleAtmAccumSec = 0;
+          this.lastAppliedAtmId = 'cycle';
+          this.applyCycleAtmosphere(this.cycleTime);
+        }
       } else if (
         this.lastAppliedAtmId !== this.atmosphereId ||
         Math.abs(this.distanceMeters - this.lastAppliedAtmDist) >= 12
@@ -7028,15 +7061,32 @@ export class HighwayEngine {
       }
     }
 
-    // Speed Dynamics (with Engine, Nitro, Wheel Rim, Body Kit & Spoiler Aero)
+    // Speed Dynamics (with cached Engine, Nitro, Wheel, Body Kit & Spoiler specs — zero per-frame Array.find)
     const wheelConfig = this.carWheels[this.carModelId];
-    const wheelSpec =
-      WHEEL_STYLES.find((w) => w.id === wheelConfig?.style) || WHEEL_STYLES[0];
     const customConfig = this.carCustom[this.carModelId];
-    const kitSpec =
-      BODY_KITS.find((k) => k.id === customConfig?.bodyKit) || BODY_KITS[0];
-    const spoilerSpec =
-      SPOILERS.find((s) => s.id === customConfig?.spoiler) || SPOILERS[0];
+    const wStyle = wheelConfig?.style ?? null;
+    const bKit = customConfig?.bodyKit ?? null;
+    const spId = customConfig?.spoiler ?? null;
+    if (
+      this.cachedBonusCarId !== this.carModelId ||
+      this.cachedBonusWheelStyle !== wStyle ||
+      this.cachedBonusKitId !== bKit ||
+      this.cachedBonusSpoilerId !== spId
+    ) {
+      this.cachedBonusCarId = this.carModelId;
+      this.cachedBonusWheelStyle = wStyle;
+      this.cachedBonusKitId = bKit;
+      this.cachedBonusSpoilerId = spId;
+      this.cachedWheelSpec =
+        WHEEL_STYLES.find((w) => w.id === wStyle) || WHEEL_STYLES[0];
+      this.cachedKitSpec =
+        BODY_KITS.find((k) => k.id === bKit) || BODY_KITS[0];
+      this.cachedSpoilerSpec =
+        SPOILERS.find((s) => s.id === spId) || SPOILERS[0];
+    }
+    const wheelSpec = this.cachedWheelSpec;
+    const kitSpec = this.cachedKitSpec;
+    const spoilerSpec = this.cachedSpoilerSpec;
     const progressionBonus = Math.min(20, this.distanceMeters / 170);
     const engineUpgradeBonus = upgrades.engine * 1.4;
     const baseCruiseMs =
@@ -7617,11 +7667,13 @@ export class HighwayEngine {
       this.rampageAuraMesh.visible = false;
     }
 
-    this.playerCar.updateEffects(
-      performance.now() * 0.001,
-      this.speedMs,
-      THREE.MathUtils.clamp(this.lateralVel / 8.5, -1, 1),
-    );
+    if (this.playerCar.root.visible) {
+      this.playerCar.updateEffects(
+        performance.now() * 0.001,
+        this.speedMs,
+        THREE.MathUtils.clamp(this.lateralVel / 8.5, -1, 1),
+      );
+    }
     const speedKmh = this.speedMs * 3.6;
     const { gear, rpmRatio } = this.computeGearAndRpm(speedKmh);
 
@@ -9552,43 +9604,42 @@ export class HighwayEngine {
     gear: number;
     rpmRatio: number;
   } {
-    const thresholds = [0, 44, 82, 124, 168, 214, 285];
     let gear = 1;
     for (let g = 1; g <= 6; g++) {
-      if (speedKmh >= thresholds[g - 1]) gear = g;
+      if (speedKmh >= GEAR_THRESHOLDS[g - 1]) gear = g;
     }
-    const low = thresholds[gear - 1];
-    const high = thresholds[gear];
-    const rpmRatio = THREE.MathUtils.clamp(
+    const low = GEAR_THRESHOLDS[gear - 1];
+    const high = GEAR_THRESHOLDS[gear];
+    _gearRpmOut.gear = gear;
+    _gearRpmOut.rpmRatio = THREE.MathUtils.clamp(
       0.28 + ((speedKmh - low) / Math.max(1, high - low)) * 0.68,
       0.22,
       0.99,
     );
-    return { gear, rpmRatio };
+    return _gearRpmOut;
   }
 
   private getDriftMultiplierState(): { mult: number; progress: number } {
     const t = this.driftDuration;
-    // Max x10 multiplier; each level-up requires exactly 2x more drift time than the previous step:
-    // x1->x2: 0.5s, x2->x3: 1.0s, x3->x4: 2.0s, x4->x5: 4.0s, x5->x6: 8.0s,
-    // x6->x7: 16.0s, x7->x8: 32.0s, x8->x9: 64.0s, x9->x10: 128.0s
-    const thresholds = [0, 0.5, 1.5, 3.5, 7.5, 15.5, 31.5, 63.5, 127.5, 255.5];
     let mult = 1;
-    for (let i = 1; i < thresholds.length; i++) {
-      if (t >= thresholds[i]) mult = i + 1;
+    for (let i = 1; i < DRIFT_MULT_THRESHOLDS.length; i++) {
+      if (t >= DRIFT_MULT_THRESHOLDS[i]) mult = i + 1;
     }
     if (mult >= 10) {
-      return { mult: 10, progress: 1 };
+      _driftMultOut.mult = 10;
+      _driftMultOut.progress = 1;
+      return _driftMultOut;
     }
-    const low = thresholds[mult - 1];
-    const high = thresholds[mult];
-    const progress = THREE.MathUtils.clamp((t - low) / (high - low), 0, 1);
-    return { mult, progress };
+    const low = DRIFT_MULT_THRESHOLDS[mult - 1];
+    const high = DRIFT_MULT_THRESHOLDS[mult];
+    _driftMultOut.mult = mult;
+    _driftMultOut.progress = THREE.MathUtils.clamp((t - low) / (high - low), 0, 1);
+    return _driftMultOut;
   }
 
   private pushHud(force: boolean): void {
     const now = performance.now();
-    const minInterval = this.isMobileDevice ? 100 : 66;
+    const minInterval = this.isMobileDevice ? 120 : 66;
     if (!force && now - this.lastHudPush < minInterval) return;
     this.lastHudPush = now;
 
