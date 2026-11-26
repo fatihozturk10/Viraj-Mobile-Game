@@ -16,6 +16,7 @@ import streetCrateArt from '../assets/images/store_crate_street_vault.jpg';
 import proCrateArt from '../assets/images/store_crate_pro_vault.jpg';
 import legendaryCrateArt from '../assets/images/store_crate_legendary_vault.jpg';
 import goldVaultArt from '../assets/images/store_gold_vault_1795078816982.jpg';
+import noAdsPackArt from '../assets/images/store_reklamsiz_paket_1795687907426.jpg';
 
 export type StoreCategory = 'bundle' | 'crate' | 'gold';
 
@@ -169,7 +170,7 @@ export const BUNDLE_PRODUCTS: BundleProductSpec[] = [
   },
   {
     sku: 'viraj_ad_free',
-    title: 'Reklamsız VIP Geçiş',
+    title: 'Reklamsız Paket',
     subtitle: 'Kalıcı Ayrıcalık · Tek Seferlik',
     tagline: 'Tüm zorunlu geçiş reklamlarını sonsuza dek kaldır ve bonus altın kazan.',
     priceTry: 9.99,
@@ -177,7 +178,7 @@ export const BUNDLE_PRODUCTS: BundleProductSpec[] = [
     includesAdFree: true,
     goldAmount: 600,
     cars: [],
-    imageUrl: goldVaultArt,
+    imageUrl: noAdsPackArt,
     accentBorderClass: 'border-emerald-400/45',
     accentTextClass: 'text-emerald-300',
     highlights: [

@@ -5924,6 +5924,7 @@ export interface ActiveCareerMissionHud {
   shortLabel: string;
   progressText: string;
   completed: boolean;
+  failed?: boolean;
 }
 
 export interface ActiveCareerHudState {
@@ -5935,6 +5936,8 @@ export interface ActiveCareerHudState {
   elapsedSec: number;
   mission1: ActiveCareerMissionHud;
   mission2: ActiveCareerMissionHud;
+  minSpeedTargetKmh?: number;
+  minSpeedGraceActive?: boolean;
 }
 
 export interface FloatingCallout {

@@ -20,6 +20,8 @@ import {
   CareerLevelSpec,
   CareerProgressSnapshot,
   CareerStarChestSpec,
+  getCareerLevelDifficulty,
+  getCareerLevelSpecialTags,
   TOTAL_CAREER_LEVELS,
 } from '../game/careerLevels';
 import {
@@ -28,7 +30,7 @@ import {
   RolledLootItem,
 } from '../services/storeCatalog';
 import { ATMOSPHERES } from '../types/game';
-import { CareerMapScenery } from './CareerMapScenery';
+import { BiomeBoundaries, CareerMapScenery } from './CareerMapScenery';
 import { CrateOpeningCeremony } from './CrateOpeningCeremony';
 
 interface CareerMapModalProps {
@@ -40,18 +42,26 @@ interface CareerMapModalProps {
   onClaimStarChest: (starsRequired: number) => void;
 }
 
-const ROW_STEP = 112;
-const TOP_PAD = 150;
-const BOTTOM_PAD = 180;
-const MAP_WIDTH = 460;
-const MAP_HEIGHT = TOP_PAD + (TOTAL_CAREER_LEVELS - 1) * ROW_STEP + BOTTOM_PAD;
+const ROW_STEP = 114;
+const CHAPTER_GAP = 108;
+const TOP_PAD = 180;
+const BOTTOM_PAD = 215;
+const WORLD_WIDTH = 1600;
+const WORLD_CENTER_X = WORLD_WIDTH * 0.5;
+const MAP_HEIGHT =
+  TOP_PAD +
+  (TOTAL_CAREER_LEVELS - 1) * ROW_STEP +
+  3 * CHAPTER_GAP +
+  BOTTOM_PAD;
 
 function getLevelCoords(levelId: number): { x: number; y: number } {
   // Level 1 sits near bottom; Level 100 climbs to the summit at top
   const idx = levelId - 1;
-  const y = MAP_HEIGHT - BOTTOM_PAD - idx * ROW_STEP;
-  const wave = Math.sin(idx * 0.68) * 116 + Math.sin(idx * 0.24) * 22;
-  const x = MAP_WIDTH * 0.5 + wave;
+  const chapterIndex = Math.min(3, Math.floor(idx / 25));
+  const y = MAP_HEIGHT - BOTTOM_PAD - idx * ROW_STEP - chapterIndex * CHAPTER_GAP;
+  // Compact horizontal amplitude (±108px max) so nodes stay well inside narrow mobile screens without any horizontal squishing
+  const wave = Math.sin(idx * 0.66) * 92 + Math.sin(idx * 0.25) * 16;
+  const x = WORLD_CENTER_X + wave;
   return { x, y };
 }
 
@@ -114,6 +124,42 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
     );
     return buildSmoothRoadPath(levelCoords.slice(0, count));
   }, [levelCoords, progress.highestUnlockedLevel]);
+
+  const biomeBoundaries = useMemo<BiomeBoundaries>(
+    () => ({
+      volcanicToArcticY: (levelCoords[74].y + levelCoords[75].y) * 0.5,
+      arcticToDesertY: (levelCoords[49].y + levelCoords[50].y) * 0.5,
+      desertToAlpineY: (levelCoords[24].y + levelCoords[25].y) * 0.5,
+    }),
+    [levelCoords],
+  );
+
+  const chapterBanners = useMemo(
+    () =>
+      CAREER_CHAPTERS.map((ch) => {
+        const startPt = levelCoords[ch.startLevel - 1];
+        if (ch.index === 0) {
+          return { ch, topY: startPt.y + 56, centerY: startPt.y + 92 };
+        }
+        const prevPt = levelCoords[ch.startLevel - 2];
+        const midY = (startPt.y + prevPt.y) * 0.5;
+        return { ch, topY: midY - 36, centerY: midY };
+      }),
+    [levelCoords],
+  );
+
+  const gantryYs = useMemo(
+    () => chapterBanners.map((b) => b.centerY),
+    [chapterBanners],
+  );
+
+  const backdropGradient = useMemo(() => {
+    const pVolc = (biomeBoundaries.volcanicToArcticY / MAP_HEIGHT) * 100;
+    const pArc = (biomeBoundaries.arcticToDesertY / MAP_HEIGHT) * 100;
+    const pDes = (biomeBoundaries.desertToAlpineY / MAP_HEIGHT) * 100;
+    const f = (n: number) => `${Math.max(0, Math.min(100, n)).toFixed(2)}%`;
+    return `linear-gradient(180deg, #160609 0%, #340d14 ${f(pVolc * 0.5)}, #260d18 ${f(pVolc - 1.8)}, #0c1f35 ${f(pVolc + 1.8)}, #11304f ${f((pVolc + pArc) * 0.5)}, #193b5a ${f(pArc - 1.8)}, #582812 ${f(pArc + 1.8)}, #7b3918 ${f((pArc + pDes) * 0.5)}, #532613 ${f(pDes - 1.8)}, #133526 ${f(pDes + 1.8)}, #1a4732 ${f(pDes + (100 - pDes) * 0.52)}, #0c2419 100%)`;
+  }, [biomeBoundaries]);
 
   const claimableChestsCount = useMemo(
     () =>
@@ -257,75 +303,68 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
           className="relative mx-auto w-full overflow-hidden"
           style={{
             height: `${MAP_HEIGHT}px`,
-            // Rich atmospheric multi-biome backdrop (Volcanic Summit -> Arctic Glaciers -> Red Desert -> Alpine Valley)
-            background:
-              'linear-gradient(180deg, #160609 0%, #340d14 11%, #260d18 22%, #0c1f35 26%, #11304f 38%, #193b5a 47%, #582812 51%, #7b3918 62%, #532613 72%, #133526 76%, #1a4732 88%, #0c2419 100%)',
+            // Exact chapter-aligned multi-biome backdrop (Volcanic Summit -> Arctic Glaciers -> Red Desert -> Alpine Valley)
+            background: backdropGradient,
           }}
         >
           {/* Ambient Atmospheric Horizon Washes */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-55"
+            className="pointer-events-none absolute inset-0 opacity-50"
             style={{
               backgroundImage:
-                'radial-gradient(circle at 18% 89%, rgba(52,211,153,0.24), transparent 24%), radial-gradient(circle at 82% 83%, rgba(14,165,233,0.22), transparent 22%), radial-gradient(circle at 84% 62%, rgba(251,146,60,0.28), transparent 24%), radial-gradient(circle at 18% 58%, rgba(245,158,11,0.2), transparent 22%), radial-gradient(circle at 22% 38%, rgba(56,189,248,0.26), transparent 24%), radial-gradient(circle at 78% 32%, rgba(45,212,191,0.22), transparent 22%), radial-gradient(circle at 50% 6%, rgba(249,115,22,0.34), transparent 20%), radial-gradient(circle at 80% 15%, rgba(244,63,94,0.26), transparent 24%)',
+                'radial-gradient(circle at 18% 89%, rgba(52,211,153,0.22), transparent 24%), radial-gradient(circle at 82% 83%, rgba(14,165,233,0.2), transparent 22%), radial-gradient(circle at 84% 62%, rgba(251,146,60,0.26), transparent 24%), radial-gradient(circle at 18% 58%, rgba(245,158,11,0.18), transparent 22%), radial-gradient(circle at 22% 38%, rgba(56,189,248,0.24), transparent 24%), radial-gradient(circle at 78% 32%, rgba(45,212,191,0.2), transparent 22%), radial-gradient(circle at 50% 6%, rgba(249,115,22,0.32), transparent 20%), radial-gradient(circle at 80% 15%, rgba(244,63,94,0.24), transparent 24%)',
             }}
           />
 
-          {/* Memoized Panoramic World Scenery + Roadside Landmarks + Layered Racing Highway */}
+          {/* Unified Aspect-True Panoramic World Scenery + Roadside Landmarks + Layered Racing Highway */}
           <CareerMapScenery
-            mapWidth={MAP_WIDTH}
+            worldWidth={WORLD_WIDTH}
             mapHeight={MAP_HEIGHT}
             levelCoords={levelCoords}
             fullRoadPath={fullRoadPath}
             unlockedRoadPath={unlockedRoadPath}
             highestUnlockedLevel={progress.highestUnlockedLevel}
+            boundaries={biomeBoundaries}
+            gantryYs={gantryYs}
           />
 
-          {/* Centered Interactive Highway Corridor (Level Nodes & Highway Gantries) */}
-          <div
-            className="relative mx-auto h-full"
-            style={{ width: `min(100vw, ${MAP_WIDTH}px)` }}
-          >
-            {/* Chapter Overhead Highway Gantry Arches at Levels 1, 26, 51, 76 */}
-            {CAREER_CHAPTERS.map((ch) => {
-              const pt = levelCoords[ch.startLevel - 1];
-              const bannerTop = pt.y + 44;
-              return (
-                <div
-                  key={ch.biome}
-                  className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 text-center"
-                  style={{ top: `${bannerTop}px`, width: 'min(92vw, 356px)' }}
-                >
-                  <div className="relative overflow-hidden rounded-xl border border-white/15 bg-zinc-950/90 px-4 py-2.5 shadow-2xl">
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-0 top-0 h-[3px]"
-                      style={{ backgroundColor: ch.accentHex }}
-                    />
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 font-mono-num">
-                      Bölge {ch.index + 1} · Bölüm {ch.startLevel}–{ch.endLevel}
-                    </div>
-                    <div className="mt-0.5 font-display text-sm font-extrabold text-white">
-                      {ch.name}
-                    </div>
-                    <div className="mt-0.5 truncate text-[11px] text-zinc-400">
-                      {ch.subtitle.split('·')[1]?.trim() || ch.subtitle}
-                    </div>
+          {/* Interactive Highway Nodes & Chapter Gantry Arches (1:1 synced to WORLD_CENTER_X) */}
+          <div className="relative h-full w-full">
+            {/* Chapter Overhead Highway Gantry Arches cleanly placed in chapter transition gaps */}
+            {chapterBanners.map(({ ch, topY }) => (
+              <div
+                key={ch.biome}
+                className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 text-center"
+                style={{ top: `${topY}px`, width: 'min(90vw, 344px)' }}
+              >
+                <div className="relative overflow-hidden rounded-xl border border-white/15 bg-zinc-950/92 px-4 py-2 shadow-2xl">
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 top-0 h-[3px]"
+                    style={{ backgroundColor: ch.accentHex }}
+                  />
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 font-mono-num">
+                    Bölge {ch.index + 1} · Bölüm {ch.startLevel}–{ch.endLevel}
                   </div>
-                  {/* Subtle Highway Gantry Support Legs */}
-                  <div className="mx-auto flex w-[84%] justify-between px-3">
-                    <span className="h-3.5 w-1.5 rounded-b-sm bg-zinc-700/90" />
-                    <span className="h-3.5 w-1.5 rounded-b-sm bg-zinc-700/90" />
+                  <div className="mt-0.5 font-display text-sm font-extrabold text-white">
+                    {ch.name}
+                  </div>
+                  <div className="mt-0.5 truncate text-[11px] text-zinc-400">
+                    {ch.subtitle.split('·')[1]?.trim() || ch.subtitle}
                   </div>
                 </div>
-              );
-            })}
+                <div className="mx-auto flex w-[84%] justify-between px-3">
+                  <span className="h-3 w-1.5 rounded-b-sm bg-zinc-700/90" />
+                  <span className="h-3 w-1.5 rounded-b-sm bg-zinc-700/90" />
+                </div>
+              </div>
+            ))}
 
             {/* Summit Finish Trophy Banner above Level 100 */}
             <div
               className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 text-center"
-              style={{ top: `${levelCoords[TOTAL_CAREER_LEVELS - 1].y - 122}px` }}
+              style={{ top: `${levelCoords[TOTAL_CAREER_LEVELS - 1].y - 128}px` }}
             >
               <div className="inline-flex items-center gap-2.5 rounded-2xl border border-amber-400/55 bg-zinc-950/92 px-4 py-2.5 shadow-[0_10px_34px_rgba(249,115,22,0.34)]">
                 <Crown className="h-5 w-5 text-amber-400 shrink-0" />
@@ -343,7 +382,7 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
             {/* 100 Interactive Level Nodes directly on the Highway */}
             {CAREER_LEVELS.map((lv, index) => {
               const pt = levelCoords[index];
-              const leftPct = (pt.x / MAP_WIDTH) * 100;
+              const offsetX = pt.x - WORLD_CENTER_X;
               const unlocked = lv.id <= progress.highestUnlockedLevel;
               const isCurrent = lv.id === progress.highestUnlockedLevel;
               const lvProg = progress.levels[lv.id];
@@ -359,7 +398,10 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                 <div
                   key={lv.id}
                   className="absolute z-10 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-                  style={{ left: `${leftPct}%`, top: `${pt.y}px` }}
+                  style={{
+                    left: `calc(50% + ${offsetX.toFixed(1)}px)`,
+                    top: `${pt.y}px`,
+                  }}
                 >
                   {/* Active Frontier Car Beacon */}
                   {isCurrent && (
@@ -519,6 +561,27 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                   <span aria-hidden="true">·</span>
                   <span>{getAtmosphereLabel(selectedLevel.atmosphere)}</span>
                 </div>
+                {(() => {
+                  const diff = getCareerLevelDifficulty(selectedLevel.id);
+                  const tags = getCareerLevelSpecialTags(selectedLevel);
+                  return (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`rounded-md border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${diff.borderClass} ${diff.bgClass} ${diff.textClass}`}
+                      >
+                        Zorluk: {diff.label}
+                      </span>
+                      {tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-md border border-rose-400/35 bg-rose-500/14 px-2 py-0.5 text-[10px] font-bold text-rose-200"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
 
               <button

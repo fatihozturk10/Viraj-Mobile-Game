@@ -532,86 +532,93 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
             </form>
 
             {/* TAB 1: FEATURED BUNDLES & VIP */}
-            {activeTab === 'bundles' && (
-              <div className="flex flex-col gap-5">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                  <h3 className="font-display text-base font-bold text-white sm:text-lg">
-                    Özel Paketler ve Kalıcı Ayrıcalıklar
-                  </h3>
-                  <p className="text-xs text-zinc-400">
-                    Zaten sahip olduğun araçlar otomatik altın telafisine dönüşür
-                  </p>
-                </div>
+            {activeTab === 'bundles' && (() => {
+              const availableBundles = BUNDLE_PRODUCTS.filter((bundle) => {
+                if (!bundle.oneTimeOnly) return true;
+                const owned =
+                  entitlements.claimedOneTimeSkus.includes(bundle.sku) ||
+                  (bundle.includesAdFree && adFreePurchased);
+                return !owned;
+              });
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {BUNDLE_PRODUCTS.map((bundle) => {
-                    const owned =
-                      bundle.oneTimeOnly &&
-                      (entitlements.claimedOneTimeSkus.includes(bundle.sku) ||
-                        (bundle.includesAdFree && adFreePurchased));
-                    return (
-                      <div
-                        key={bundle.sku}
-                        className={`flex flex-col overflow-hidden rounded-2xl border ${
-                          owned ? 'border-emerald-400/35' : bundle.accentBorderClass
-                        } bg-zinc-900/75`}
-                      >
-                        <div className="relative h-40 w-full overflow-hidden bg-zinc-950">
-                          <ResilientArt
-                            src={bundle.imageUrl}
-                            alt={bundle.title}
-                            className="h-full w-full object-cover"
-                            fallbackIcon={<Crown className="h-10 w-10" />}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/45 to-transparent" />
-                          <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-2">
-                            <div className="min-w-0">
-                              <div
-                                className={`text-xs font-semibold ${bundle.accentTextClass}`}
-                              >
-                                {bundle.subtitle}
-                              </div>
-                              <h4 className="font-display text-lg font-extrabold text-white truncate">
-                                {bundle.title}
-                              </h4>
-                            </div>
-                            <div className="text-right shrink-0">
-                              {bundle.compareAtTry && !owned && (
-                                <div className="font-mono-num text-[11px] text-zinc-400 line-through">
-                                  {formatPriceTry(bundle.compareAtTry)}
-                                </div>
-                              )}
-                              <div className="font-mono-num font-display text-lg font-extrabold text-white">
-                                {formatPriceTry(bundle.priceTry)}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+              return (
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                    <h3 className="font-display text-base font-bold text-white sm:text-lg">
+                      Özel Paketler ve Kalıcı Ayrıcalıklar
+                    </h3>
+                    <p className="text-xs text-zinc-400">
+                      Zaten sahip olduğun araçlar otomatik altın telafisine dönüşür
+                    </p>
+                  </div>
 
-                        <div className="flex flex-1 flex-col justify-between gap-4 p-4">
-                          <div className="space-y-2">
-                            <p className="text-xs leading-relaxed text-zinc-300">
-                              {bundle.tagline}
-                            </p>
-                            <ul className="space-y-1.5 pt-1 text-xs text-zinc-200">
-                              {bundle.highlights.map((line) => (
-                                <li
-                                  key={line}
-                                  className="flex items-start gap-2"
+                  {availableBundles.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-emerald-400/30 bg-emerald-500/8 px-6 py-12 text-center">
+                      <CheckCircle2 className="h-9 w-9 text-emerald-400" />
+                      <div className="font-display text-base font-extrabold text-white">
+                        Tüm Tek Seferlik Paketlere Sahipsin!
+                      </div>
+                      <p className="max-w-sm text-xs text-zinc-300">
+                        Mevcut tüm özel paketleri satın aldın. Otomotiv Kasaları veya Altın Kasaları sekmelerinden garajını güçlendirmeye devam edebilirsin.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {availableBundles.map((bundle) => (
+                        <div
+                          key={bundle.sku}
+                          className={`flex flex-col overflow-hidden rounded-2xl border ${bundle.accentBorderClass} bg-zinc-900/75`}
+                        >
+                          <div className="relative h-44 w-full overflow-hidden bg-zinc-950">
+                            <ResilientArt
+                              src={bundle.imageUrl}
+                              alt={bundle.title}
+                              className="h-full w-full object-cover object-center"
+                              fallbackIcon={<Crown className="h-10 w-10" />}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/35 to-transparent" />
+                            <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-2">
+                              <div className="min-w-0">
+                                <div
+                                  className={`text-xs font-semibold ${bundle.accentTextClass}`}
                                 >
-                                  <Check className="mt-0.5 h-3.5 w-3.5 text-amber-400 shrink-0" />
-                                  <span>{line}</span>
-                                </li>
-                              ))}
-                            </ul>
+                                  {bundle.subtitle}
+                                </div>
+                                <h4 className="font-display text-lg font-extrabold text-white truncate">
+                                  {bundle.title}
+                                </h4>
+                              </div>
+                              <div className="text-right shrink-0">
+                                {bundle.compareAtTry && (
+                                  <div className="font-mono-num text-[11px] text-zinc-400 line-through">
+                                    {formatPriceTry(bundle.compareAtTry)}
+                                  </div>
+                                )}
+                                <div className="font-mono-num font-display text-lg font-extrabold text-white">
+                                  {formatPriceTry(bundle.priceTry)}
+                                </div>
+                              </div>
+                            </div>
                           </div>
 
-                          {owned ? (
-                            <div className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-emerald-400/35 bg-emerald-500/12 px-4 text-sm font-bold text-emerald-300">
-                              <CheckCircle2 className="h-4 w-4" />
-                              <span>Hesabında Aktif</span>
+                          <div className="flex flex-1 flex-col justify-between gap-4 p-4">
+                            <div className="space-y-2">
+                              <p className="text-xs leading-relaxed text-zinc-300">
+                                {bundle.tagline}
+                              </p>
+                              <ul className="space-y-1.5 pt-1 text-xs text-zinc-200">
+                                {bundle.highlights.map((line) => (
+                                  <li
+                                    key={line}
+                                    className="flex items-start gap-2"
+                                  >
+                                    <Check className="mt-0.5 h-3.5 w-3.5 text-amber-400 shrink-0" />
+                                    <span>{line}</span>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
-                          ) : (
+
                             <button
                               type="button"
                               onClick={() => startBundleCheckout(bundle)}
@@ -623,14 +630,14 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                                 {formatPriceTry(bundle.priceTry)}
                               </span>
                             </button>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* TAB 2: CRATES / LOOT CHESTS */}
             {activeTab === 'crates' && (
@@ -857,7 +864,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     <p className="text-xs text-zinc-400">
                       {currentUser
                         ? 'Makbuzların ve kalıcı paketlerin hesabınla senkronize edilir.'
-                        : 'Cihaz değiştirirsen Reklamsız VIP ve paketlerini geri yükleyebilmek için giriş yap.'}
+                        : 'Cihaz değiştirirsen Reklamsız Paket ve diğer paketlerini geri yükleyebilmek için giriş yap.'}
                     </p>
                   </div>
 

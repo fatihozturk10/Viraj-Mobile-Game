@@ -109,6 +109,7 @@ import {
   TrafficRig,
 } from './carBuilder';
 import {
+  CAREER_MIN_SPEED_GRACE_SEC,
   CareerLevelSpec,
   CareerProgressManager,
   CareerProgressSnapshot,
@@ -116,6 +117,7 @@ import {
   CareerRunOutcome,
   evaluateCareerObjective,
   getCareerLevelById,
+  isContinuousCareerConstraint,
 } from './careerLevels';
 import { ClaimResult, MissionManager, RewardEvent } from './missions';
 import { RoadEventSystem } from './roadEvents';
@@ -264,6 +266,7 @@ export interface EngineCallbacks {
   onMissionsChange?: (snapshot: MissionsSnapshot) => void;
   onCareerProgressChange?: (snapshot: CareerProgressSnapshot) => void;
   onCareerRunComplete?: (outcome: CareerRunOutcome) => void;
+  onCameraModeChange?: (mode: CameraMode) => void;
 }
 
 const BEST_SCORE_KEY = 'viraj_best_score_v1';
@@ -740,12 +743,21 @@ export class HighwayEngine {
   private activeCareerLevel: CareerLevelSpec | null = null;
   private savedPreCareerMode: GameModeId | null = null;
   private savedPreCareerAtmosphere: AtmosphereId | null = null;
+  private savedPreCareerCameraMode: CameraMode | null = null;
   private careerElapsedSec = 0;
   private careerPeakSpeedKmh = 0;
   private careerMaxCombo = 1;
   private careerRoadEventsCount = 0;
   private careerMission1Announced = false;
   private careerMission2Announced = false;
+  private careerStayedInCockpit = true;
+  private careerCockpitNearMissCount = 0;
+  private careerUsedBrake = false;
+  private careerBrakeHoldSec = 0;
+  private careerUsedNitro = false;
+  private careerDroppedBelowMinSpeed = false;
+  private careerOncomingMeters = 0;
+  private careerHighSpeedSeconds = 0;
   private finishLineGroup: THREE.Group;
   private finishLineFlags: THREE.Mesh[] = [];
   private finishLineGeos: THREE.BufferGeometry[] = [];
@@ -3275,6 +3287,22 @@ export class HighwayEngine {
     const inDrive = this.phase === 'playing' || this.phase === 'paused';
     this.playerCar.root.visible = !inDrive || mode === 'chase' || mode === 'cine';
     this.cockpit.root.visible = inDrive && mode === 'cockpit';
+    this.callbacks.onCameraModeChange?.(mode);
+    if (
+      this.activeCareerLevel &&
+      this.phase === 'playing' &&
+      mode !== 'cockpit' &&
+      this.careerStayedInCockpit
+    ) {
+      const hasCockpitOnly = this.activeCareerLevel.missions.some(
+        (m) => m.kind === 'cockpitOnly',
+      );
+      if (hasCockpitOnly) {
+        this.careerStayedInCockpit = false;
+        this.emitCallout('1. ŞAHIS BOZULDU!', 'Kokpit görevi kaybedildi', 'rose');
+        return;
+      }
+    }
     if (this.phase === 'playing') {
       const label =
         CAMERA_MODES.find((c) => c.id === mode)?.label ?? 'Kamera';
@@ -4016,6 +4044,11 @@ export class HighwayEngine {
       this.atmosphereId = this.savedPreCareerAtmosphere;
       this.savedPreCareerAtmosphere = null;
     }
+    if (this.savedPreCareerCameraMode) {
+      this.cameraMode = this.savedPreCareerCameraMode;
+      this.savedPreCareerCameraMode = null;
+      this.callbacks.onCameraModeChange?.(this.cameraMode);
+    }
   }
 
   public exitCareerMode(): void {
@@ -4048,7 +4081,37 @@ export class HighwayEngine {
     this.careerRoadEventsCount = 0;
     this.careerMission1Announced = false;
     this.careerMission2Announced = false;
+    this.careerStayedInCockpit = true;
+    this.careerCockpitNearMissCount = 0;
+    this.careerUsedBrake = false;
+    this.careerBrakeHoldSec = 0;
+    this.careerUsedNitro = false;
+    this.careerDroppedBelowMinSpeed = false;
+    this.careerOncomingMeters = 0;
+    this.careerHighSpeedSeconds = 0;
+
+    const requiresCockpit = level.missions.some(
+      (m) => m.kind === 'cockpitOnly' || m.kind === 'cockpitNearMiss',
+    );
+    if (requiresCockpit) {
+      if (!this.savedPreCareerCameraMode) {
+        this.savedPreCareerCameraMode = this.cameraMode;
+      }
+      this.cameraMode = 'cockpit';
+      this.callbacks.onCameraModeChange?.('cockpit');
+    } else if (this.savedPreCareerCameraMode) {
+      this.cameraMode = this.savedPreCareerCameraMode;
+      this.savedPreCareerCameraMode = null;
+      this.callbacks.onCameraModeChange?.(this.cameraMode);
+    }
+
     this.launchRunInternal(keepRental);
+    this.playerCar.root.visible =
+      this.cameraMode === 'chase' || this.cameraMode === 'cine';
+    this.cockpit.root.visible = this.cameraMode === 'cockpit';
+    if (requiresCockpit) {
+      this.emitCallout('1. ŞAHIS ETABI', 'Kokpit açısı aktif', 'cyan');
+    }
     return true;
   }
 
@@ -6268,6 +6331,14 @@ export class HighwayEngine {
       maxCombo: Math.max(this.careerMaxCombo, this.combo),
       elapsedSec: this.careerElapsedSec,
       roadEventsCount: this.careerRoadEventsCount,
+      stayedInCockpit: this.careerStayedInCockpit && this.cameraMode === 'cockpit',
+      cockpitNearMissCount: this.careerCockpitNearMissCount,
+      usedBrake: this.careerUsedBrake,
+      usedNitro: this.careerUsedNitro,
+      droppedBelowMinSpeed: this.careerDroppedBelowMinSpeed,
+      minSpeedGraceActive: this.careerElapsedSec < CAREER_MIN_SPEED_GRACE_SEC,
+      oncomingMeters: this.careerOncomingMeters,
+      highSpeedSeconds: this.careerHighSpeedSeconds,
     };
   }
 
@@ -6277,6 +6348,7 @@ export class HighwayEngine {
     const metrics = this.collectCareerMetrics();
     const m1 = evaluateCareerObjective(level.missions[0], metrics);
     const m2 = evaluateCareerObjective(level.missions[1], metrics);
+    const minSpeedMission = level.missions.find((m) => m.kind === 'minSpeedHold');
     const remainingMeters = Math.max(
       0,
       Math.ceil(level.targetDistanceMeters - this.distanceMeters),
@@ -6293,12 +6365,15 @@ export class HighwayEngine {
       remainingMeters,
       progressRatio,
       elapsedSec: this.careerElapsedSec,
+      minSpeedTargetKmh: minSpeedMission?.target,
+      minSpeedGraceActive: metrics.minSpeedGraceActive,
       mission1: {
         id: m1.spec.id,
         title: m1.spec.title,
         shortLabel: m1.spec.shortLabel,
         progressText: m1.progressText,
         completed: m1.completed,
+        failed: m1.failed,
       },
       mission2: {
         id: m2.spec.id,
@@ -6306,6 +6381,7 @@ export class HighwayEngine {
         shortLabel: m2.spec.shortLabel,
         progressText: m2.progressText,
         completed: m2.completed,
+        failed: m2.failed,
       },
     };
   }
@@ -7150,6 +7226,26 @@ export class HighwayEngine {
     this.playerCar.tailLightMaterial.emissiveIntensity =
       effectiveThrottle < -0.15 ? 4.5 : 2.1;
 
+    if (this.activeCareerLevel) {
+      if (this.nitroActive && !this.careerUsedNitro) {
+        this.careerUsedNitro = true;
+        if (this.activeCareerLevel.missions.some((m) => m.kind === 'noNitro')) {
+          this.emitCallout('NİTRO KULLANILDI!', 'Nitrosüz görev kaybedildi', 'rose');
+        }
+      }
+      if (effectiveThrottle < -0.15) {
+        this.careerBrakeHoldSec += dt;
+        if (this.careerBrakeHoldSec > 0.08 && !this.careerUsedBrake) {
+          this.careerUsedBrake = true;
+          if (this.activeCareerLevel.missions.some((m) => m.kind === 'noBrake')) {
+            this.emitCallout('FREN KULLANILDI!', 'Frensiz görev kaybedildi', 'rose');
+          }
+        }
+      } else {
+        this.careerBrakeHoldSec = 0;
+      }
+    }
+
     this.road.sampleAtS(this.playerS, _roadSample);
 
     // Airborne parabolic jump physics
@@ -7444,8 +7540,13 @@ export class HighwayEngine {
     const oncomingMult = this.inOncomingLane ? 2.0 : 1.0;
     this.score +=
       ds * (0.65 + (this.speedMs / 65) * 0.95) * this.combo * modeMult * oncomingMult;
-    if (this.inOncomingLane && !this.nitroActive) {
-      this.nitro = Math.min(nitroMax, this.nitro + dt * 4.2);
+    if (this.inOncomingLane) {
+      if (this.activeCareerLevel) {
+        this.careerOncomingMeters += ds;
+      }
+      if (!this.nitroActive) {
+        this.nitro = Math.min(nitroMax, this.nitro + dt * 4.2);
+      }
     }
 
     const activeBiome = sampleBiomeAtDistance(this.playerS, _biomeSample).primary;
@@ -7611,13 +7712,33 @@ export class HighwayEngine {
         this.careerMaxCombo = this.combo;
       }
 
-      // Live mid-run mission completion callout (skip continuous-constraint objectives)
       const level = this.activeCareerLevel;
+      for (const m of level.missions) {
+        if (m.kind === 'highSpeedSec') {
+          const thresholdKmh = m.param ?? 180;
+          if (curSpeedKmh >= thresholdKmh) {
+            this.careerHighSpeedSeconds += dt;
+          }
+        } else if (
+          m.kind === 'minSpeedHold' &&
+          !this.careerDroppedBelowMinSpeed &&
+          this.careerElapsedSec >= CAREER_MIN_SPEED_GRACE_SEC &&
+          curSpeedKmh < m.target
+        ) {
+          this.careerDroppedBelowMinSpeed = true;
+          this.emitCallout(
+            'HIZ BARAJI DÜŞTÜ!',
+            `${m.target} km/s altına inildi`,
+            'rose',
+          );
+        }
+      }
+
+      // Live mid-run mission completion callout (skip continuous-constraint objectives)
       const liveMetrics = this.collectCareerMetrics();
       if (
         !this.careerMission1Announced &&
-        level.missions[0].kind !== 'minIntegrity' &&
-        level.missions[0].kind !== 'timeLimit' &&
+        !isContinuousCareerConstraint(level.missions[0].kind) &&
         evaluateCareerObjective(level.missions[0], liveMetrics).completed
       ) {
         this.careerMission1Announced = true;
@@ -7626,8 +7747,7 @@ export class HighwayEngine {
       }
       if (
         !this.careerMission2Announced &&
-        level.missions[1].kind !== 'minIntegrity' &&
-        level.missions[1].kind !== 'timeLimit' &&
+        !isContinuousCareerConstraint(level.missions[1].kind) &&
         evaluateCareerObjective(level.missions[1], liveMetrics).completed
       ) {
         this.careerMission2Announced = true;
@@ -8912,6 +9032,9 @@ export class HighwayEngine {
         ) {
           tv.nearMissed = true;
           this.nearMissCount++;
+          if (this.cameraMode === 'cockpit') {
+            this.careerCockpitNearMissCount++;
+          }
           this.boostCombo(1);
           const isOncomingMiss = tv.direction === -1;
           const baseBonus = isOncomingMiss

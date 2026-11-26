@@ -12,12 +12,21 @@ export type CareerObjectiveKind =
   | 'score'
   | 'maxCombo'
   | 'timeLimit'
-  | 'roadEvents';
+  | 'roadEvents'
+  | 'cockpitOnly'
+  | 'cockpitNearMiss'
+  | 'noBrake'
+  | 'noNitro'
+  | 'minSpeedHold'
+  | 'oncomingMeters'
+  | 'highSpeedSec';
 
 export interface CareerObjectiveSpec {
   id: string;
   kind: CareerObjectiveKind;
   target: number;
+  /** Optional secondary parameter (e.g. minimum speed km/h for highSpeedSec) */
+  param?: number;
   title: string;
   shortLabel: string;
 }
@@ -84,6 +93,7 @@ export interface CareerObjectiveEvaluation {
   current: number;
   target: number;
   completed: boolean;
+  failed?: boolean;
   progressText: string;
 }
 
@@ -99,6 +109,14 @@ export interface CareerRunMetrics {
   maxCombo: number;
   elapsedSec: number;
   roadEventsCount: number;
+  stayedInCockpit: boolean;
+  cockpitNearMissCount: number;
+  usedBrake: boolean;
+  usedNitro: boolean;
+  droppedBelowMinSpeed: boolean;
+  minSpeedGraceActive: boolean;
+  oncomingMeters: number;
+  highSpeedSeconds: number;
 }
 
 export interface CareerRunOutcome {
@@ -126,6 +144,75 @@ export interface CareerRunOutcome {
 
 export const TOTAL_CAREER_LEVELS = 100;
 export const MAX_CAREER_STARS = TOTAL_CAREER_LEVELS * 3;
+export const CAREER_MIN_SPEED_GRACE_SEC = 4.5;
+
+export function isContinuousCareerConstraint(
+  kind: CareerObjectiveKind,
+): boolean {
+  return (
+    kind === 'minIntegrity' ||
+    kind === 'timeLimit' ||
+    kind === 'cockpitOnly' ||
+    kind === 'noBrake' ||
+    kind === 'noNitro' ||
+    kind === 'minSpeedHold'
+  );
+}
+
+export function getCareerLevelDifficulty(levelId: number): {
+  label: string;
+  textClass: string;
+  borderClass: string;
+  bgClass: string;
+} {
+  if (levelId <= 20) {
+    return {
+      label: 'Zor',
+      textClass: 'text-amber-300',
+      borderClass: 'border-amber-400/35',
+      bgClass: 'bg-amber-500/12',
+    };
+  }
+  if (levelId <= 50) {
+    return {
+      label: 'Çok Zor',
+      textClass: 'text-orange-300',
+      borderClass: 'border-orange-400/40',
+      bgClass: 'bg-orange-500/14',
+    };
+  }
+  if (levelId <= 80) {
+    return {
+      label: 'Ekstrem',
+      textClass: 'text-rose-300',
+      borderClass: 'border-rose-400/45',
+      bgClass: 'bg-rose-500/15',
+    };
+  }
+  return {
+    label: 'Kabus',
+    textClass: 'text-fuchsia-300',
+    borderClass: 'border-fuchsia-400/50',
+    bgClass: 'bg-fuchsia-500/18',
+  };
+}
+
+export function getCareerLevelSpecialTags(level: CareerLevelSpec): string[] {
+  const tags: string[] = [];
+  for (const m of level.missions) {
+    if (m.kind === 'cockpitOnly') tags.push('1. Şahıs (Kokpit)');
+    else if (m.kind === 'cockpitNearMiss') tags.push('1. Şahıs Makas');
+    else if (m.kind === 'noBrake') tags.push('Fren Yasak');
+    else if (m.kind === 'noNitro') tags.push('Nitro Yasak');
+    else if (m.kind === 'minSpeedHold') tags.push(`Min ${m.target} km/s`);
+    else if (m.kind === 'oncomingMeters') tags.push('Ters Şerit');
+    else if (m.kind === 'highSpeedSec')
+      tags.push(`${m.param ?? 200}+ km/s Dayanıklılık`);
+    else if (m.kind === 'minIntegrity' && m.target >= 100)
+      tags.push('Sıfır Hasar');
+  }
+  return Array.from(new Set(tags));
+}
 
 export const CAREER_CHAPTERS: CareerChapterSpec[] = [
   {
@@ -189,25 +276,25 @@ const CHAPTER_TITLES: readonly (readonly string[])[] = [
     'İlk Gaz',
     'Vadi Çıkışı',
     'Şafak Şeridi',
-    'Çam Virajı',
+    'Kokpit Sınavı',
     'Sabah Makası',
-    'Nehir Kenarı',
-    'Temiz Çizgi',
+    'Ters Şerit Geçidi',
+    'Frensiz İniş',
     'Hızlı Geçiş',
     'Sıcak Asfalt',
     'Vadi Şampiyonu',
     'Altın Rampa',
     'Sisli Yamaç',
-    'Çift Şerit Dansı',
+    'Kokpit Makası',
     'Tünel Yankısı',
     'Viyadük Sürüşü',
     'Gölge Takibi',
     'Keskin Apex',
-    'Akşam Sürati',
+    'Hız Barajı',
     'Orman Fırtınası',
     'Vadi Patronu',
     'Zirve Yolcusu',
-    'Turbo Geçidi',
+    'Nitrosuz Yarış',
     'Gece Feneri',
     'Son Kavşak',
     'Vadi Finali',
@@ -220,13 +307,13 @@ const CHAPTER_TITLES: readonly (readonly string[])[] = [
     'Kanyon Virajı',
     'Ters Şerit Testi',
     'Sıcak Rüzgar',
-    'Kaktüs Hattı',
+    'Kokpit Kanyonu',
     'Serap Hızı',
     'Toz Bulutu',
     'Çöl Fırtınası',
     'Kızgın Asfalt',
     'Kanyon Makası',
-    'Altın Konvoy',
+    'Frensiz Konvoy',
     'Güneş Batımı',
     'Çöl Patronu',
     'Kızıl Tünel',
@@ -303,6 +390,7 @@ function createObjective(
   slot: 1 | 2,
   kind: CareerObjectiveKind,
   target: number,
+  param?: number,
 ): CareerObjectiveSpec {
   const id = `c${levelId}_m${slot}`;
   switch (kind) {
@@ -343,7 +431,7 @@ function createObjective(
         id,
         kind,
         target,
-        title: `${target} virajı temiz geç`,
+        title: `${target} virajı hasarsız temiz geç`,
         shortLabel: `${target} Viraj`,
       };
     case 'minIntegrity':
@@ -353,7 +441,7 @@ function createObjective(
         target,
         title:
           target >= 100
-            ? 'Hiç hasar almadan bitir (%100)'
+            ? 'Sıfır hasarla (çiziksiz %100) bitir'
             : `Gövde sağlığı %${target}+ kalsın`,
         shortLabel: target >= 100 ? 'Hasarsız' : `%${target}+ Gövde`,
       };
@@ -378,7 +466,7 @@ function createObjective(
         id,
         kind,
         target,
-        title: `${target} saniye içinde bitir`,
+        title: `${target} saniye içinde bitişe ulaş`,
         shortLabel: `≤${target} sn`,
       };
     case 'roadEvents':
@@ -389,6 +477,65 @@ function createObjective(
         title: `${target} Rampa / Turbo şeridi kullan`,
         shortLabel: `${target} Rampa/Turbo`,
       };
+    case 'cockpitOnly':
+      return {
+        id,
+        kind,
+        target: 1,
+        title: 'Tüm etabı 1. şahıs (Kokpit) açısıyla sür',
+        shortLabel: '1. Şahıs',
+      };
+    case 'cockpitNearMiss':
+      return {
+        id,
+        kind,
+        target,
+        title: `1. şahıs (Kokpit) açısında ${target} makas yap`,
+        shortLabel: `Kokpit ${target} Makas`,
+      };
+    case 'noBrake':
+      return {
+        id,
+        kind,
+        target: 1,
+        title: 'Hiç frene basmadan bitişe ulaş',
+        shortLabel: 'Fren Yasak',
+      };
+    case 'noNitro':
+      return {
+        id,
+        kind,
+        target: 1,
+        title: 'Hiç nitro kullanmadan etabı tamamla',
+        shortLabel: 'Nitrosuz',
+      };
+    case 'minSpeedHold':
+      return {
+        id,
+        kind,
+        target,
+        title: `Kalkış sonrası ${target} km/s altına hiç düşme`,
+        shortLabel: `Min ${target} km/s`,
+      };
+    case 'oncomingMeters':
+      return {
+        id,
+        kind,
+        target,
+        title: `Ters şeritte toplam ${target.toLocaleString('tr-TR')} m sür`,
+        shortLabel: `Ters ${target} m`,
+      };
+    case 'highSpeedSec': {
+      const speedKmh = param ?? 200;
+      return {
+        id,
+        kind,
+        target,
+        param: speedKmh,
+        title: `${speedKmh} km/s üzerinde toplam ${target} sn sür`,
+        shortLabel: `${speedKmh}+ · ${target}sn`,
+      };
+    }
   }
 }
 
@@ -396,64 +543,102 @@ function roundTo(val: number, step: number): number {
   return Math.max(step, Math.round(val / step) * step);
 }
 
-function buildTargetForKind(
+function buildTargetAndParamForKind(
   kind: CareerObjectiveKind,
   levelId: number,
   targetDist: number,
-): number {
+): { target: number; param?: number } {
   const t = (levelId - 1) / 99; // 0..1
   switch (kind) {
     case 'nearMiss':
-      return Math.min(26, Math.max(2, Math.round(2 + t * 18)));
+      return { target: Math.min(40, Math.max(5, Math.round(5 + t * 33))) };
     case 'maxSpeed':
-      // Achievable even with starter/mid cars early, ramps up to supercar speeds late
-      return roundTo(145 + t * 185, 5);
+      return { target: roundTo(175 + t * 195, 5) };
     case 'driftPoints':
-      return roundTo(220 + t * 2400, 50);
+      return { target: roundTo(650 + t * 5800, 50) };
     case 'runGold':
-      return Math.min(35, Math.max(4, Math.round(4 + t * 22)));
+      return { target: Math.min(50, Math.max(9, Math.round(9 + t * 38))) };
     case 'cleanCurves':
-      return Math.min(8, Math.max(1, Math.round(1 + t * 5.2)));
+      return { target: Math.min(12, Math.max(2, Math.round(2 + t * 9.5))) };
     case 'minIntegrity':
-      if (levelId <= 12) return 75;
-      if (levelId <= 35) return 80;
-      if (levelId <= 65) return 85;
-      if (levelId % 5 === 0) return 100;
-      return 90;
+      if (levelId <= 10) return { target: 90 };
+      if (levelId <= 25) return { target: 95 };
+      return { target: 100 };
     case 'score':
-      return roundTo(targetDist * (1.85 + t * 2.4), 250);
+      return { target: roundTo(targetDist * (3.1 + t * 4.2), 250) };
     case 'maxCombo':
-      if (levelId <= 12) return 2;
-      if (levelId <= 38) return 3;
-      if (levelId <= 72) return 4;
-      return 5;
+      if (levelId <= 15) return { target: 3 };
+      if (levelId <= 40) return { target: 4 };
+      if (levelId <= 68) return { target: 5 };
+      if (levelId <= 88) return { target: 6 };
+      return { target: 7 };
     case 'timeLimit': {
-      // Average expected speed scales from ~36 m/s (130 km/h) up to ~68 m/s (245 km/h)
-      const expectedAvgMs = 35 + t * 31;
+      // Brutally tight pace: 44 m/s (~158 km/h avg) early up to 84 m/s (~302 km/h avg) late
+      const expectedAvgMs = 44 + t * 40;
       const rawSec = targetDist / expectedAvgMs;
-      return Math.max(18, Math.round(rawSec));
+      return { target: Math.max(16, Math.round(rawSec)) };
     }
     case 'roadEvents':
-      return Math.min(5, Math.max(1, Math.round(1 + t * 3)));
+      return { target: Math.min(7, Math.max(2, Math.round(2 + t * 4.5))) };
+    case 'cockpitOnly':
+      return { target: 1 };
+    case 'cockpitNearMiss':
+      return { target: Math.min(22, Math.max(4, Math.round(4 + t * 16))) };
+    case 'noBrake':
+      return { target: 1 };
+    case 'noNitro':
+      return { target: 1 };
+    case 'minSpeedHold':
+      return { target: roundTo(125 + t * 115, 5) };
+    case 'oncomingMeters': {
+      const ratio = 0.36 + t * 0.24; // 36%..60% of the stage driven in oncoming lane!
+      return { target: roundTo(targetDist * ratio, 50) };
+    }
+    case 'highSpeedSec': {
+      const speedKmh = roundTo(165 + t * 130, 5);
+      const seconds = Math.min(28, Math.max(7, Math.round(7 + t * 20)));
+      return { target: seconds, param: speedKmh };
+    }
   }
 }
 
-const OBJECTIVE_PAIRS: readonly [CareerObjectiveKind, CareerObjectiveKind][] = [
-  ['nearMiss', 'maxSpeed'],
-  ['runGold', 'minIntegrity'],
-  ['score', 'nearMiss'],
-  ['driftPoints', 'maxSpeed'],
-  ['timeLimit', 'nearMiss'],
-  ['cleanCurves', 'runGold'],
-  ['maxCombo', 'score'],
-  ['nearMiss', 'minIntegrity'],
-  ['driftPoints', 'timeLimit'],
-  ['score', 'maxCombo'],
-  ['roadEvents', 'maxSpeed'],
-  ['runGold', 'nearMiss'],
-  ['cleanCurves', 'minIntegrity'],
-  ['timeLimit', 'score'],
+const CLASSIC_OBJECTIVE_PAIRS: readonly [
+  CareerObjectiveKind,
+  CareerObjectiveKind,
+][] = [
+  ['nearMiss', 'timeLimit'],
+  ['cockpitOnly', 'nearMiss'],
+  ['noBrake', 'minIntegrity'],
+  ['cockpitNearMiss', 'maxSpeed'],
+  ['minSpeedHold', 'nearMiss'],
+  ['highSpeedSec', 'minIntegrity'],
+  ['noNitro', 'timeLimit'],
+  ['cockpitOnly', 'minIntegrity'],
   ['driftPoints', 'maxCombo'],
+  ['noBrake', 'minSpeedHold'],
+  ['cockpitNearMiss', 'timeLimit'],
+  ['score', 'maxCombo'],
+  ['highSpeedSec', 'noBrake'],
+  ['cockpitOnly', 'timeLimit'],
+  ['cleanCurves', 'minIntegrity'],
+  ['noNitro', 'nearMiss'],
+  ['roadEvents', 'highSpeedSec'],
+  ['cockpitOnly', 'driftPoints'],
+  ['minSpeedHold', 'score'],
+  ['cockpitNearMiss', 'minIntegrity'],
+];
+
+const TWOWAY_OBJECTIVE_PAIRS: readonly [
+  CareerObjectiveKind,
+  CareerObjectiveKind,
+][] = [
+  ['oncomingMeters', 'nearMiss'],
+  ['oncomingMeters', 'minIntegrity'],
+  ['cockpitOnly', 'oncomingMeters'],
+  ['oncomingMeters', 'noBrake'],
+  ['oncomingMeters', 'timeLimit'],
+  ['cockpitNearMiss', 'oncomingMeters'],
+  ['oncomingMeters', 'minSpeedHold'],
 ];
 
 function buildCareerLevels(): CareerLevelSpec[] {
@@ -466,91 +651,101 @@ function buildCareerLevels(): CareerLevelSpec[] {
     const isMilestone = id % 10 === 0;
     const t = (id - 1) / 99;
 
-    // Smooth, punchy distance progression: 650m on Lv.1 up to 3,600m on Lv.100
-    const rawDist = 650 + Math.pow(t, 1.08) * 2800 + (isMilestone ? 200 : 0);
+    // Longer, demanding stage distances: 950m on Lv.1 up to 5,400m on Lv.100
+    const rawDist = 950 + Math.pow(t, 1.06) * 4100 + (isMilestone ? 350 : 0);
     const targetDistanceMeters = roundTo(rawDist, 50);
 
-    // Curated atmosphere variety per chapter
+    // Rich atmosphere variety with more night/rain/mist pressure in later chapters
     let atmosphere: AtmosphereId = 'golden';
     if (chapterIndex === 0) {
       atmosphere =
-        localIdx % 6 === 4
+        localIdx % 5 === 3
           ? 'mist'
-          : localIdx % 7 === 5
+          : localIdx % 6 === 4
             ? 'night'
-            : localIdx % 9 === 8
+            : localIdx % 7 === 5
               ? 'rainy'
               : 'golden';
     } else if (chapterIndex === 1) {
       atmosphere =
-        localIdx % 5 === 3
+        localIdx % 4 === 2
           ? 'night'
-          : localIdx % 8 === 6
+          : localIdx % 5 === 4
             ? 'mist'
-            : 'golden';
+            : localIdx % 9 === 7
+              ? 'rainy'
+              : 'golden';
     } else if (chapterIndex === 2) {
       atmosphere =
         localIdx % 3 === 0
-          ? 'mist'
+          ? 'rainy'
           : localIdx % 3 === 1
             ? 'night'
-            : 'rainy';
+            : 'mist';
     } else {
       atmosphere =
-        localIdx % 4 === 0
+        localIdx % 3 === 0
           ? 'night'
-          : localIdx % 4 === 2
-            ? 'mist'
-            : localIdx % 7 === 6
-              ? 'rainy'
-              : 'golden';
+          : localIdx % 3 === 1
+            ? 'rainy'
+            : 'mist';
     }
 
-    // Road flavor variety: classic early, introducing two-way & police pursuit cleanly
+    // Introduce Two-Way early (Lv.6+) and Police Pursuit early (Lv.10+) for high intensity
     let roadRule: CareerRoadRule = 'classic';
-    if (id >= 12 && (id % 5 === 0 || (chapterIndex === 1 && localIdx % 4 === 1))) {
+    if (
+      id >= 6 &&
+      (id % 4 === 2 || (chapterIndex === 1 && localIdx % 3 === 1))
+    ) {
       roadRule = 'twoway';
     }
     if (
-      id >= 20 &&
-      (id % 10 === 0 || (chapterIndex >= 2 && localIdx % 6 === 4))
+      id >= 10 &&
+      (id % 10 === 0 ||
+        (chapterIndex >= 2 && localIdx % 5 === 3) ||
+        (chapterIndex === 3 && localIdx % 4 === 3))
     ) {
       roadRule = 'pursuit';
     }
     if (id === 100) {
       roadRule = 'pursuit';
-      atmosphere = 'night';
+      atmosphere = 'rainy';
     }
 
-    // Pick 2 distinct objectives tailored to level progression
-    let pair = OBJECTIVE_PAIRS[(id - 1) % OBJECTIVE_PAIRS.length];
+    // Pick 2 demanding objectives tailored to roadRule & progression
+    let pair: [CareerObjectiveKind, CareerObjectiveKind];
     if (id === 1) {
-      pair = ['runGold', 'nearMiss'];
+      pair = ['nearMiss', 'timeLimit'];
     } else if (id === 2) {
       pair = ['maxSpeed', 'minIntegrity'];
     } else if (id === 3) {
-      pair = ['nearMiss', 'score'];
+      pair = ['noBrake', 'nearMiss'];
+    } else if (id === 4) {
+      pair = ['cockpitOnly', 'nearMiss'];
+    } else if (id === 100) {
+      pair = ['cockpitOnly', 'minIntegrity'];
+    } else if (roadRule === 'twoway') {
+      const twPair =
+        TWOWAY_OBJECTIVE_PAIRS[(id * 3) % TWOWAY_OBJECTIVE_PAIRS.length];
+      pair = [twPair[0], twPair[1]];
+    } else {
+      const clPair =
+        CLASSIC_OBJECTIVE_PAIRS[(id - 1) % CLASSIC_OBJECTIVE_PAIRS.length];
+      pair = [clPair[0], clPair[1]];
     }
 
-    const m1 = createObjective(
-      id,
-      1,
-      pair[0],
-      buildTargetForKind(pair[0], id, targetDistanceMeters),
-    );
-    const m2 = createObjective(
-      id,
-      2,
-      pair[1],
-      buildTargetForKind(pair[1], id, targetDistanceMeters),
-    );
+    const p1 = buildTargetAndParamForKind(pair[0], id, targetDistanceMeters);
+    const p2 = buildTargetAndParamForKind(pair[1], id, targetDistanceMeters);
 
-    const milestoneMult = isMilestone ? 1.65 : 1.0;
-    const finishGold = roundTo((75 + t * 340) * milestoneMult, 5);
-    const missionGold = roundTo((40 + t * 180) * milestoneMult, 5);
-    const perfectBonusGold = roundTo((50 + t * 240) * milestoneMult, 5);
-    const finishXp = roundTo((120 + t * 1250) * milestoneMult, 10);
-    const replayGold = roundTo(20 + t * 65, 5);
+    const m1 = createObjective(id, 1, pair[0], p1.target, p1.param);
+    const m2 = createObjective(id, 2, pair[1], p2.target, p2.param);
+
+    const milestoneMult = isMilestone ? 1.75 : 1.0;
+    const finishGold = roundTo((95 + t * 420) * milestoneMult, 5);
+    const missionGold = roundTo((55 + t * 240) * milestoneMult, 5);
+    const perfectBonusGold = roundTo((70 + t * 320) * milestoneMult, 5);
+    const finishXp = roundTo((150 + t * 1500) * milestoneMult, 10);
+    const replayGold = roundTo(25 + t * 80, 5);
 
     levels.push({
       id,
@@ -589,6 +784,7 @@ export function evaluateCareerObjective(
 ): CareerObjectiveEvaluation {
   let current = 0;
   let completed = false;
+  let failed = false;
   let progressText = '';
 
   switch (spec.kind) {
@@ -620,6 +816,7 @@ export function evaluateCareerObjective(
     case 'minIntegrity':
       current = Math.round(metrics.integrityPercent);
       completed = current >= spec.target;
+      failed = !completed;
       progressText = `%${current} / %${spec.target}`;
       break;
     case 'score':
@@ -635,12 +832,56 @@ export function evaluateCareerObjective(
     case 'timeLimit':
       current = Math.round(metrics.elapsedSec * 10) / 10;
       completed = metrics.elapsedSec <= spec.target;
+      failed = !completed;
       progressText = `${Math.ceil(metrics.elapsedSec)}/${spec.target} sn`;
       break;
     case 'roadEvents':
       current = Math.floor(metrics.roadEventsCount);
       completed = current >= spec.target;
       progressText = `${Math.min(current, spec.target)}/${spec.target}`;
+      break;
+    case 'cockpitOnly':
+      current = metrics.stayedInCockpit ? 1 : 0;
+      completed = metrics.stayedInCockpit;
+      failed = !metrics.stayedInCockpit;
+      progressText = metrics.stayedInCockpit ? '1. Şahıs ✓' : 'Bozuldu!';
+      break;
+    case 'cockpitNearMiss':
+      current = Math.floor(metrics.cockpitNearMissCount);
+      completed = current >= spec.target;
+      progressText = `${Math.min(current, spec.target)}/${spec.target}`;
+      break;
+    case 'noBrake':
+      current = metrics.usedBrake ? 0 : 1;
+      completed = !metrics.usedBrake;
+      failed = metrics.usedBrake;
+      progressText = metrics.usedBrake ? 'Fren Yapıldı!' : 'Temiz ✓';
+      break;
+    case 'noNitro':
+      current = metrics.usedNitro ? 0 : 1;
+      completed = !metrics.usedNitro;
+      failed = metrics.usedNitro;
+      progressText = metrics.usedNitro ? 'Nitro Kullanıldı!' : 'Temiz ✓';
+      break;
+    case 'minSpeedHold':
+      current = metrics.droppedBelowMinSpeed ? 0 : 1;
+      completed = !metrics.droppedBelowMinSpeed;
+      failed = metrics.droppedBelowMinSpeed;
+      progressText = metrics.droppedBelowMinSpeed
+        ? 'Baraj Düştü!'
+        : metrics.minSpeedGraceActive
+          ? 'Kalkış...'
+          : `${spec.target}+ ✓`;
+      break;
+    case 'oncomingMeters':
+      current = Math.floor(metrics.oncomingMeters);
+      completed = current >= spec.target;
+      progressText = `${Math.min(current, spec.target)}/${spec.target} m`;
+      break;
+    case 'highSpeedSec':
+      current = Math.floor(metrics.highSpeedSeconds * 10) / 10;
+      completed = metrics.highSpeedSeconds >= spec.target;
+      progressText = `${Math.min(Math.floor(metrics.highSpeedSeconds), spec.target)}/${spec.target} sn`;
       break;
   }
 
@@ -649,6 +890,7 @@ export function evaluateCareerObjective(
     current,
     target: spec.target,
     completed,
+    failed,
     progressText,
   };
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Award,
+  Box,
   CheckCircle2,
   Coins,
   Flame,
@@ -131,7 +132,7 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
               </h2>
             </div>
             <p className="mt-1 text-xs sm:text-xs text-zinc-400">
-              Her gün giriş yaparak seriyi büyüt, çarktan ekstra altın ve XP kap
+              Her gün giriş yaparak seriyi büyüt, çarktan altın, XP ve Sokak Kasası kap
             </p>
           </div>
 
@@ -317,12 +318,12 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                     return (
                       <div
                         key={slice.id}
-                        className="pointer-events-none absolute inset-0 flex justify-center pt-5"
+                        className="pointer-events-none absolute inset-0 flex justify-center pt-4"
                         style={{
                           transform: `rotate(${angle}deg)`,
                         }}
                       >
-                        <span className="font-display text-xs font-extrabold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
+                        <span className="max-w-[76px] text-center font-display text-[11px] leading-tight font-extrabold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]">
                           {slice.shortLabel}
                         </span>
                       </div>
@@ -341,12 +342,16 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                 <div className="flex items-center gap-2.5">
                   {wonSlice.kind === 'gold' ? (
                     <Coins className="h-5 w-5 text-amber-400 shrink-0" />
+                  ) : wonSlice.kind === 'crate' ? (
+                    <Box className="h-5 w-5 text-orange-400 shrink-0" />
                   ) : (
                     <Award className="h-5 w-5 text-sky-400 shrink-0" />
                   )}
                   <div>
                     <div className="text-xs font-semibold text-emerald-300">
-                      Ödül Hesabına Eklendi!
+                      {wonSlice.kind === 'crate'
+                        ? 'Kasa Kazandın! Açılış Başlıyor...'
+                        : 'Ödül Hesabına Eklendi!'}
                     </div>
                     <div className="font-display text-base font-extrabold text-white">
                       {wonSlice.label}

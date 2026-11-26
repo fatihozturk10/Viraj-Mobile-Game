@@ -16,8 +16,9 @@ export interface WheelSlice {
   id: string;
   label: string;
   shortLabel: string;
-  kind: 'gold' | 'xp';
+  kind: 'gold' | 'xp' | 'crate';
   amount: number;
+  crateTierId?: 'street' | 'pro' | 'legendary';
   weight: number;
   color: string;
 }
@@ -29,7 +30,7 @@ export const DAILY_WHEEL_SLICES: WheelSlice[] = [
     shortLabel: '30 Altın',
     kind: 'gold',
     amount: 30,
-    weight: 26,
+    weight: 24,
     color: '#d97706',
   },
   {
@@ -38,7 +39,7 @@ export const DAILY_WHEEL_SLICES: WheelSlice[] = [
     shortLabel: '450 XP',
     kind: 'xp',
     amount: 450,
-    weight: 22,
+    weight: 20,
     color: '#0284c7',
   },
   {
@@ -47,8 +48,18 @@ export const DAILY_WHEEL_SLICES: WheelSlice[] = [
     shortLabel: '60 Altın',
     kind: 'gold',
     amount: 60,
-    weight: 20,
+    weight: 18,
     color: '#059669',
+  },
+  {
+    id: 'crate_street',
+    label: '1× Sokak Kasası',
+    shortLabel: 'Sokak Kasası',
+    kind: 'crate',
+    amount: 1,
+    crateTierId: 'street',
+    weight: 8,
+    color: '#ea580c',
   },
   {
     id: 'gold_90',
@@ -56,7 +67,7 @@ export const DAILY_WHEEL_SLICES: WheelSlice[] = [
     shortLabel: '90 Altın',
     kind: 'gold',
     amount: 90,
-    weight: 14,
+    weight: 13,
     color: '#7c3aed',
   },
   {
@@ -65,7 +76,7 @@ export const DAILY_WHEEL_SLICES: WheelSlice[] = [
     shortLabel: '900 XP',
     kind: 'xp',
     amount: 900,
-    weight: 12,
+    weight: 11,
     color: '#2563eb',
   },
   {

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { ActiveAdSession, AdOverlayModal } from './components/AdOverlayModal';
 import { CareerMapModal } from './components/CareerMapModal';
 import { CrateOpeningCeremony } from './components/CrateOpeningCeremony';
 import { DailyWheelModal } from './components/DailyWheelModal';
@@ -387,8 +386,7 @@ export default function App() {
   const [storeInitialTab, setStoreInitialTab] = useState<StoreTabId>('bundles');
   const [storeEntitlements, setStoreEntitlements] =
     useState<StoreEntitlementState>(() => billingService.getSnapshot());
-  const [activeAdSession, setActiveAdSession] =
-    useState<ActiveAdSession | null>(null);
+  const [adNotice, setAdNotice] = useState<string | null>(null);
   const [adState, setAdState] = useState<AdStateSnapshot>(() =>
     adManager.getSnapshot(),
   );
@@ -427,9 +425,9 @@ export default function App() {
   const smoothedTiltRef = useRef(0);
   const hasTiltSensorDataRef = useRef(false);
 
-  const pendingInterstitialActionRef = useRef<(() => void) | null>(null);
   const pendingExtraSpinCbRef = useRef<(() => void) | null>(null);
   const adRequestBusyRef = useRef(false);
+  const adNoticeTimeoutRef = useRef<number | null>(null);
 
   const activePointerIdRef = useRef<number | null>(null);
   const lastPointerXRef = useRef(0);
@@ -455,7 +453,6 @@ export default function App() {
     levelRoadOpen: false,
     hasLevelUpModal: false,
     hasLevelRoadCrate: false,
-    hasActiveAd: false,
   });
   modalsOpenRef.current = {
     leaderboardOpen,
@@ -466,8 +463,18 @@ export default function App() {
     levelRoadOpen,
     hasLevelUpModal: Boolean(activeLevelUp && phase !== 'playing'),
     hasLevelRoadCrate: Boolean(levelRoadCrateSession),
-    hasActiveAd: Boolean(activeAdSession),
   };
+
+  const showAdNotice = useCallback((message: string) => {
+    setAdNotice(message);
+    if (adNoticeTimeoutRef.current) {
+      window.clearTimeout(adNoticeTimeoutRef.current);
+    }
+    adNoticeTimeoutRef.current = window.setTimeout(() => {
+      setAdNotice(null);
+      adNoticeTimeoutRef.current = null;
+    }, 3200);
+  }, []);
 
   const triggerNitroBurst = useCallback((x: number, y: number) => {
     triggerNativeHaptic('medium');
@@ -677,6 +684,9 @@ export default function App() {
           triggerNativeHaptic('reward');
         }
       },
+      onCameraModeChange: (nextMode) => {
+        setCameraMode(nextMode);
+      },
     });
     } catch (err) {
       console.error('HighwayEngine init failed:', err);
@@ -742,7 +752,7 @@ export default function App() {
           setStoreOpen(false);
           return true;
         }
-        if (m.hasActiveAd || adRequestBusyRef.current) {
+        if (adRequestBusyRef.current) {
           return true;
         }
         if (m.careerMapOpen) {
@@ -776,7 +786,7 @@ export default function App() {
         }
       },
       onForeground: () => {
-        if (!adRequestBusyRef.current && !modalsOpenRef.current.hasActiveAd) {
+        if (!adRequestBusyRef.current) {
           engine.audio.setMuted(mutedRef.current, false);
         }
         setMissions(engine.getMissionsSnapshot());
@@ -795,6 +805,8 @@ export default function App() {
         window.clearTimeout(nitroBurstTimeoutRef.current);
       if (inDriveLevelUpTimerRef.current)
         window.clearTimeout(inDriveLevelUpTimerRef.current);
+      if (adNoticeTimeoutRef.current)
+        window.clearTimeout(adNoticeTimeoutRef.current);
       unsubAndroid();
       unsubAuth();
       engine.dispose();
@@ -870,7 +882,6 @@ export default function App() {
         }
       } else if (e.code === 'Space') {
         if (
-          activeAdSession ||
           leaderboardOpen ||
           dailyWheelOpen ||
           storeOpen ||
@@ -900,30 +911,20 @@ export default function App() {
               engineRef.current?.startGame();
             }
           };
-          if (adManager.shouldShowInterstitial()) {
-            setAdState(adManager.markInterstitialShown());
+          if (adManager.shouldShowInterstitial() && isGoogleAdsConfigured()) {
             const actionLabel = outcome ? 'Kariyer Bölümü' : 'Yeni Sürüş';
-            if (isGoogleAdsConfigured()) {
-              adRequestBusyRef.current = true;
-              void triggerGoogleInterstitialAd(
-                actionLabel,
-                () => engineRef.current?.audio.setMuted(true, false),
-                () => engineRef.current?.audio.setMuted(mutedRef.current, false),
-              ).then((res) => {
-                adRequestBusyRef.current = false;
-                if (res.outcome === 'shown' || res.outcome === 'skipped') {
-                  proceed();
-                  return;
-                }
-                engineRef.current?.audio.setMuted(true, false);
-                pendingInterstitialActionRef.current = proceed;
-                setActiveAdSession({ type: 'interstitial', actionLabel });
-              });
-              return;
-            }
-            engineRef.current?.audio.setMuted(true, false);
-            pendingInterstitialActionRef.current = proceed;
-            setActiveAdSession({ type: 'interstitial', actionLabel });
+            adRequestBusyRef.current = true;
+            void triggerGoogleInterstitialAd(
+              actionLabel,
+              () => engineRef.current?.audio.setMuted(true, false),
+              () => engineRef.current?.audio.setMuted(mutedRef.current, false),
+            ).then((res) => {
+              adRequestBusyRef.current = false;
+              if (res.outcome === 'shown') {
+                setAdState(adManager.markInterstitialShown());
+              }
+              proceed();
+            });
             return;
           }
           proceed();
@@ -969,7 +970,6 @@ export default function App() {
     };
   }, [
     phase,
-    activeAdSession,
     leaderboardOpen,
     dailyWheelOpen,
     storeOpen,
@@ -1236,32 +1236,24 @@ export default function App() {
   const runWithInterstitialGate = useCallback(
     (actionLabel: string, proceed: () => void) => {
       if (adRequestBusyRef.current) return;
-      // Interstitials ONLY trigger during menu transitions after a run (never mid-game, never first 3 runs)
-      if (phaseRef.current === 'gameover' && adManager.shouldShowInterstitial()) {
-        setAdState(adManager.markInterstitialShown());
-
-        if (isGoogleAdsConfigured()) {
-          adRequestBusyRef.current = true;
-          void triggerGoogleInterstitialAd(
-            actionLabel,
-            () => engineRef.current?.audio.setMuted(true, false),
-            () => engineRef.current?.audio.setMuted(mutedRef.current, false),
-          ).then((res) => {
-            adRequestBusyRef.current = false;
-            if (res.outcome === 'shown' || res.outcome === 'skipped') {
-              proceed();
-              return;
-            }
-            engineRef.current?.audio.setMuted(true, false);
-            pendingInterstitialActionRef.current = proceed;
-            setActiveAdSession({ type: 'interstitial', actionLabel });
-          });
-          return;
-        }
-
-        engineRef.current?.audio.setMuted(true, false);
-        pendingInterstitialActionRef.current = proceed;
-        setActiveAdSession({ type: 'interstitial', actionLabel });
+      // Interstitials ONLY trigger via real Google Ads during menu transitions after a run (never mid-game, never first 3 runs)
+      if (
+        phaseRef.current === 'gameover' &&
+        adManager.shouldShowInterstitial() &&
+        isGoogleAdsConfigured()
+      ) {
+        adRequestBusyRef.current = true;
+        void triggerGoogleInterstitialAd(
+          actionLabel,
+          () => engineRef.current?.audio.setMuted(true, false),
+          () => engineRef.current?.audio.setMuted(mutedRef.current, false),
+        ).then((res) => {
+          adRequestBusyRef.current = false;
+          if (res.outcome === 'shown') {
+            setAdState(adManager.markInterstitialShown());
+          }
+          proceed();
+        });
         return;
       }
       proceed();
@@ -1384,54 +1376,31 @@ export default function App() {
     (placement: RewardedAdPlacement) => {
       if (adRequestBusyRef.current) return;
 
-      if (isGoogleAdsConfigured()) {
-        adRequestBusyRef.current = true;
-        void triggerGoogleRewardedAd(
-          placement,
-          () => engineRef.current?.audio.setMuted(true, false),
-          () => engineRef.current?.audio.setMuted(mutedRef.current, false),
-        ).then((res) => {
-          adRequestBusyRef.current = false;
-          if (res.outcome === 'viewed') {
-            grantRewardForPlacement(placement);
-          } else if (res.outcome === 'dismissed') {
-            pendingExtraSpinCbRef.current = null;
-          } else {
-            engineRef.current?.audio.setMuted(true, false);
-            setActiveAdSession({ type: 'rewarded', placement });
-          }
-        });
+      if (!isGoogleAdsConfigured()) {
+        pendingExtraSpinCbRef.current = null;
+        showAdNotice('Reklam servisi şu an aktif değil. Lütfen daha sonra tekrar dene.');
         return;
       }
 
-      engineRef.current?.audio.setMuted(true, false);
-      setActiveAdSession({ type: 'rewarded', placement });
+      adRequestBusyRef.current = true;
+      void triggerGoogleRewardedAd(
+        placement,
+        () => engineRef.current?.audio.setMuted(true, false),
+        () => engineRef.current?.audio.setMuted(mutedRef.current, false),
+      ).then((res) => {
+        adRequestBusyRef.current = false;
+        if (res.outcome === 'viewed') {
+          grantRewardForPlacement(placement);
+        } else if (res.outcome === 'dismissed') {
+          pendingExtraSpinCbRef.current = null;
+        } else {
+          pendingExtraSpinCbRef.current = null;
+          showAdNotice('Reklam şu an yüklenemedi. Lütfen biraz sonra tekrar dene.');
+        }
+      });
     },
-    [grantRewardForPlacement],
+    [grantRewardForPlacement, showAdNotice],
   );
-
-  const handleCompleteRewardedAd = useCallback(
-    (placement: RewardedAdPlacement) => {
-      engineRef.current?.audio.setMuted(mutedRef.current, false);
-      setActiveAdSession(null);
-      grantRewardForPlacement(placement);
-    },
-    [grantRewardForPlacement],
-  );
-
-  const handleCancelRewardedAd = useCallback(() => {
-    engineRef.current?.audio.setMuted(mutedRef.current, false);
-    pendingExtraSpinCbRef.current = null;
-    setActiveAdSession(null);
-  }, []);
-
-  const handleCloseInterstitial = useCallback(() => {
-    engineRef.current?.audio.setMuted(mutedRef.current, false);
-    setActiveAdSession(null);
-    const next = pendingInterstitialActionRef.current;
-    pendingInterstitialActionRef.current = null;
-    next?.();
-  }, []);
 
   const handleSpinFreeWheel = useCallback(() => {
     const idx = adManager.pickRandomWheelSlice();
@@ -1447,15 +1416,6 @@ export default function App() {
     [openRewardedAd],
   );
 
-  const handleClaimWheelSlice = useCallback((slice: WheelSlice) => {
-    triggerNativeHaptic('reward');
-    if (slice.kind === 'gold') {
-      engineRef.current?.grantRewardGold(slice.amount, 'Günlük Çark');
-    } else {
-      engineRef.current?.grantRewardXp(slice.amount);
-    }
-  }, []);
-
   const handleClaimStreakFree = useCallback(() => {
     triggerNativeHaptic('reward');
     const claimed = adManager.claimDailyStreak(1);
@@ -1470,11 +1430,7 @@ export default function App() {
 
   const handleConfirmPurchaseAdFree = useCallback(() => {
     setAdState(adManager.purchaseAdFree());
-    // If purchased directly from an active interstitial, immediately proceed
-    if (activeAdSession?.type === 'interstitial') {
-      handleCloseInterstitial();
-    }
-  }, [activeAdSession, handleCloseInterstitial]);
+  }, []);
 
   const handleFulfillStorePurchase = useCallback(
     async (
@@ -1750,7 +1706,7 @@ export default function App() {
         summaryParts.push(`${openedCrates}× Kasa`);
       }
       if (adFreeActivated) {
-        summaryParts.push('Reklamsız VIP');
+        summaryParts.push('Reklamsız Paket');
       }
       const rewardSummary =
         summaryParts.join(' · ') || 'Ödüller hesabına eklendi';
@@ -1829,7 +1785,7 @@ export default function App() {
         summaryParts.push(`+${spec.goldAmount.toLocaleString('tr-TR')} Altın`);
       }
       if (adFreeActivated) {
-        summaryParts.push('Reklamsız VIP');
+        summaryParts.push('Reklamsız Paket');
       }
       const rewardSummary = summaryParts.join(' · ') || spec.description;
 
@@ -2099,10 +2055,6 @@ export default function App() {
     setStoreOpen(true);
   }, []);
   const handleCloseStore = useCallback(() => setStoreOpen(false), []);
-  const handleOpenStoreFromInterstitial = useCallback(() => {
-    setStoreInitialTab('bundles');
-    setStoreOpen(true);
-  }, []);
 
   const handleOpenLevelRoad = useCallback((focusLevel?: number) => {
     setLevelRoadFocusLevel(focusLevel ?? null);
@@ -2237,6 +2189,24 @@ export default function App() {
       });
     },
     [],
+  );
+
+  const handleClaimWheelSlice = useCallback(
+    (slice: WheelSlice) => {
+      triggerNativeHaptic('reward');
+      if (slice.kind === 'gold') {
+        engineRef.current?.grantRewardGold(slice.amount, 'Günlük Çark');
+      } else if (slice.kind === 'crate') {
+        setDailyWheelOpen(false);
+        openLevelRoadCrates(
+          [slice.crateTierId ?? 'street'],
+          'Günlük Ödül Çarkı · Sokak Kasası',
+        );
+      } else {
+        engineRef.current?.grantRewardXp(slice.amount);
+      }
+    },
+    [openLevelRoadCrates],
   );
 
   const handleClaimLevelRoad = useCallback(
@@ -2555,18 +2525,14 @@ export default function App() {
         />
       )}
 
-      {activeAdSession && (
-        <AdOverlayModal
-          session={activeAdSession}
-          iapModalOpen={false}
-          adFreePurchased={adState.adFreePurchased}
-          onCompleteRewarded={handleCompleteRewardedAd}
-          onCancelRewarded={handleCancelRewardedAd}
-          onCloseInterstitial={handleCloseInterstitial}
-          onOpenIapFromInterstitial={handleOpenStoreFromInterstitial}
-          onConfirmPurchaseAdFree={handleConfirmPurchaseAdFree}
-          onCloseIap={handleCloseStore}
-        />
+      {adNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed left-1/2 top-5 z-[95] -translate-x-1/2 rounded-xl border border-amber-400/35 bg-zinc-950/95 px-4 py-2.5 text-center text-xs font-semibold text-amber-200 shadow-2xl"
+        >
+          {adNotice}
+        </div>
       )}
 
       {storeOpen && (

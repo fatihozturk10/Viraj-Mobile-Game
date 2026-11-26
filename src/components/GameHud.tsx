@@ -889,13 +889,17 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                     <div
                       key={m.id}
                       className={`flex min-w-0 items-center justify-between gap-1 rounded-md border px-1.5 py-0.5 text-[10px] leading-tight ${
-                        m.completed
-                          ? 'border-emerald-400/50 bg-emerald-500/18 text-emerald-200'
-                          : 'border-white/10 bg-white/[0.03] text-zinc-300'
+                        m.failed
+                          ? 'border-rose-500/55 bg-rose-500/18 text-rose-200'
+                          : m.completed
+                            ? 'border-emerald-400/50 bg-emerald-500/18 text-emerald-200'
+                            : 'border-white/10 bg-white/[0.03] text-zinc-300'
                       }`}
                     >
                       <span className="flex min-w-0 items-center gap-1 truncate font-semibold">
-                        {m.completed ? (
+                        {m.failed ? (
+                          <XCircle className="h-3 w-3 shrink-0 text-rose-400" />
+                        ) : m.completed ? (
                           <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-400" />
                         ) : (
                           <Star className="h-2.5 w-2.5 shrink-0 text-amber-400/75" />
@@ -908,6 +912,27 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                     </div>
                   ))}
                 </div>
+
+                {stats.career.minSpeedTargetKmh != null &&
+                  !stats.career.mission1.failed &&
+                  !stats.career.mission2.failed &&
+                  (stats.career.minSpeedGraceActive ||
+                    stats.speedKmh < stats.career.minSpeedTargetKmh + 18) && (
+                    <div
+                      className={`flex items-center justify-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-bold font-mono-num ${
+                        stats.career.minSpeedGraceActive
+                          ? 'border-amber-400/40 bg-amber-500/15 text-amber-200'
+                          : 'animate-pulse border-rose-500/60 bg-rose-500/20 text-rose-200'
+                      }`}
+                    >
+                      <Gauge className="h-3 w-3 shrink-0" />
+                      <span>
+                        {stats.career.minSpeedGraceActive
+                          ? `HIZLAN · HEDEF ≥${stats.career.minSpeedTargetKmh} KM/S`
+                          : `DİKKAT! ${stats.career.minSpeedTargetKmh} KM/S ALTINA İNME`}
+                      </span>
+                    </div>
+                  )}
               </div>
             )}
 

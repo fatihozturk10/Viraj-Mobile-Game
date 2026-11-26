@@ -691,9 +691,9 @@ export class AudioEngine {
     const profile = ENGINE_PROFILES[this.carModelId];
 
     if (!active) {
-      this.engineGain?.gain.setTargetAtTime(0.03, now, 0.12);
-      this.windGain?.gain.setTargetAtTime(0, now, 0.1);
-      this.driftGain?.gain.setTargetAtTime(0, now, 0.08);
+      this.engineGain?.gain.setTargetAtTime(0, now, 0.08);
+      this.windGain?.gain.setTargetAtTime(0, now, 0.08);
+      this.driftGain?.gain.setTargetAtTime(0, now, 0.06);
       this.engineOsc1?.frequency.setTargetAtTime(profile.idleHz, now, 0.1);
       this.engineOsc2?.frequency.setTargetAtTime(
         profile.idleHz * profile.osc2Ratio,
