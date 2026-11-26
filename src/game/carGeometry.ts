@@ -67,11 +67,10 @@ export function applyCreaseNormals(
   const ac = new THREE.Vector3();
   const fn = new THREE.Vector3();
 
-  // Group vertices by quantized spatial position so coincident vertices across
-  // smooth quads share averaged normals while hard edges stay razor sharp.
-  const bucketMap = new Map<string, number[]>();
-  const keyOf = (x: number, y: number, z: number): string =>
-    `${Math.round(x * 2000)},${Math.round(y * 2000)},${Math.round(z * 2000)}`;
+  // Group vertices by quantized 48-bit integer spatial key (zero string allocations)
+  // so coincident vertices across smooth quads share averaged normals while hard edges stay razor sharp.
+  const bucketMap = new Map<number, number[]>();
+  const vertKeys = new Float64Array(vCount);
 
   for (let t = 0; t < triCount; t++) {
     const i0 = t * 3;
@@ -95,7 +94,11 @@ export function applyCreaseNormals(
 
     for (let k = 0; k < 3; k++) {
       const vi = i0 + k;
-      const key = keyOf(posAttr.getX(vi), posAttr.getY(vi), posAttr.getZ(vi));
+      const qx = Math.round(posAttr.getX(vi) * 2000) + 32768;
+      const qy = Math.round(posAttr.getY(vi) * 2000) + 32768;
+      const qz = Math.round(posAttr.getZ(vi) * 2000) + 32768;
+      const key = (qx * 65536 + qy) * 65536 + qz;
+      vertKeys[vi] = key;
       let arr = bucketMap.get(key);
       if (!arr) {
         arr = [];
@@ -115,8 +118,7 @@ export function applyCreaseNormals(
 
     for (let k = 0; k < 3; k++) {
       const vi = t * 3 + k;
-      const key = keyOf(posAttr.getX(vi), posAttr.getY(vi), posAttr.getZ(vi));
-      const neighbors = bucketMap.get(key);
+      const neighbors = bucketMap.get(vertKeys[vi]);
       let nx = fnx;
       let ny = fny;
       let nz = fnz;
@@ -1015,7 +1017,8 @@ export function isAnimatedLivery(livery: LiveryId): boolean {
     livery === 'animHypnoSpiral' ||
     livery === 'animWarpHyperdrive' ||
     livery === 'animCyberEqualizer' ||
-    livery === 'animSolarEclipse'
+    livery === 'animSolarEclipse' ||
+    livery === 'animCrysisNanosuit'
   );
 }
 
@@ -1680,91 +1683,413 @@ function createAnimatedLiveryTextures(
     ctx.globalAlpha = 1;
     ectx.globalAlpha = 1;
   } else if (livery === 'animGoldenDragon') {
-    // Royal Obsidian Dragon Scales with Surging Waves of Molten 24K Gold & Phoenix Amber!
-    ctx.fillStyle = '#0c0a09';
+    // Imperial Obsidian-Crimson 3D Dragon Scales + Anchored 24K Gold Dragon Silhouette & Scrolling Molten Gold Waves!
+    const bg = ctx.createLinearGradient(0, 0, S, 0);
+    bg.addColorStop(0, '#090608');
+    bg.addColorStop(0.22, '#18090d');
+    bg.addColorStop(0.5, '#260911');
+    bg.addColorStop(0.78, '#18090d');
+    bg.addColorStop(1, '#090608');
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, S, S);
 
+    // 1. Layered 3D Beveled Obsidian & Imperial Crimson Dragon Scales across entire bodywork
     const colW = 32; // exact divisor of 512 (16 cols)
-    const rowH = 32; // exact divisor of 512 (16 rows)
-    const scaleR = 20;
-
-    for (let row = -1; row <= S / rowH + 1; row++) {
+    const rowH = 26;
+    const scaleR = 19;
+    for (let row = -1; row <= Math.ceil(S / rowH) + 1; row++) {
       const cy = row * rowH;
       const offsetX = (row & 1) !== 0 ? colW * 0.5 : 0;
-      // Seamless molten golden energy wave (2 full cycles per 512px)
-      const wave = 0.5 + 0.5 * Math.cos((cy / S) * Math.PI * 4);
-      const energy = Math.pow(wave, 2.0);
-
       for (let col = -1; col <= S / colW + 1; col++) {
         const cx = col * colW + offsetX;
-        // Overlapping curved dragon scale arc
+        const centerDist = Math.abs(cx - 256) / 256;
+
+        // Pointed overlapping dragon scale silhouette
         ctx.beginPath();
-        ctx.arc(cx, cy, scaleR, 0, Math.PI, false);
+        ctx.moveTo(cx - scaleR, cy - 2);
+        ctx.quadraticCurveTo(cx - scaleR * 0.9, cy + scaleR * 0.85, cx, cy + scaleR * 1.15);
+        ctx.quadraticCurveTo(cx + scaleR * 0.9, cy + scaleR * 0.85, cx + scaleR, cy - 2);
         ctx.closePath();
-        const sg = ctx.createRadialGradient(cx, cy - 4, 2, cx, cy + 4, scaleR);
-        sg.addColorStop(0, energy > 0.5 ? '#451a03' : '#1c1917');
-        sg.addColorStop(1, '#09090b');
+
+        const sg = ctx.createRadialGradient(cx, cy + 2, 2, cx, cy + 6, scaleR * 1.15);
+        if (centerDist < 0.45) {
+          sg.addColorStop(0, '#4c0d19');
+          sg.addColorStop(0.65, '#21070d');
+          sg.addColorStop(1, '#0a0406');
+        } else {
+          sg.addColorStop(0, '#271e1a');
+          sg.addColorStop(0.65, '#120e0d');
+          sg.addColorStop(1, '#060506');
+        }
         ctx.fillStyle = sg;
         ctx.fill();
 
-        // Crisp 24K gold rim around every dragon scale
-        ctx.strokeStyle = energy > 0.45 ? '#fde047' : '#b45309';
-        ctx.lineWidth = 1.6 + energy * 2.4;
-        ctx.globalAlpha = 0.42 + energy * 0.58;
+        // Subtle inner golden central scale keel ridge
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.28)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + 1);
+        ctx.lineTo(cx, cy + scaleR * 0.95);
         ctx.stroke();
 
-        // Emissive blazing gold surge along scale rims during wave peak
-        if (energy > 0.14) {
+        // Crisp 24K metallic gold rim on every scale
+        ctx.strokeStyle = centerDist < 0.42 ? '#eab308' : '#b45309';
+        ctx.lineWidth = 1.8;
+        ctx.globalAlpha = 0.72;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // 2. Crisp Imperial Double-Gold Flank Trim Borders
+    for (const fx of [26, 476]) {
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(fx, 0, 10, S);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(fx + 3, 0, 4, S);
+    }
+
+    // 3. Auspicious Imperial Golden Cloud Swirls (Xiangyun) framing both flanks
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      for (const cy of [120, 275, 425]) {
+        ctx.beginPath();
+        ctx.moveTo(52, cy);
+        ctx.bezierCurveTo(96, cy - 28, 126, cy - 4, 104, cy + 20);
+        ctx.bezierCurveTo(88, cy + 36, 62, cy + 20, 74, cy + 4);
+        ctx.stroke();
+        ctx.strokeStyle = '#fef08a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 5;
+      }
+      ctx.restore();
+    }
+
+    // 4. Sweeping 24K Gold Imperial Dragon Silhouette along Hood & Roof!
+    const dragonSpine: [number, number][] = [
+      [256, 76],
+      [224, 128],
+      [208, 184],
+      [268, 242],
+      [304, 304],
+      [252, 366],
+      [216, 422],
+      [256, 478],
+    ];
+    // Dark crimson drop-shadow aura behind the golden dragon for maximum pop
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.78)';
+    ctx.lineWidth = 46;
+    ctx.beginPath();
+    ctx.moveTo(dragonSpine[0][0], dragonSpine[0][1]);
+    for (let i = 1; i < dragonSpine.length; i++) {
+      const prev = dragonSpine[i - 1];
+      const curr = dragonSpine[i];
+      ctx.quadraticCurveTo(prev[0], prev[1], (prev[0] + curr[0]) * 0.5, (prev[1] + curr[1]) * 0.5);
+    }
+    ctx.lineTo(dragonSpine[dragonSpine.length - 1][0], dragonSpine[dragonSpine.length - 1][1]);
+    ctx.stroke();
+
+    // Rich 24K Gold Dragon Body Ribbon
+    const goldGrad = ctx.createLinearGradient(180, 70, 330, 480);
+    goldGrad.addColorStop(0, '#fef08a');
+    goldGrad.addColorStop(0.32, '#f59e0b');
+    goldGrad.addColorStop(0.65, '#fde047');
+    goldGrad.addColorStop(1, '#b45309');
+    ctx.strokeStyle = goldGrad;
+    ctx.lineWidth = 30;
+    ctx.stroke();
+
+    // Bright molten white-gold dorsal ridge highlight
+    ctx.strokeStyle = '#fef9c3';
+    ctx.lineWidth = 7;
+    ctx.stroke();
+
+    // Barbed dorsal dragon fins & golden flame spikes along the coils
+    ctx.fillStyle = '#fde047';
+    ctx.strokeStyle = '#92400e';
+    ctx.lineWidth = 2;
+    const fins: [number, number, number][] = [
+      [216, 152, -2.5],
+      [226, 206, -1.9],
+      [294, 274, -0.5],
+      [292, 332, 0.4],
+      [226, 392, -2.6],
+    ];
+    for (const [fx, fy, ang] of fins) {
+      ctx.save();
+      ctx.translate(fx, fy);
+      ctx.rotate(ang);
+      ctx.beginPath();
+      ctx.moveTo(0, -10);
+      ctx.lineTo(34, -2);
+      ctx.lineTo(12, 8);
+      ctx.lineTo(26, 16);
+      ctx.lineTo(0, 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Fierce Imperial Dragon Head & Sweeping Horns + Flowing Whiskers on Hood (y ≈ 78)
+    ctx.save();
+    ctx.translate(256, 86);
+    // Flowing golden whiskers
+    ctx.strokeStyle = '#fde047';
+    ctx.lineWidth = 4;
+    for (const sgn of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(sgn * 16, -24);
+      ctx.bezierCurveTo(sgn * 66, -42, sgn * 88, -8, sgn * 108, -22);
+      ctx.stroke();
+      // Swept imperial antler horns
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.moveTo(sgn * 14, 4);
+      ctx.lineTo(sgn * 48, 42);
+      ctx.lineTo(sgn * 34, 44);
+      ctx.lineTo(sgn * 10, 16);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // Sculpted gold dragon head crest
+    ctx.fillStyle = '#f59e0b';
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -48);
+    ctx.lineTo(24, -18);
+    ctx.lineTo(34, 8);
+    ctx.lineTo(18, 28);
+    ctx.lineTo(0, 18);
+    ctx.lineTo(-18, 28);
+    ctx.lineTo(-34, 8);
+    ctx.lineTo(-24, -18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Bright gold snout ridge
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.moveTo(0, -42);
+    ctx.lineTo(10, -10);
+    ctx.lineTo(0, 12);
+    ctx.lineTo(-10, -10);
+    ctx.closePath();
+    ctx.fill();
+    // Fierce glowing emerald-gold dragon eyes
+    ctx.fillStyle = '#ef4444';
+    for (const sgn of [-1, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(sgn * 15, -6, 6, 3.2, sgn * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fef9c3';
+      ctx.beginPath();
+      ctx.arc(sgn * 15, -6, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ef4444';
+    }
+    ctx.restore();
+    ctx.restore();
+
+    // 5. Seamless Vertically-Tiling Molten 24K Gold Emissive Surge Waves (scrolls smoothly on ectx!)
+    // Exact period S = 512 with 2 surging chevron gold waves & glowing scale rims
+    const eRowH = 32; // exact divisor of 512 (16 rows)
+    for (let row = -1; row <= S / eRowH + 1; row++) {
+      const cy = row * eRowH;
+      const offsetX = (row & 1) !== 0 ? colW * 0.5 : 0;
+      for (let col = -1; col <= S / colW + 1; col++) {
+        const cx = col * colW + offsetX;
+        // V-shaped chevron phase so molten gold sweeps rearward along the car!
+        const chevronY = cy - Math.abs(cx - 256) * 0.35;
+        const wave = 0.5 + 0.5 * Math.cos((chevronY / S) * Math.PI * 4);
+        const energy = Math.pow(wave, 2.8);
+        if (energy > 0.1) {
           ectx.beginPath();
-          ectx.arc(cx, cy, scaleR, 0.12 * Math.PI, 0.88 * Math.PI, false);
-          ectx.strokeStyle = energy > 0.65 ? '#fef08a' : '#f59e0b';
-          ectx.lineWidth = 2.0 + energy * 2.8;
+          ectx.arc(cx, cy, 18, 0.1 * Math.PI, 0.9 * Math.PI, false);
+          ectx.strokeStyle = energy > 0.65 ? '#fef9c3' : '#f59e0b';
+          ectx.lineWidth = 1.8 + energy * 3.4;
           ectx.globalAlpha = Math.min(1, energy * 1.15);
           ectx.stroke();
         }
       }
     }
+    // Seamless glowing molten-gold ember sparks drifting in the wave
+    let dSeed = 77241;
+    const dRand = () => {
+      dSeed = (dSeed * 16807) % 2147483647;
+      return (dSeed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 48; i++) {
+      const sx = dRand() * S;
+      const sy = dRand() * S;
+      const len = 18 + dRand() * 44;
+      const w = 1.6 + dRand() * 2.8;
+      for (const oy of [-S, 0, S]) {
+        ectx.fillStyle = i % 3 === 0 ? '#fef08a' : '#f59e0b';
+        ectx.globalAlpha = 0.72;
+        ectx.beginPath();
+        ectx.moveTo(sx, sy + oy);
+        ectx.lineTo(sx + w, sy + oy + len * 0.5);
+        ectx.lineTo(sx, sy + oy + len);
+        ectx.lineTo(sx - w, sy + oy + len * 0.5);
+        ectx.closePath();
+        ectx.fill();
+      }
+    }
     ctx.globalAlpha = 1;
     ectx.globalAlpha = 1;
   } else if (livery === 'animComicSpeed') {
-    // Live Anime / Manga Drift Speed Lines: High-contrast ink speed streaks + electric cyan/crimson impact flashes!
-    ctx.fillStyle = '#09090d';
+    // Initial-D Style High-Contrast Japanese Manga Ink Speed Wrap: Crisp White Paper + Black Ink Wedges + Halftones + Cyan/Crimson Slashes!
+    ctx.fillStyle = '#f8fafc';
     ctx.fillRect(0, 0, S, S);
 
-    // Subtle manga halftone screen columns
-    ctx.fillStyle = 'rgba(248, 250, 252, 0.12)';
-    for (let x = 8; x < S; x += 16) {
-      for (let y = 8; y < S; y += 16) {
+    // 1. Dramatic Seamless Black Ink Flanking Shadow Bands with Jagged Manga Silhouette
+    const drawInkFlank = (isRight: boolean) => {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.fillStyle = '#09090d';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      for (let y = 0; y <= S; y += 16) {
+        // Periodic edge (period S=512) for 100% seamless vertical scrolling
+        const t = (y / S) * Math.PI * 2;
+        const w = 92 + Math.sin(t * 2) * 26 + Math.cos(t * 6) * 14 + Math.sin(t * 10) * 8;
+        ctx.lineTo(w, y);
+      }
+      ctx.lineTo(0, S);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
+    drawInkFlank(false);
+    drawInkFlank(true);
+
+    // 2. Classic Japanese Manga Ben-Day Halftone Screentone Gradient along Inner Flanks (exact divisor of 512)
+    for (let y = 8; y < S; y += 16) {
+      for (let x = 96; x <= 192; x += 12) {
+        const fade = 1 - (x - 96) / 96;
+        const r = Math.max(0.8, fade * 4.4);
+        ctx.fillStyle = '#09090d';
+        ctx.globalAlpha = 0.85;
         ctx.beginPath();
-        ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.arc(S - x, y, r, 0, Math.PI * 2);
         ctx.fill();
       }
     }
+    ctx.globalAlpha = 1;
 
+    // 3. Bold Manga Panel Action Border Pinstripes
+    ctx.fillStyle = '#09090d';
+    ctx.fillRect(156, 0, 5, S);
+    ctx.fillRect(351, 0, 5, S);
+
+    // 4. Razor-Sharp Tapered Manga Speed Needles (True Needle Triangles, Seamless in Y!)
     let seed = 55109;
     const rand = () => {
       seed = (seed * 16807) % 2147483647;
       return (seed - 1) / 2147483646;
     };
 
-    // High-speed vertical manga action streaks (seamless in Y)
-    for (let i = 0; i < 64; i++) {
-      const sx = rand() * S;
-      const sy = rand() * S;
-      const len = 80 + rand() * 190;
-      const w = 1.5 + rand() * 5.2;
-      const isCyan = i % 7 === 0;
-      const isCrimson = i % 9 === 0;
-      const col = isCyan ? '#22d3ee' : isCrimson ? '#f43f5e' : '#f8fafc';
+    const drawNeedle = (
+      target: CanvasRenderingContext2D,
+      cx: number,
+      cy: number,
+      w: number,
+      len: number,
+      col: string,
+      alpha: number,
+    ) => {
+      target.fillStyle = col;
+      target.globalAlpha = alpha;
       for (const oy of [-S, 0, S]) {
-        ctx.fillStyle = col;
-        ctx.globalAlpha = isCyan || isCrimson ? 0.95 : 0.78;
-        ctx.fillRect(sx, sy + oy, w, len);
+        target.beginPath();
+        target.moveTo(cx, cy + oy);
+        target.lineTo(cx + w * 0.5, cy + oy + len * 0.22);
+        target.lineTo(cx, cy + oy + len);
+        target.lineTo(cx - w * 0.5, cy + oy + len * 0.22);
+        target.closePath();
+        target.fill();
+      }
+    };
 
-        if (isCyan || isCrimson || w > 4.2) {
-          ectx.fillStyle = col;
-          ectx.globalAlpha = isCyan || isCrimson ? 0.95 : 0.6;
-          ectx.fillRect(sx, sy + oy, w, len);
+    // Dense black ink speed needles cutting through the crisp white center paper
+    for (let i = 0; i < 68; i++) {
+      const sx = 128 + rand() * 256;
+      const sy = rand() * S;
+      const len = 95 + rand() * 210;
+      const w = 1.6 + rand() * 5.2;
+      drawNeedle(ctx, sx, sy, w, len, '#09090d', 0.92);
+    }
+
+    // Crisp white speed needles slicing through the pitch-black ink flanks
+    for (let i = 0; i < 44; i++) {
+      const leftSide = i % 2 === 0;
+      const sx = leftSide ? 8 + rand() * 94 : S - 8 - rand() * 94;
+      const sy = rand() * S;
+      const len = 85 + rand() * 190;
+      const w = 1.8 + rand() * 4.8;
+      drawNeedle(ctx, sx, sy, w, len, '#f8fafc', 0.95);
+    }
+
+    // High-energy Electric Cyan & Manga Crimson Kinetic Impact Needles (on both diffuse & fast-scrolling emissive!)
+    for (let i = 0; i < 34; i++) {
+      const sx = 18 + rand() * (S - 36);
+      const sy = rand() * S;
+      const len = 110 + rand() * 220;
+      const w = 3.2 + rand() * 7.0;
+      const isCyan = i % 2 === 0;
+      const col = isCyan ? '#06b6d4' : '#e11d48';
+      const glowCol = isCyan ? '#22d3ee' : '#fb7185';
+      drawNeedle(ctx, sx, sy, w, len, col, 0.96);
+      drawNeedle(ectx, sx, sy, w * 0.92, len * 1.05, glowCol, 0.95);
+      // White-hot needle core on emissive for anime kinetic pop
+      drawNeedle(ectx, sx, sy + 6, w * 0.35, len * 0.72, '#ffffff', 0.9);
+    }
+
+    // Stylized Manga Drift Impact Star-Bursts (seamless in Y) along the ink edges
+    for (const [bx, by, br, col] of [
+      [112, 128, 26, '#22d3ee'],
+      [400, 256, 28, '#f43f5e'],
+      [118, 384, 24, '#f43f5e'],
+      [396, 64, 22, '#22d3ee'],
+    ] as [number, number, number, string][]) {
+      for (const oy of [-S, 0, S]) {
+        for (const target of [ctx, ectx]) {
+          target.save();
+          target.translate(bx, by + oy);
+          target.fillStyle = col;
+          target.globalAlpha = target === ectx ? 0.95 : 1;
+          target.beginPath();
+          for (let k = 0; k < 12; k++) {
+            const r = k % 2 === 0 ? br : br * 0.34;
+            const a = (k * Math.PI) / 6;
+            if (k === 0) target.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+            else target.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+          }
+          target.closePath();
+          target.fill();
+          target.fillStyle = '#ffffff';
+          target.beginPath();
+          target.arc(0, 0, br * 0.28, 0, Math.PI * 2);
+          target.fill();
+          target.restore();
         }
       }
     }
@@ -1827,85 +2152,286 @@ function createAnimatedLiveryTextures(
     ctx.globalAlpha = 1;
     ectx.globalAlpha = 1;
   } else if (livery === 'animVenomSymbiote') {
-    // Superhero Symbiote (Venom): Glossy pitch-black living organic tendrils, razor-sharp white hood eyes & spider veins!
-    ctx.fillStyle = '#050507';
+    // Living Alien Symbiote (Venom): Wet Obsidian-Indigo Muscular Sheen, Fierce Jagged White Hood Eyes,
+    // Snarling Flank Fangs, Iconic Roof Spider Crest + Crawling Animated Organic White Symbiote Veins on Emissive!
+    const baseGrad = ctx.createLinearGradient(0, 0, S, 0);
+    baseGrad.addColorStop(0, '#040407');
+    baseGrad.addColorStop(0.24, '#0c0d1a');
+    baseGrad.addColorStop(0.5, '#13162b');
+    baseGrad.addColorStop(0.76, '#0c0d1a');
+    baseGrad.addColorStop(1, '#040407');
+    ctx.fillStyle = baseGrad;
     ctx.fillRect(0, 0, S, S);
 
-    // Organic dark indigo-obsidian writhing muscular symbiote tendrils across entire body
-    let seed = 66613;
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
-    };
-    for (let i = 0; i < 46; i++) {
-      const x0 = rand() * S;
-      const y0 = rand() * S;
-      ctx.strokeStyle = i % 3 === 0 ? '#181824' : '#101018';
-      ctx.lineWidth = 4 + rand() * 10;
+    // 1. Sculpted Wet Obsidian-Indigo Symbiote Muscle Sinew Contours (gives glossy 3D organic depth)
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
+      }
+      const muscleCurves: [number, number, number, number, number, number, number, string][] = [
+        [248, 20, 175, 95, 110, 190, 26, 'rgba(30, 41, 74, 0.55)'],
+        [244, 150, 150, 210, 74, 310, 32, 'rgba(24, 32, 62, 0.52)'],
+        [250, 265, 160, 330, 82, 465, 28, 'rgba(30, 41, 74, 0.5)'],
+        [135, 36, 68, 130, 28, 250, 20, 'rgba(49, 46, 129, 0.28)'],
+        [120, 280, 56, 365, 22, 495, 22, 'rgba(49, 46, 129, 0.26)'],
+      ];
       ctx.lineCap = 'round';
+      for (const [x0, y0, cx1, cy1, x1, y1, lw, col] of muscleCurves) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = lw;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.quadraticCurveTo(cx1, cy1, x1, y1);
+        ctx.stroke();
+        // Wet specular sheen highlight along each muscle ridge
+        ctx.strokeStyle = 'rgba(129, 140, 248, 0.16)';
+        ctx.lineWidth = lw * 0.24;
+        ctx.beginPath();
+        ctx.moveTo(x0 - 4, y0);
+        ctx.quadraticCurveTo(cx1 - 4, cy1, x1 - 4, y1);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 2. Organic Pitch-Black Symbiote Tendril Overlays for Layered Goo Texture
+    let vSeed = 66613;
+    const vRand = () => {
+      vSeed = (vSeed * 16807) % 2147483647;
+      return (vSeed - 1) / 2147483646;
+    };
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 42; i++) {
+      const x0 = vRand() * S;
+      const y0 = vRand() * S;
+      const x1 = x0 + (vRand() - 0.5) * 180;
+      const y1 = y0 + (vRand() - 0.5) * 180;
+      ctx.strokeStyle = i % 3 === 0 ? 'rgba(2, 2, 5, 0.85)' : 'rgba(15, 18, 36, 0.68)';
+      ctx.lineWidth = 4 + vRand() * 11;
       ctx.beginPath();
       ctx.moveTo(x0, y0);
-      ctx.bezierCurveTo(
-        x0 + (rand() - 0.5) * 140,
-        y0 + (rand() - 0.5) * 140,
-        x0 + (rand() - 0.5) * 160,
-        y0 + (rand() - 0.5) * 160,
-        x0 + (rand() - 0.5) * 180,
-        y0 + (rand() - 0.5) * 180,
+      ctx.quadraticCurveTo(
+        (x0 + x1) * 0.5 + (vRand() - 0.5) * 70,
+        (y0 + y1) * 0.5 + (vRand() - 0.5) * 70,
+        x1,
+        y1,
       );
       ctx.stroke();
     }
 
-    // Razor-sharp menacing White Symbiote Eyes curving aggressively across the hood!
-    for (const target of [ctx, ectx]) {
-      for (const isRight of [false, true]) {
-        target.save();
-        if (isRight) {
-          target.translate(S, 0);
-          target.scale(-1, 1);
-        }
-        // Iconic jagged curved Venom eye silhouette
-        target.fillStyle = '#f8fafc';
-        target.beginPath();
-        target.moveTo(132, 92);
-        target.quadraticCurveTo(188, 128, 240, 214);
-        target.quadraticCurveTo(192, 232, 146, 198);
-        target.quadraticCurveTo(116, 152, 132, 92);
-        target.closePath();
-        target.fill();
-
-        // Jagged white organic spider-leg tendrils creeping along the flanks & rear!
-        target.strokeStyle = '#f8fafc';
-        target.lineCap = 'round';
-        target.lineJoin = 'miter';
-        const veins: [number, number, number, number, number, number, number][] = [
-          [24, 60, 88, 132, 42, 216, 9],
-          [16, 165, 96, 236, 36, 332, 11],
-          [28, 286, 110, 352, 54, 468, 9],
-          [82, 230, 178, 304, 242, 344, 7],
-          [94, 348, 186, 390, 246, 444, 6],
-        ];
-        for (const [ax, ay, bx, by, cx, cy, lw] of veins) {
-          target.lineWidth = target === ectx ? lw * 0.72 : lw;
-          target.beginPath();
-          target.moveTo(ax, ay);
-          target.lineTo(bx, by);
-          target.lineTo(cx, cy);
-          target.stroke();
-        }
-        target.restore();
+    // 3. Snarling Lower-Flank Symbiote Jaw & Razor-Sharp White Fangs (both flanks)
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
       }
+      // Subtle crimson-violet inner symbiote maw streak along lower rocker
+      const mawGrad = ctx.createLinearGradient(0, 140, 88, 380);
+      mawGrad.addColorStop(0, 'rgba(136, 19, 55, 0.72)');
+      mawGrad.addColorStop(0.5, 'rgba(159, 18, 57, 0.45)');
+      mawGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+      ctx.fillStyle = mawGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, 118);
+      ctx.quadraticCurveTo(86, 195, 72, 340);
+      ctx.quadraticCurveTo(32, 395, 0, 382);
+      ctx.closePath();
+      ctx.fill();
 
-      // Stylized jagged white Symbiote Spider Crest along the roof center
-      target.fillStyle = '#f8fafc';
-      target.beginPath();
-      target.moveTo(256, 278);
-      target.lineTo(278, 326);
-      target.lineTo(256, 396);
-      target.lineTo(234, 326);
-      target.closePath();
-      target.fill();
+      // Jagged curved white symbiote fangs jutting across the flank
+      for (let f = 0; f < 6; f++) {
+        const fy = 134 + f * 38;
+        const flen = 42 + (f === 1 || f === 2 ? 22 : f === 3 ? 14 : 0);
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.moveTo(4, fy);
+        ctx.quadraticCurveTo(flen * 0.65, fy + 6, flen, fy + 16);
+        ctx.quadraticCurveTo(flen * 0.45, fy + 18, 4, fy + 24);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#040407';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+      ctx.restore();
     }
+
+    // 4. Iconic Menacing Sweeping White Venom Eyes on Hood (with spiky symbiote corner tendrils!)
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
+      }
+      // Soft icy-cyan under-glow halo behind the eye
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.25)';
+      ctx.beginPath();
+      ctx.moveTo(118, 66);
+      ctx.bezierCurveTo(176, 94, 224, 152, 246, 204);
+      ctx.bezierCurveTo(202, 228, 148, 206, 122, 162);
+      ctx.bezierCurveTo(100, 124, 102, 92, 118, 66);
+      ctx.closePath();
+      ctx.fill();
+
+      // Razor-sharp pure-white Venom eye silhouette
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(122, 72);
+      ctx.bezierCurveTo(174, 102, 218, 154, 241, 198);
+      ctx.bezierCurveTo(202, 218, 154, 198, 128, 158);
+      ctx.bezierCurveTo(108, 126, 108, 96, 122, 72);
+      ctx.closePath();
+      ctx.fill();
+
+      // Jagged black symbiote tendrils biting into the outer eye contour for authentic comic style
+      ctx.fillStyle = '#05050a';
+      ctx.beginPath();
+      ctx.moveTo(136, 174);
+      ctx.lineTo(164, 164);
+      ctx.lineTo(152, 188);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(182, 118);
+      ctx.lineTo(170, 138);
+      ctx.lineTo(196, 132);
+      ctx.closePath();
+      ctx.fill();
+
+      // White spiky symbiote wisps shooting off the upper eye tip
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(124, 78);
+      ctx.quadraticCurveTo(102, 54, 84, 34);
+      ctx.moveTo(116, 106);
+      ctx.quadraticCurveTo(86, 90, 62, 76);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 5. Crisp Iconic White Venom Spider Crest across Center Roof & Upper Flanks
+    ctx.save();
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#05050a';
+    ctx.lineWidth = 3;
+    // Pointed diamond cephalothorax (head)
+    ctx.beginPath();
+    ctx.moveTo(256, 238);
+    ctx.lineTo(278, 272);
+    ctx.lineTo(256, 302);
+    ctx.lineTo(234, 272);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Fierce elongated segmented abdomen
+    ctx.beginPath();
+    ctx.moveTo(256, 298);
+    ctx.lineTo(286, 342);
+    ctx.lineTo(256, 428);
+    ctx.lineTo(226, 342);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 8 Long Razor-Sharp Angular Spider Legs stretching symmetrically across roof & flanks
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
+      }
+      const legs: [number, number, number, number, number, number, number][] = [
+        [240, 266, 178, 224, 108, 170, 10],
+        [236, 282, 162, 264, 74, 242, 11],
+        [234, 302, 152, 326, 72, 356, 11],
+        [238, 324, 168, 378, 108, 466, 10],
+      ];
+      for (const [ax, ay, bx, by, cx, cy, w] of legs) {
+        // Tapered sharp polygon leg (thick at joint, razor point at tip)
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.moveTo(ax, ay - w * 0.45);
+        ctx.lineTo(bx, by - w * 0.55);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(bx + 4, by + w * 0.55);
+        ctx.lineTo(ax, ay + w * 0.45);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // 6. Seamless Crawling Living White/Ice-Blue Symbiote Veins on Emissive (scrolls smoothly in X & Y!)
+    ectx.lineCap = 'round';
+    const drawWrappedVein = (
+      x0: number,
+      y0: number,
+      dx1: number,
+      dy1: number,
+      dx2: number,
+      dy2: number,
+      lw: number,
+      col: string,
+      alpha: number,
+    ) => {
+      ectx.strokeStyle = col;
+      ectx.lineWidth = lw;
+      ectx.globalAlpha = alpha;
+      for (const ox of [-S, 0, S]) {
+        for (const oy of [-S, 0, S]) {
+          ectx.beginPath();
+          ectx.moveTo(x0 + ox, y0 + oy);
+          ectx.bezierCurveTo(
+            x0 + dx1 + ox,
+            y0 + dy1 + oy,
+            x0 + dx2 + ox,
+            y0 + dy2 + oy,
+            x0 + ox,
+            y0 + S * 0.5 + oy,
+          );
+          ectx.stroke();
+        }
+      }
+    };
+    // Crawling vertical organic symbiote vein streams (period S/2 = 256 -> seamless modulo 512!)
+    for (let i = 0; i < 14; i++) {
+      const vx = 24 + (i / 14) * (S - 48);
+      const vy = (i * 97) % S;
+      const sway1 = (i % 2 === 0 ? 1 : -1) * (24 + (i % 4) * 12);
+      const sway2 = -sway1 * 0.85;
+      drawWrappedVein(vx, vy, sway1, 86, sway2, 172, 2.2 + (i % 3) * 1.4, '#e0f2fe', 0.55);
+      drawWrappedVein(vx + 4, vy + 18, sway1 * 0.7, 86, sway2 * 0.7, 172, 1.2, '#ffffff', 0.75);
+    }
+    // Branching organic white micro-tendrils crawling across the body
+    for (let i = 0; i < 28; i++) {
+      const bx = vRand() * S;
+      const by = vRand() * S;
+      const len = 32 + vRand() * 64;
+      const ang = (vRand() - 0.5) * 1.6;
+      const mx = bx + Math.sin(ang) * len * 0.5;
+      const my = by + Math.cos(ang) * len * 0.5;
+      const ex = bx + Math.sin(ang * 1.3) * len;
+      const ey = by + Math.cos(ang * 1.3) * len;
+      for (const ox of [-S, 0, S]) {
+        for (const oy of [-S, 0, S]) {
+          ectx.strokeStyle = i % 3 === 0 ? '#bae6fd' : '#f8fafc';
+          ectx.lineWidth = 1.4 + vRand() * 2.2;
+          ectx.globalAlpha = 0.45 + vRand() * 0.35;
+          ectx.beginPath();
+          ectx.moveTo(bx + ox, by + oy);
+          ectx.quadraticCurveTo(mx + ox, my + oy, ex + ox, ey + oy);
+          ectx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
   } else if (livery === 'animLiquidAquarium') {
     // Translucent Glass Aquarium Shell Caustics & Shimmering Water Ripples (paired with real 3D sloshing water + goldfish inside!)
     const g = ctx.createLinearGradient(0, 0, 0, S);
@@ -2046,126 +2572,348 @@ function createAnimatedLiveryTextures(
     ctx.globalAlpha = 1;
     ectx.globalAlpha = 1;
   } else if (livery === 'omnitrixAlien') {
-    // Ben 10 Omnitrix / Alien Watch Wrap: Sleek Black & White Futuristic Armor + Glowing Neon Green Hourglass Emblem!
-    ctx.fillStyle = '#09090b';
+    // Animated Ben-10 Omnitrix Alien-Tech Armor: Locked Matte-Black & Pearl-White Interlocking Armor + 3D Hood/Roof Hourglass Dial
+    // paired with Live Scrolling Neon-Green Alien DNA Double-Helix & Energy Pulse Waves on Emissive!
+    const chassisBg = ctx.createLinearGradient(0, 0, S, 0);
+    chassisBg.addColorStop(0, '#07090c');
+    chassisBg.addColorStop(0.22, '#11161f');
+    chassisBg.addColorStop(0.5, '#090b10');
+    chassisBg.addColorStop(0.78, '#11161f');
+    chassisBg.addColorStop(1, '#07090c');
+    ctx.fillStyle = chassisBg;
     ctx.fillRect(0, 0, S, S);
 
-    // Stark glossy white futuristic alien-tech center chassis & flanking armor plates
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(148, 0, 216, 512);
-    // Angled black armor notches cutting into the white body
-    ctx.fillStyle = '#09090b';
-    ctx.beginPath();
-    ctx.moveTo(148, 0);
-    ctx.lineTo(205, 84);
-    ctx.lineTo(148, 152);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(364, 0);
-    ctx.lineTo(307, 84);
-    ctx.lineTo(364, 152);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(148, 358);
-    ctx.lineTo(205, 426);
-    ctx.lineTo(148, 512);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(364, 358);
-    ctx.lineTo(307, 426);
-    ctx.lineTo(364, 512);
-    ctx.closePath();
-    ctx.fill();
-
-    // Sharp glowing Neon-Green Futuristic Omnitrix Circuit Lines along flanks & seams
-    const drawOmniLines = (target: CanvasRenderingContext2D, isEm: boolean) => {
-      target.strokeStyle = isEm ? '#4ade80' : '#22c55e';
-      target.lineWidth = isEm ? 6 : 8;
-      target.lineCap = 'square';
-      // Side flank energy rails
-      for (const sx of [64, 144, 368, 448]) {
-        target.beginPath();
-        target.moveTo(sx, 0);
-        target.lineTo(sx, 512);
-        target.stroke();
-      }
-      // Diagonal sci-fi chevron conduits
-      for (const y of [96, 256, 416]) {
-        target.beginPath();
-        target.moveTo(0, y);
-        target.lineTo(64, y + 38);
-        target.lineTo(144, y + 38);
-        target.moveTo(512, y);
-        target.lineTo(448, y + 38);
-        target.lineTo(368, y + 38);
-        target.stroke();
-      }
-    };
-    drawOmniLines(ctx, false);
-    drawOmniLines(ectx, true);
-
-    // Iconic Glowing Omnitrix Dial + Razor-Sharp Neon-Green Hourglass Emblem right on the Hood/Roof!
-    const drawOmnitrixDial = (cx: number, cy: number, rad: number) => {
-      // Dark tactical steel bezel on diffuse
+    // 1. Sleek Gunmetal Alien Cooling Louvers along Lower Flanks
+    for (const isRight of [false, true]) {
       ctx.save();
-      ctx.translate(cx, cy);
-      ctx.fillStyle = '#18181b';
-      ctx.beginPath();
-      ctx.arc(0, 0, rad + 12, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 5;
-      ctx.stroke();
-
-      // 4 outer Omnitrix bezel locking pips
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2 + Math.PI * 0.25;
-        ctx.fillStyle = '#22c55e';
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
+      }
+      // Subtle recessed dark-steel side intake channel
+      ctx.fillStyle = '#05070a';
+      ctx.fillRect(16, 0, 88, S);
+      // Angled gunmetal armor louvers
+      for (let ly = 24; ly < S; ly += 48) {
+        ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.arc(Math.cos(a) * (rad + 6), Math.sin(a) * (rad + 6), 5, 0, Math.PI * 2);
+        ctx.moveTo(14, ly);
+        ctx.lineTo(96, ly + 16);
+        ctx.lineTo(96, ly + 30);
+        ctx.lineTo(14, ly + 14);
+        ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = 'rgba(74, 222, 128, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
       }
       ctx.restore();
+    }
 
-      // Glowing Neon-Green Hourglass core on BOTH diffuse & emissive!
-      for (const target of [ctx, ectx]) {
-        target.save();
-        target.translate(cx, cy);
-        // Pitch black circular dial face
-        target.fillStyle = '#050507';
-        target.beginPath();
-        target.arc(0, 0, rad, 0, Math.PI * 2);
-        target.fill();
-        // Glowing outer ring
-        target.strokeStyle = '#4ade80';
-        target.lineWidth = 5;
-        target.stroke();
+    // 2. Sculpted Glossy Pearl-White Ben-10 Interlocking Center Armor Carapace
+    const whiteGrad = ctx.createLinearGradient(132, 0, 380, 0);
+    whiteGrad.addColorStop(0, '#cbd5e1');
+    whiteGrad.addColorStop(0.18, '#f8fafc');
+    whiteGrad.addColorStop(0.5, '#ffffff');
+    whiteGrad.addColorStop(0.82, '#f8fafc');
+    whiteGrad.addColorStop(1, '#cbd5e1');
+    ctx.fillStyle = whiteGrad;
+    ctx.beginPath();
+    ctx.moveTo(148, 0);
+    ctx.lineTo(364, 0);
+    ctx.lineTo(382, 92);
+    ctx.lineTo(362, 168);
+    ctx.lineTo(378, 256);
+    ctx.lineTo(358, 348);
+    ctx.lineTo(376, 434);
+    ctx.lineTo(358, S);
+    ctx.lineTo(154, S);
+    ctx.lineTo(136, 434);
+    ctx.lineTo(154, 348);
+    ctx.lineTo(134, 256);
+    ctx.lineTo(150, 168);
+    ctx.lineTo(130, 92);
+    ctx.closePath();
+    ctx.fill();
 
-        // Iconic Omnitrix Hourglass (two glowing green triangles meeting at dead-center!)
-        target.fillStyle = target === ectx ? '#86efac' : '#22c55e';
-        target.beginPath();
-        target.moveTo(-rad * 0.62, -rad * 0.72);
-        target.lineTo(rad * 0.62, -rad * 0.72);
-        target.lineTo(0, 0);
-        target.lineTo(rad * 0.62, rad * 0.72);
-        target.lineTo(-rad * 0.62, rad * 0.72);
-        target.lineTo(0, 0);
-        target.closePath();
-        target.fill();
+    // Crisp gunmetal bevel outline & mechanical armor panel seams across the white carapace
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 5;
+    ctx.stroke();
 
-        // Crisp white-green core highlight outline
-        target.strokeStyle = '#dcfce7';
-        target.lineWidth = 3;
-        target.stroke();
-        target.restore();
+    // Diagonal black tactical armor notches biting cleanly into the white hood & rear deck
+    ctx.fillStyle = '#09090b';
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
       }
+      // Front hood intake notch
+      ctx.beginPath();
+      ctx.moveTo(132, 26);
+      ctx.lineTo(192, 74);
+      ctx.lineTo(176, 118);
+      ctx.lineTo(132, 96);
+      ctx.closePath();
+      ctx.fill();
+      // Mid-chassis alien vent notch
+      ctx.beginPath();
+      ctx.moveTo(134, 234);
+      ctx.lineTo(188, 268);
+      ctx.lineTo(188, 294);
+      ctx.lineTo(146, 314);
+      ctx.closePath();
+      ctx.fill();
+      // Rear armor notch
+      ctx.beginPath();
+      ctx.moveTo(136, 412);
+      ctx.lineTo(194, 444);
+      ctx.lineTo(166, S);
+      ctx.lineTo(136, S);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Precision armored panel seam lines & metallic rivets on diffuse
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(154, 266);
+    ctx.lineTo(358, 266);
+    ctx.moveTo(256, 0);
+    ctx.lineTo(256, 86);
+    ctx.moveTo(256, 248);
+    ctx.lineTo(256, 322);
+    ctx.moveTo(256, 422);
+    ctx.lineTo(256, S);
+    ctx.stroke();
+
+    // 3. Sharp Neon-Green Alien Energy Conduit Trim Channels along Armor Edges (diffuse)
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'square';
+    for (const sx of [118, 394]) {
+      ctx.beginPath();
+      ctx.moveTo(sx, 0);
+      ctx.lineTo(sx, S);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = '#86efac';
+    ctx.lineWidth = 2;
+    for (const sx of [118, 394]) {
+      ctx.beginPath();
+      ctx.moveTo(sx, 0);
+      ctx.lineTo(sx, S);
+      ctx.stroke();
+    }
+    // Connecting angled green conduits from side rails into the central dials
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 5;
+    for (const y of [166, 372]) {
+      ctx.beginPath();
+      ctx.moveTo(118, y - 22);
+      ctx.lineTo(176, y);
+      ctx.moveTo(394, y - 22);
+      ctx.lineTo(336, y);
+      ctx.stroke();
+    }
+
+    // 4. Hero 3D-Beveled Omnitrix Watch Dial + Razor-Sharp Neon-Green Hourglass Emblem (Anchored on Diffuse!)
+    const drawOmnitrixDial = (cx: number, cy: number, rad: number) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      // Outer titanium mechanical collar with metallic gradient
+      const bezelGrad = ctx.createLinearGradient(-rad, -rad, rad, rad);
+      bezelGrad.addColorStop(0, '#64748b');
+      bezelGrad.addColorStop(0.45, '#1e293b');
+      bezelGrad.addColorStop(1, '#09090b');
+      ctx.fillStyle = bezelGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, rad + 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // 4 Chunky Omnitrix Bezel Locking Clamps + Glowing Green Status Pips at 45°
+      for (let i = 0; i < 4; i++) {
+        ctx.save();
+        ctx.rotate((i / 4) * Math.PI * 2 + Math.PI * 0.25);
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.fillRect(rad - 2, -10, 19, 20);
+        ctx.strokeRect(rad - 2, -10, 19, 20);
+        ctx.fillStyle = '#4ade80';
+        ctx.fillRect(rad + 4, -5, 7, 10);
+        ctx.restore();
+      }
+
+      // Pitch-black recessed dial face
+      ctx.fillStyle = '#040608';
+      ctx.beginPath();
+      ctx.arc(0, 0, rad, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtle alien radial gauge ticks inside the dial face
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.35)';
+      ctx.lineWidth = 2;
+      for (let t = 0; t < 16; t++) {
+        const a = (t / 16) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * (rad * 0.8), Math.sin(a) * (rad * 0.8));
+        ctx.lineTo(Math.cos(a) * (rad * 0.94), Math.sin(a) * (rad * 0.94));
+        ctx.stroke();
+      }
+
+      // Glowing outer neon-green dial rim
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, rad - 2, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Iconic Omnitrix Hourglass Emblem (faceted neon-green glowing triangles meeting at dead-center!)
+      const hgGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, rad * 0.85);
+      hgGrad.addColorStop(0, '#dcfce7');
+      hgGrad.addColorStop(0.35, '#4ade80');
+      hgGrad.addColorStop(0.85, '#16a34a');
+      hgGrad.addColorStop(1, '#15803d');
+      ctx.fillStyle = hgGrad;
+      ctx.beginPath();
+      ctx.moveTo(-rad * 0.64, -rad * 0.72);
+      ctx.lineTo(rad * 0.64, -rad * 0.72);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(rad * 0.64, rad * 0.72);
+      ctx.lineTo(-rad * 0.64, rad * 0.72);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // Crisp white-green specular bevel edge around the hourglass
+      ctx.strokeStyle = '#dcfce7';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Glowing white-green core energy diamond right at the hourglass pinch
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(0, -rad * 0.14);
+      ctx.lineTo(rad * 0.12, 0);
+      ctx.lineTo(0, rad * 0.14);
+      ctx.lineTo(-rad * 0.12, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
     };
 
-    drawOmnitrixDial(256, 178, 72);
-    drawOmnitrixDial(256, 366, 48);
+    drawOmnitrixDial(256, 166, 74);
+    drawOmnitrixDial(256, 372, 46);
+
+    // 5. LIVE ANIMATED EMISSIVE LAYER (scrolls seamlessly modulo 512 in Y!):
+    //    Twin Neon-Green Alien DNA Double-Helices on Flanks + Surging Omnitrix Energy Chevrons & Data Packets!
+    for (const helixX of [60, 452]) {
+      const amp = 24;
+      // Glowing nucleotide base-pair rungs connecting the double helix strands (exact divisor of 512)
+      for (let y = 0; y < S; y += 16) {
+        const phase = (y / S) * Math.PI * 4; // 2 complete helix twists per 512px -> 100% seamless!
+        const xA = helixX + Math.sin(phase) * amp;
+        const xB = helixX - Math.sin(phase) * amp;
+        const depth = Math.abs(Math.sin(phase));
+        ectx.strokeStyle = '#4ade80';
+        ectx.lineWidth = 2.4;
+        ectx.globalAlpha = 0.25 + depth * 0.55;
+        ectx.beginPath();
+        ectx.moveTo(xA, y);
+        ectx.lineTo(xB, y);
+        ectx.stroke();
+      }
+      // Twin intertwined neon-green DNA backbone strands
+      for (const sgn of [-1, 1]) {
+        ectx.strokeStyle = sgn > 0 ? '#86efac' : '#22c55e';
+        ectx.lineWidth = sgn > 0 ? 5.5 : 4.5;
+        ectx.globalAlpha = 0.92;
+        ectx.beginPath();
+        for (let y = 0; y <= S; y += 8) {
+          const phase = (y / S) * Math.PI * 4;
+          const px = helixX + sgn * Math.sin(phase) * amp;
+          if (y === 0) ectx.moveTo(px, y);
+          else ectx.lineTo(px, y);
+        }
+        ectx.stroke();
+      }
+    }
+
+    // Surging Neon-Green Omnitrix Energy Rail Pulses & Transformation Chevrons down the Center!
+    for (const railX of [118, 394]) {
+      ectx.strokeStyle = '#22c55e';
+      ectx.lineWidth = 4;
+      ectx.globalAlpha = 0.55;
+      ectx.beginPath();
+      ectx.moveTo(railX, 0);
+      ectx.lineTo(railX, S);
+      ectx.stroke();
+
+      // Bright high-speed energy data packets racing along the side conduits (2 cycles per 512px)
+      for (const py of [32, 160, 288, 416]) {
+        for (const oy of [-S, 0, S]) {
+          const pg = ectx.createLinearGradient(0, py + oy - 36, 0, py + oy + 36);
+          pg.addColorStop(0, 'rgba(74, 222, 128, 0)');
+          pg.addColorStop(0.5, '#dcfce7');
+          pg.addColorStop(1, 'rgba(74, 222, 128, 0)');
+          ectx.strokeStyle = pg;
+          ectx.lineWidth = 9;
+          ectx.globalAlpha = 0.95;
+          ectx.beginPath();
+          ectx.moveTo(railX, py + oy - 36);
+          ectx.lineTo(railX, py + oy + 36);
+          ectx.stroke();
+        }
+      }
+    }
+
+    // Sweeping Center Omnitrix Radar Scan Chevrons & Hourglass Pulse Waves (period 256 -> seamless modulo 512!)
+    for (const wy of [0, 256]) {
+      for (const oy of [-S, 0, S]) {
+        const y0 = wy + oy;
+        // Soft glowing alien energy wave band across the armor
+        const wg = ectx.createLinearGradient(0, y0 - 44, 0, y0 + 44);
+        wg.addColorStop(0, 'rgba(34, 197, 94, 0)');
+        wg.addColorStop(0.5, 'rgba(74, 222, 128, 0.52)');
+        wg.addColorStop(1, 'rgba(34, 197, 94, 0)');
+        ectx.fillStyle = wg;
+        ectx.globalAlpha = 1;
+        ectx.fillRect(120, y0 - 44, 272, 88);
+
+        // Razor-sharp glowing forward-pointing Omnitrix chevron pulse
+        ectx.strokeStyle = '#bbf7d0';
+        ectx.lineWidth = 6;
+        ectx.lineCap = 'round';
+        ectx.lineJoin = 'miter';
+        ectx.globalAlpha = 0.92;
+        ectx.beginPath();
+        ectx.moveTo(148, y0 + 28);
+        ectx.lineTo(256, y0 - 24);
+        ectx.lineTo(364, y0 + 28);
+        ectx.stroke();
+
+        // Secondary trailing echo chevron
+        ectx.strokeStyle = '#4ade80';
+        ectx.lineWidth = 3;
+        ectx.globalAlpha = 0.65;
+        ectx.beginPath();
+        ectx.moveTo(172, y0 + 48);
+        ectx.lineTo(256, y0 + 6);
+        ectx.lineTo(340, y0 + 48);
+        ectx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
   } else if (livery === 'animSakuraStorm') {
     // Midnight Japanese Sakura Petal Storm: Deep twilight indigo + swirling misty ribbons & glowing pink petals!
     ctx.fillStyle = '#120824';
@@ -2689,6 +3437,326 @@ function createAnimatedLiveryTextures(
         target.stroke();
       }
     }
+    ctx.globalAlpha = 1;
+    ectx.globalAlpha = 1;
+  } else if (livery === 'animCrysisNanosuit') {
+    // Crysis Nanosuit 2.0 ("MAXIMUM ARMOR"): Sculpted Carbon-Graphene Synthetic Muscle Fibers,
+    // Articulated Titanium Spine Plates, Glowing Crimson Visor Slit + Live Sweeping Hexagonal Nano-Shield Wave!
+    const bg = ctx.createLinearGradient(0, 0, S, 0);
+    bg.addColorStop(0, '#07090d');
+    bg.addColorStop(0.24, '#111622');
+    bg.addColorStop(0.5, '#192030');
+    bg.addColorStop(0.76, '#111622');
+    bg.addColorStop(1, '#07090d');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, S, S);
+
+    // 1. Subtle CryNet Micro-Hexagonal Ballistic Carbon Skin across the Entire Suit
+    const microR = 16;
+    const mdx = microR * 1.5;
+    const mdy = microR * Math.sqrt(3);
+    for (let col = -1; col < 24; col++) {
+      for (let row = -1; row < 20; row++) {
+        const cx = col * mdx;
+        const cy = row * mdy + ((col & 1) === 0 ? 0 : mdy * 0.5);
+        ctx.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const a = (k * Math.PI) / 3;
+          const px = cx + Math.cos(a) * (microR - 1.4);
+          const py = cy + Math.sin(a) * (microR - 1.4);
+          if (k === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = (col + row) % 3 === 0 ? 'rgba(30, 41, 59, 0.42)' : 'rgba(15, 23, 42, 0.55)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
+    }
+
+    // 2. Signature Crysis Sculpted Synthetic Muscle Fiber Bundles (Symmetrical Anatomical Striations!)
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
+      }
+
+      const drawMuscleBundle = (
+        x0: number,
+        y0: number,
+        cx1: number,
+        cy1: number,
+        x1: number,
+        y1: number,
+        width: number,
+        striations: number,
+      ) => {
+        // Deep recessed obsidian muscle cleft shadow
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#030508';
+        ctx.lineWidth = width + 8;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.quadraticCurveTo(cx1, cy1, x1, y1);
+        ctx.stroke();
+
+        // Dark graphite-titanium synthetic muscle body
+        ctx.strokeStyle = '#1e2533';
+        ctx.lineWidth = width;
+        ctx.stroke();
+
+        // Raised metallic carbon fiber specular ridge
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = width * 0.34;
+        ctx.beginPath();
+        ctx.moveTo(x0 - 2, y0 - 2);
+        ctx.quadraticCurveTo(cx1 - 2, cy1 - 2, x1 - 2, y1 - 2);
+        ctx.stroke();
+
+        // Crisp parallel nano-muscle fiber striations running along the bundle
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.22)';
+        ctx.lineWidth = 1.3;
+        for (let s = -striations; s <= striations; s++) {
+          const off = s * (width * 0.16);
+          ctx.beginPath();
+          ctx.moveTo(x0 + off, y0);
+          ctx.quadraticCurveTo(cx1 + off, cy1, x1 + off, y1);
+          ctx.stroke();
+        }
+      };
+
+      // Pectoral / Hood Sculpted Carbon Muscle Arcs
+      drawMuscleBundle(206, 44, 148, 72, 108, 126, 20, 2);
+      drawMuscleBundle(202, 168, 142, 198, 92, 246, 24, 2);
+      // Deltoid / Flank Diagonal Synthetic Muscle Ribs
+      drawMuscleBundle(110, 48, 62, 118, 26, 196, 22, 2);
+      drawMuscleBundle(106, 186, 56, 264, 22, 344, 24, 2);
+      drawMuscleBundle(118, 326, 68, 396, 28, 488, 22, 2);
+      // Rear Haunch / Shoulder Muscle Striations
+      drawMuscleBundle(204, 304, 146, 356, 102, 434, 22, 2);
+      drawMuscleBundle(206, 410, 158, 456, 126, 502, 18, 2);
+
+      // Brushed Titanium Flank Armor Exo-Ribs cutting over the muscle fibers
+      ctx.fillStyle = '#0f131c';
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      for (const ry of [126, 262, 396]) {
+        ctx.beginPath();
+        ctx.moveTo(0, ry);
+        ctx.lineTo(78, ry + 26);
+        ctx.lineTo(72, ry + 48);
+        ctx.lineTo(0, ry + 24);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 3. Articulated Dark-Tungsten Nanosuit Spinal/Chest Armor Spine down the Center (x = 206..306)
+    const spineBg = ctx.createLinearGradient(204, 0, 308, 0);
+    spineBg.addColorStop(0, '#04060a');
+    spineBg.addColorStop(0.18, '#1e2636');
+    spineBg.addColorStop(0.5, '#0f141e');
+    spineBg.addColorStop(0.82, '#1e2636');
+    spineBg.addColorStop(1, '#04060a');
+    ctx.fillStyle = spineBg;
+    ctx.fillRect(206, 0, 100, S);
+
+    // Interlocking armored Nanosuit thoracic/spinal vertebrae segments
+    for (let sy = 14; sy < S; sy += 46) {
+      if (sy > 84 && sy < 180) continue; // Keep hood visor brow plate unobstructed
+      const segGrad = ctx.createLinearGradient(216, sy, 296, sy + 34);
+      segGrad.addColorStop(0, '#334155');
+      segGrad.addColorStop(0.5, '#1e293b');
+      segGrad.addColorStop(1, '#0b1019');
+      ctx.fillStyle = segGrad;
+      ctx.beginPath();
+      ctx.moveTo(222, sy);
+      ctx.lineTo(290, sy);
+      ctx.lineTo(298, sy + 18);
+      ctx.lineTo(282, sy + 34);
+      ctx.lineTo(230, sy + 34);
+      ctx.lineTo(214, sy + 18);
+      ctx.closePath();
+      ctx.fill();
+
+      // Chamfered steel top edge highlight
+      ctx.strokeStyle = 'rgba(203, 213, 225, 0.45)';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      // Central recessed dark titanium spine channel & subtle cyan power pip
+      ctx.fillStyle = '#070a10';
+      ctx.fillRect(249, sy + 7, 14, 20);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(253, sy + 13, 6, 8);
+    }
+
+    // Precision Cyan-Silver Nano-Conduit Seam Rails flanking the spine
+    for (const sx of [204, 308]) {
+      ctx.fillStyle = '#0ea5e9';
+      ctx.fillRect(sx - 2, 0, 4, S);
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(sx - 0.8, 0, 1.6, S);
+    }
+
+    // 4. Iconic Crysis Nanosuit Helmet Brow & Glowing Crimson Optical Visor Slit on Hood (y ≈ 98..172)
+    ctx.save();
+    // Sculpted angular tungsten helmet/chest brow housing
+    const browGrad = ctx.createLinearGradient(168, 92, 344, 178);
+    browGrad.addColorStop(0, '#334155');
+    browGrad.addColorStop(0.5, '#111622');
+    browGrad.addColorStop(1, '#06080d');
+    ctx.fillStyle = browGrad;
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(174, 108);
+    ctx.lineTo(256, 88);
+    ctx.lineTo(338, 108);
+    ctx.lineTo(318, 168);
+    ctx.lineTo(256, 182);
+    ctx.lineTo(194, 168);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Recessed pitch-black visor trough
+    ctx.fillStyle = '#030407';
+    ctx.beginPath();
+    ctx.moveTo(186, 122);
+    ctx.lineTo(256, 138);
+    ctx.lineTo(326, 122);
+    ctx.lineTo(314, 148);
+    ctx.lineTo(256, 162);
+    ctx.lineTo(198, 148);
+    ctx.closePath();
+    ctx.fill();
+
+    // Fierce Glowing Crysis Crimson-Red Split Tactical Visor Lenses!
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(S, 0);
+        ctx.scale(-1, 1);
+      }
+      // Red optical bloom halo
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.36)';
+      ctx.beginPath();
+      ctx.moveTo(188, 122);
+      ctx.lineTo(248, 138);
+      ctx.lineTo(246, 156);
+      ctx.lineTo(198, 145);
+      ctx.closePath();
+      ctx.fill();
+
+      // Razor-sharp crimson visor lens
+      const visorGrad = ctx.createLinearGradient(192, 126, 246, 152);
+      visorGrad.addColorStop(0, '#dc2626');
+      visorGrad.addColorStop(0.55, '#ef4444');
+      visorGrad.addColorStop(1, '#fca5a5');
+      ctx.fillStyle = visorGrad;
+      ctx.beginPath();
+      ctx.moveTo(194, 127);
+      ctx.lineTo(246, 140);
+      ctx.lineTo(244, 151);
+      ctx.lineTo(202, 141);
+      ctx.closePath();
+      ctx.fill();
+
+      // White-hot optical glint inside visor
+      ctx.fillStyle = '#fee2e2';
+      ctx.beginPath();
+      ctx.moveTo(204, 131);
+      ctx.lineTo(238, 141);
+      ctx.lineTo(237, 145);
+      ctx.lineTo(206, 136);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Crisp micro tactical stencil on lower hood armor collar
+    ctx.fillStyle = 'rgba(186, 230, 253, 0.72)';
+    ctx.font = '800 13px "Oxanium", "Consolas", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('CRYNET • NANO 2.0', 256, 171);
+    ctx.restore();
+
+    // 5. LIVE ANIMATED EMISSIVE LAYER (100% Seamlessly Tileable in Y modulo 512!):
+    //    Crysis "MAXIMUM ARMOR" Sweeping Hexagonal Energy Shield Wave + Nano-Spine Telemetry Pulses!
+    const eHexW = 32; // exact divisor of 512 (16 cols)
+    const eHexH = 32; // exact divisor of 512 (16 rows) -> 100% seamless vertical wrap!
+    const eHexR = 17.5;
+
+    for (let row = -1; row <= S / eHexH + 1; row++) {
+      const cy = row * eHexH;
+      const offX = (row & 1) !== 0 ? eHexW * 0.5 : 0;
+      for (let col = -1; col <= S / eHexW + 1; col++) {
+        const cx = col * eHexW + offX;
+        // Sweeping V-chevron Maximum Armor activation wave (2 full seamless cycles per 512px)
+        const waveY = cy - Math.abs(cx - 256) * 0.42;
+        const wave = 0.5 + 0.5 * Math.cos((waveY / S) * Math.PI * 4);
+        const energy = Math.pow(wave, 3.2);
+        if (energy < 0.08) continue;
+
+        ectx.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const a = (k * Math.PI) / 3 + Math.PI / 6;
+          const px = cx + Math.cos(a) * eHexR;
+          const py = cy + Math.sin(a) * eHexR;
+          if (k === 0) ectx.moveTo(px, py);
+          else ectx.lineTo(px, py);
+        }
+        ectx.closePath();
+
+        // Translucent glowing ice-cyan Maximum Armor hex facet fill at wave crest
+        if (energy > 0.32) {
+          ectx.fillStyle = energy > 0.74 ? '#bae6fd' : '#0284c7';
+          ectx.globalAlpha = (energy - 0.32) * 0.52;
+          ectx.fill();
+        }
+
+        // Razor-sharp glowing hexagonal honeycomb lattice outline
+        ectx.strokeStyle = energy > 0.72 ? '#ffffff' : energy > 0.42 ? '#7dd3fc' : '#0ea5e9';
+        ectx.lineWidth = 1.4 + energy * 2.6;
+        ectx.globalAlpha = Math.min(1, energy * 1.15);
+        ectx.stroke();
+      }
+    }
+
+    // Surging Nano-Telemetry Energy Packets racing along both Spinal Rails (seamless modulo 512)
+    for (const railX of [204, 308]) {
+      ectx.strokeStyle = '#0ea5e9';
+      ectx.lineWidth = 3.2;
+      ectx.globalAlpha = 0.45;
+      ectx.beginPath();
+      ectx.moveTo(railX, 0);
+      ectx.lineTo(railX, S);
+      ectx.stroke();
+
+      for (const py of [64, 320]) {
+        for (const oy of [-S, 0, S]) {
+          const pg = ectx.createLinearGradient(0, py + oy - 48, 0, py + oy + 48);
+          pg.addColorStop(0, 'rgba(56, 189, 248, 0)');
+          pg.addColorStop(0.5, '#f0f9ff');
+          pg.addColorStop(1, 'rgba(56, 189, 248, 0)');
+          ectx.strokeStyle = pg;
+          ectx.lineWidth = 7.5;
+          ectx.globalAlpha = 0.95;
+          ectx.beginPath();
+          ectx.moveTo(railX, py + oy - 48);
+          ectx.lineTo(railX, py + oy + 48);
+          ectx.stroke();
+        }
+      }
+    }
+
     ctx.globalAlpha = 1;
     ectx.globalAlpha = 1;
   }
@@ -3445,42 +4513,233 @@ export function createLiveryTexture(
       ctx.fillRect(476 - i * 22, 420, 14, 52);
     }
   } else if (livery === 'cyberHexArmor') {
-    // Full-Wrap Matte Carbon Slate Hexagonal Armor Plating with Amber/Cyan Seams
+    // Tactical 3D Beveled Carbon-Titanium Hexagonal Armor Plating with Recessed Rivet Seams & Cyan/Amber Energy Conduits!
     const bg = ctx.createLinearGradient(0, 0, 512, 512);
-    bg.addColorStop(0, '#090d16');
-    bg.addColorStop(0.5, '#182032');
-    bg.addColorStop(1, '#0b101b');
+    bg.addColorStop(0, '#05080f');
+    bg.addColorStop(0.5, '#0b111e');
+    bg.addColorStop(1, '#04070d');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, 512, 512);
+
+    // 1. Individual 3D-Beveled Hexagonal Titanium-Carbon Armor Cells
     const hexR = 26;
     const dx = hexR * 1.5;
     const dy = hexR * Math.sqrt(3);
+    const hexVerts = (cx: number, cy: number, r: number): [number, number][] => {
+      const pts: [number, number][] = [];
+      for (let k = 0; k < 6; k++) {
+        const a = (k * Math.PI) / 3;
+        pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+      }
+      return pts;
+    };
+
     for (let col = -1; col < 16; col++) {
       for (let row = -1; row < 14; row++) {
         const cx = col * dx;
-        const cy = row * dy + (col % 2 === 0 ? 0 : dy * 0.5);
+        const cy = row * dy + ((col & 1) === 0 ? 0 : dy * 0.5);
+        const pts = hexVerts(cx, cy, hexR - 2.4);
+        const hash = Math.abs((col * 17 + row * 31) % 13);
+        const isAmberCell = hash === 0;
+        const isCyanCell = hash === 4 || hash === 9;
+        const isRaised = hash % 3 === 0;
+
+        ctx.save();
         ctx.beginPath();
         for (let k = 0; k < 6; k++) {
-          const a = (k * Math.PI) / 3;
-          const px = cx + Math.cos(a) * (hexR - 2);
-          const py = cy + Math.sin(a) * (hexR - 2);
-          if (k === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
+          if (k === 0) ctx.moveTo(pts[k][0], pts[k][1]);
+          else ctx.lineTo(pts[k][0], pts[k][1]);
         }
         ctx.closePath();
-        const hi = (col + row * 3) % 7 === 0;
-        ctx.fillStyle = hi ? '#1e293b' : '#0f172a';
+
+        // Directional metallic bevel gradient across every single hex plate
+        const hg = ctx.createLinearGradient(cx - hexR, cy - hexR, cx + hexR, cy + hexR);
+        if (isRaised) {
+          hg.addColorStop(0, '#334155');
+          hg.addColorStop(0.45, '#1e293b');
+          hg.addColorStop(1, '#090e1a');
+        } else {
+          hg.addColorStop(0, '#1e293b');
+          hg.addColorStop(0.5, '#0f172a');
+          hg.addColorStop(1, '#04070e');
+        }
+        ctx.fillStyle = hg;
         ctx.fill();
-        ctx.strokeStyle = hi ? '#f59e0b' : 'rgba(56, 189, 248, 0.35)';
-        ctx.lineWidth = hi ? 2.2 : 1.2;
+
+        // Clip inside cell to draw subtle carbon-weave diagonal micro-hatch
+        ctx.clip();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.045)';
+        ctx.lineWidth = 1.5;
+        for (let h = -hexR * 2; h <= hexR * 2; h += 6) {
+          ctx.beginPath();
+          ctx.moveTo(cx + h - hexR, cy - hexR);
+          ctx.lineTo(cx + h + hexR, cy + hexR);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // 3D Top-Left Metallic Highlight Edges (verts 3->4->5->0)
+        ctx.strokeStyle = isRaised ? 'rgba(203, 213, 225, 0.48)' : 'rgba(148, 163, 184, 0.28)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(pts[3][0], pts[3][1]);
+        ctx.lineTo(pts[4][0], pts[4][1]);
+        ctx.lineTo(pts[5][0], pts[5][1]);
+        ctx.lineTo(pts[0][0], pts[0][1]);
         ctx.stroke();
+
+        // 3D Bottom-Right Recessed Shadow Edges (verts 0->1->2->3)
+        ctx.strokeStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        ctx.lineTo(pts[1][0], pts[1][1]);
+        ctx.lineTo(pts[2][0], pts[2][1]);
+        ctx.lineTo(pts[3][0], pts[3][1]);
+        ctx.stroke();
+
+        // Glowing tactical power-cell inner bevel on select hex modules
+        if (isAmberCell || isCyanCell) {
+          const innerPts = hexVerts(cx, cy, hexR - 7.5);
+          ctx.strokeStyle = isAmberCell ? '#f59e0b' : '#22d3ee';
+          ctx.lineWidth = isAmberCell ? 2.2 : 1.6;
+          ctx.globalAlpha = isAmberCell ? 0.9 : 0.72;
+          ctx.beginPath();
+          for (let k = 0; k < 6; k++) {
+            if (k === 0) ctx.moveTo(innerPts[k][0], innerPts[k][1]);
+            else ctx.lineTo(innerPts[k][0], innerPts[k][1]);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
       }
     }
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillRect(248, 0, 16, 512);
+
+    // 2. Zig-Zag Glowing Cyan & Amber Energy Conduits Tracing the Hex Seams down Both Flanks
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(512, 0);
+        ctx.scale(-1, 1);
+      }
+      // Subtle cyan conduit outer glow
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'miter';
+      const traceConduit = (baseX: number, colGlow: string, colCore: string) => {
+        ctx.strokeStyle = colGlow;
+        ctx.lineWidth = 9;
+        ctx.globalAlpha = 0.28;
+        ctx.beginPath();
+        for (let y = 0; y <= 512; y += 32) {
+          const zx = baseX + ((y / 32) % 2 === 0 ? 0 : 18);
+          if (y === 0) ctx.moveTo(zx, y);
+          else ctx.lineTo(zx, y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = colCore;
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.95;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      };
+      traceConduit(74, '#22d3ee', '#67e8f9');
+      traceConduit(164, '#f59e0b', '#fde047');
+      ctx.restore();
+    }
+
+    // 3. Recessed Tactical Armor Panel Seams & Machined Steel Rivets
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 4;
+    for (const sy of [112, 266, 408]) {
+      ctx.beginPath();
+      ctx.moveTo(0, sy);
+      ctx.lineTo(192, sy + 24);
+      ctx.lineTo(320, sy + 24);
+      ctx.lineTo(512, sy);
+      ctx.stroke();
+      // Metallic steel bolts flanking the seam
+      for (const bx of [44, 108, 174, 338, 404, 468]) {
+        const by = sy + (bx > 192 && bx < 320 ? 24 : bx < 192 ? (bx / 192) * 24 : ((512 - bx) / 192) * 24);
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.arc(bx, by - 9, 2.8, 0, Math.PI * 2);
+        ctx.arc(bx, by + 9, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // 4. Sculpted Armored Tactical Center Spine + Hex Reactor Core Emblem on Hood
+    const spineGrad = ctx.createLinearGradient(224, 0, 288, 0);
+    spineGrad.addColorStop(0, '#020617');
+    spineGrad.addColorStop(0.22, '#1e293b');
+    spineGrad.addColorStop(0.5, '#0f172a');
+    spineGrad.addColorStop(0.78, '#1e293b');
+    spineGrad.addColorStop(1, '#020617');
+    ctx.fillStyle = spineGrad;
+    ctx.fillRect(228, 0, 56, 512);
+
+    // Sharp cyan & amber dual precision rails framing the armored spine
     ctx.fillStyle = '#22d3ee';
-    ctx.fillRect(240, 0, 4, 512);
-    ctx.fillRect(268, 0, 4, 512);
+    ctx.fillRect(224, 0, 4, 512);
+    ctx.fillRect(284, 0, 4, 512);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(249, 0, 14, 512);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(254, 0, 4, 512);
+
+    // Angled stealth louver notches cutting across the amber spine
+    ctx.fillStyle = '#090d16';
+    for (let ly = 26; ly < 500; ly += 42) {
+      if (ly > 130 && ly < 220) continue; // keep hood reactor core clear
+      ctx.beginPath();
+      ctx.moveTo(234, ly);
+      ctx.lineTo(256, ly - 10);
+      ctx.lineTo(278, ly);
+      ctx.lineTo(278, ly + 8);
+      ctx.lineTo(256, ly - 2);
+      ctx.lineTo(234, ly + 8);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Tactical Hex-Core Armor Badge on Hood (cx=256, cy=174)
+    const corePts = hexVerts(256, 174, 34);
+    ctx.fillStyle = '#090d16';
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) {
+      if (k === 0) ctx.moveTo(corePts[k][0], corePts[k][1]);
+      else ctx.lineTo(corePts[k][0], corePts[k][1]);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    const innerCorePts = hexVerts(256, 174, 21);
+    ctx.fillStyle = '#0e7490';
+    ctx.strokeStyle = '#22d3ee';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) {
+      if (k === 0) ctx.moveTo(innerCorePts[k][0], innerCorePts[k][1]);
+      else ctx.lineTo(innerCorePts[k][0], innerCorePts[k][1]);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    const microCorePts = hexVerts(256, 174, 9);
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) {
+      if (k === 0) ctx.moveTo(microCorePts[k][0], microCorePts[k][1]);
+      else ctx.lineTo(microCorePts[k][0], microCorePts[k][1]);
+    }
+    ctx.closePath();
+    ctx.fill();
   } else if (livery === 'gulfHeritage') {
     // Classic Endurance Le Mans Center Orange Stripe with Crisp Dark Navy Pinstripes
     ctx.fillStyle = '#0f172a';
@@ -3590,117 +4849,6 @@ export function createLiveryTexture(
     // Flanking side sweep stripes
     drawTriStripe(52, 0.55);
     drawTriStripe(460, 0.55);
-  } else if (livery === 'rustWasteland') {
-    // Full-Wrap Mad Max Wasteland Corroded Scrap-Iron Plates, Rivets & Burnt Rust
-    ctx.fillStyle = '#3b3735';
-    ctx.fillRect(0, 0, 512, 512);
-
-    // Deterministic mottled rust & scorched steel patches
-    let seed = 64112;
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
-    };
-    for (let i = 0; i < 85; i++) {
-      const rx = rand() * 512;
-      const ry = rand() * 512;
-      const rr = 18 + rand() * 54;
-      const rg = ctx.createRadialGradient(rx, ry, 2, rx, ry, rr);
-      const isDark = i % 3 === 0;
-      rg.addColorStop(0, isDark ? 'rgba(69, 26, 3, 0.85)' : 'rgba(154, 52, 18, 0.72)');
-      rg.addColorStop(0.6, isDark ? 'rgba(124, 45, 18, 0.42)' : 'rgba(194, 65, 12, 0.35)');
-      rg.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = rg;
-      ctx.fillRect(rx - rr, ry - rr, rr * 2, rr * 2);
-    }
-
-    // Welded scrap armor panel seams & metal rivets
-    ctx.strokeStyle = '#1c1917';
-    ctx.lineWidth = 4;
-    for (const y of [118, 256, 392]) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(512, y);
-      ctx.stroke();
-      for (let x = 20; x < 512; x += 36) {
-        ctx.fillStyle = '#78716c';
-        ctx.beginPath();
-        ctx.arc(x, y - 9, 3.2, 0, Math.PI * 2);
-        ctx.arc(x, y + 9, 3.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    ctx.beginPath();
-    ctx.moveTo(168, 0);
-    ctx.lineTo(168, 512);
-    ctx.moveTo(344, 0);
-    ctx.lineTo(344, 512);
-    ctx.stroke();
-
-    // Faded yellow wasteland war-paint stripe down center
-    ctx.fillStyle = 'rgba(202, 138, 4, 0.72)';
-    ctx.fillRect(236, 0, 40, 512);
-    for (let s = 0; s < 35; s++) {
-      ctx.fillStyle = '#451a03';
-      ctx.fillRect(232 + rand() * 48, rand() * 512, 10 + rand() * 14, 6 + rand() * 12);
-    }
-  } else if (livery === 'apertureLab') {
-    // Full-Wrap Portal Aperture Science Sterile White Test-Chamber Panels + Blue & Orange Portal Stripes!
-    ctx.fillStyle = '#f1f5f9';
-    ctx.fillRect(0, 0, 512, 512);
-
-    // Clean sterile Aperture test-chamber square tile grid
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 3;
-    for (let g = 0; g <= 512; g += 64) {
-      ctx.beginPath();
-      ctx.moveTo(g, 0);
-      ctx.lineTo(g, 512);
-      ctx.moveTo(0, g);
-      ctx.lineTo(512, g);
-      ctx.stroke();
-    }
-    // Subtle dark slate test-chamber recessed blocks
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(0, 0, 512, 26);
-    ctx.fillRect(0, 486, 512, 26);
-
-    // Iconic Portal Blue left-flank stripe & Portal Orange right-flank stripe
-    ctx.fillStyle = '#0284c7';
-    ctx.fillRect(58, 26, 36, 460);
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(98, 26, 8, 460);
-
-    ctx.fillStyle = '#ea580c';
-    ctx.fillRect(418, 26, 36, 460);
-    ctx.fillStyle = '#fb923c';
-    ctx.fillRect(406, 26, 8, 460);
-
-    // Crisp 8-blade Aperture Science shutter emblem on center hood!
-    ctx.save();
-    ctx.translate(256, 200);
-    ctx.fillStyle = '#0f172a';
-    ctx.beginPath();
-    ctx.arc(0, 0, 68, 0, Math.PI * 2);
-    ctx.fill();
-    for (let i = 0; i < 8; i++) {
-      ctx.save();
-      ctx.rotate((i / 8) * Math.PI * 2);
-      ctx.fillStyle = i % 2 === 0 ? '#0284c7' : '#f97316';
-      ctx.beginPath();
-      ctx.moveTo(14, -56);
-      ctx.lineTo(54, -22);
-      ctx.lineTo(24, -10);
-      ctx.lineTo(2, -34);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-    ctx.fillStyle = '#f8fafc';
-    ctx.beginPath();
-    ctx.arc(0, 0, 18, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
   } else if (livery === 'minecraftPixel') {
     // Full-Wrap Crisp 16x16 Quantized Minecraft Voxel Mosaic: Stone, Grass Flanks & Glowing Diamond Ore!
     const tile = 32; // 16x16 chunky pixels across 512px
@@ -3830,145 +4978,231 @@ export function createLiveryTexture(
       ctx.fill();
       ctx.restore();
     }
-  } else if (livery === 'pepperoniPizza') {
-    // Hot Melted Cheese & Pepperoni Pizza Wrap with Golden Baked Crust Borders!
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(0, 0, 512, 512);
-
-    // Rich melted mozzarella & bubbling tomato sauce patches
-    let seed = 44712;
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
+  } else if (livery === 'toyCarBlocks') {
+    // Hyper-Glossy Toy Racer / LEGO Building-Brick Wrap: Candy-Gloss Primary Brick Zones,
+    // 3D Shaded Plastic Stud Clusters, #01 Racing Roundel & Playful Toy Flame Swooshes!
+    const drawPlasticZone = (x: number, y: number, w: number, h: number, cTop: string, cBot: string) => {
+      const g = ctx.createLinearGradient(x, y, x + w, y + h);
+      g.addColorStop(0, cTop);
+      g.addColorStop(1, cBot);
+      ctx.fillStyle = g;
+      ctx.fillRect(x, y, w, h);
     };
-    for (let i = 0; i < 55; i++) {
-      const cx = 70 + rand() * 372;
-      const cy = rand() * 512;
-      const cr = 16 + rand() * 34;
-      ctx.fillStyle = i % 3 === 0 ? '#fde047' : i % 3 === 1 ? '#f59e0b' : '#fef08a';
-      ctx.globalAlpha = 0.65;
-      ctx.beginPath();
-      ctx.arc(cx, cy, cr, 0, Math.PI * 2);
-      ctx.fill();
+
+    // 1. Vibrant Glossy Molded Plastic Color-Blocked Zones
+    // Electric Toy Blue base (rear deck & upper flanks)
+    drawPlasticZone(0, 0, 512, 512, '#3b82f6', '#1d4ed8');
+    // Candy Toy Red front hood block
+    drawPlasticZone(64, 0, 384, 208, '#f87171', '#dc2626');
+    // Sunny Toy Yellow roof & mid-cockpit block
+    drawPlasticZone(64, 208, 384, 152, '#fde047', '#eab308');
+    // Vibrant Toy Lime lower side rocker bricks
+    drawPlasticZone(0, 48, 64, 416, '#4ade80', '#16a34a');
+    drawPlasticZone(448, 48, 64, 416, '#4ade80', '#16a34a');
+    // Glossy White molded plastic bumper & zone divider strips
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 512, 16);
+    ctx.fillRect(0, 496, 512, 16);
+    ctx.fillRect(60, 0, 8, 512);
+    ctx.fillRect(444, 0, 8, 512);
+    ctx.fillRect(64, 204, 384, 8);
+    ctx.fillRect(64, 356, 384, 8);
+
+    // 2. Crisp Center Toy Racing Stripe + Mini Checkered Racing Band
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(216, 0, 80, 512);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(228, 0, 56, 512);
+    // Crisp mini black-and-white checkered collar along the yellow roof transition
+    const chk = 16;
+    for (let cx = 64; cx < 448; cx += chk) {
+      const idx = Math.floor(cx / chk);
+      ctx.fillStyle = idx % 2 === 0 ? '#0f172a' : '#ffffff';
+      ctx.fillRect(cx, 204, chk, 10);
+      ctx.fillStyle = idx % 2 === 1 ? '#0f172a' : '#ffffff';
+      ctx.fillRect(cx, 354, chk, 10);
     }
-    ctx.globalAlpha = 1;
 
-    // Crispy golden-brown baked pizza crust along outer flanks & nose/tail
-    const crustGradL = ctx.createLinearGradient(0, 0, 68, 0);
-    crustGradL.addColorStop(0, '#92400e');
-    crustGradL.addColorStop(0.65, '#d97706');
-    crustGradL.addColorStop(1, '#b91c1c');
-    ctx.fillStyle = crustGradL;
-    ctx.fillRect(0, 0, 68, 512);
-    const crustGradR = ctx.createLinearGradient(512, 0, 444, 0);
-    crustGradR.addColorStop(0, '#92400e');
-    crustGradR.addColorStop(0.65, '#d97706');
-    crustGradR.addColorStop(1, '#b91c1c');
-    ctx.fillStyle = crustGradR;
-    ctx.fillRect(444, 0, 68, 512);
-
-    // Big juicy crimson Pepperoni slices with crispy darker rims & fat speckles
-    for (let i = 0; i < 22; i++) {
-      const px = 98 + rand() * 316;
-      const py = 28 + rand() * 456;
-      const pr = 20 + rand() * 12;
-      ctx.fillStyle = '#991b1b';
+    // 3. Authentic Interlocking Plastic Building-Brick Seam Grooves (staggered 2x4 & 2x2 bricks)
+    const drawBrickSeam = (x1: number, y1: number, x2: number, y2: number) => {
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.lineWidth = 2.6;
       ctx.beginPath();
-      ctx.arc(px, py, pr + 2.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#dc2626';
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.arc(px, py, pr, 0, Math.PI * 2);
-      ctx.fill();
-      // Little white pepperoni marbling dots
-      ctx.fillStyle = '#fca5a5';
-      for (let d = 0; d < 4; d++) {
-        ctx.beginPath();
-        ctx.arc(px + (rand() - 0.5) * pr, py + (rand() - 0.5) * pr, 2.2, 0, Math.PI * 2);
-        ctx.fill();
+      ctx.moveTo(x1 + 1.5, y1 + 1.5);
+      ctx.lineTo(x2 + 1.5, y2 + 1.5);
+      ctx.stroke();
+    };
+    for (let gy = 48; gy < 512; gy += 48) {
+      drawBrickSeam(0, gy, 512, gy);
+    }
+    for (let row = 0; row < 11; row++) {
+      const y0 = row * 48;
+      const y1 = Math.min(512, y0 + 48);
+      const offset = (row & 1) === 0 ? 0 : 48;
+      for (let gx = 64 + offset; gx < 448; gx += 96) {
+        drawBrickSeam(gx, y0, gx, y1);
       }
     }
 
-    // Sliced black olives & vibrant fresh green basil leaves
-    for (let i = 0; i < 16; i++) {
-      const ox = 92 + rand() * 328;
-      const oy = 24 + rand() * 464;
-      ctx.strokeStyle = '#18181b';
-      ctx.lineWidth = 6;
+    // 4. Authentic 3D-Shaded Glossy Plastic LEGO Brick Studs (filled color cylinder + shadow + specular highlight!)
+    const drawPlasticStud = (cx: number, cy: number, fillCol: string, topCol: string, rad = 13.5) => {
+      // Soft cast drop shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.30)';
       ctx.beginPath();
-      ctx.arc(ox, oy, 9, 0, Math.PI * 2);
+      ctx.arc(cx + 3.2, cy + 4.2, rad + 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Raised glossy plastic stud cylinder body
+      const sg = ctx.createLinearGradient(cx - rad, cy - rad, cx + rad, cy + rad);
+      sg.addColorStop(0, topCol);
+      sg.addColorStop(0.55, fillCol);
+      sg.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
+      ctx.fillStyle = fillCol;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad - 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Crisp dark bottom-right plastic bevel
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.36)';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad - 0.5, 0.05 * Math.PI, 0.9 * Math.PI);
       ctx.stroke();
-    }
-    for (let i = 0; i < 14; i++) {
-      const bx = 95 + rand() * 322;
-      const by = 24 + rand() * 464;
-      ctx.save();
-      ctx.translate(bx, by);
-      ctx.rotate(rand() * Math.PI * 2);
-      ctx.fillStyle = '#16a34a';
+
+      // Glossy top-left molded plastic rim highlight
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.78)';
+      ctx.lineWidth = 2.6;
       ctx.beginPath();
-      ctx.ellipse(0, 0, 14, 7, 0, 0, Math.PI * 2);
+      ctx.arc(cx, cy, rad - 1.2, 1.0 * Math.PI, 1.85 * Math.PI);
+      ctx.stroke();
+
+      // Toy-plastic specular shine dot
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.beginPath();
+      ctx.arc(cx - rad * 0.36, cy - rad * 0.36, rad * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    // Place neat brick stud clusters across flanks, hood corners, roof rails, and rear brick deck
+    const studStep = 48;
+    for (let gx = 32; gx < 512; gx += studStep) {
+      for (let gy = 24; gy < 512; gy += studStep) {
+        // Leave clean decal window on hood center (#01 roundel) & flank flame swooshes
+        const distHoodDecal = Math.hypot(gx - 256, gy - 112);
+        if (distHoodDecal < 76) continue;
+        // Skip lower mid-flank strip where playful toy flames sweep
+        if ((gx < 72 || gx > 440) && gy > 140 && gy < 370) continue;
+
+        let baseCol = '#2563eb';
+        let topCol = '#60a5fa';
+        if (gx < 64 || gx > 448) {
+          baseCol = '#22c55e';
+          topCol = '#86efac';
+        } else if (gx >= 216 && gx <= 296) {
+          baseCol = '#eab308';
+          topCol = '#fef08a';
+        } else if (gy < 206) {
+          baseCol = '#ef4444';
+          topCol = '#fca5a5';
+        } else if (gy < 358) {
+          baseCol = '#facc15';
+          topCol = '#fef9c3';
+        }
+        drawPlasticStud(gx, gy, baseCol, topCol);
+      }
+    }
+
+    // 5. Playful Stylized Toy-Racer Flame Swooshes licking back along Both Flanks!
+    for (const isRight of [false, true]) {
+      ctx.save();
+      if (isRight) {
+        ctx.translate(512, 0);
+        ctx.scale(-1, 1);
+      }
+      // White sticker border under toy flame decal
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(6, 134);
+      ctx.quadraticCurveTo(64, 170, 52, 248);
+      ctx.lineTo(70, 224);
+      ctx.quadraticCurveTo(66, 294, 42, 344);
+      ctx.lineTo(58, 326);
+      ctx.quadraticCurveTo(40, 384, 6, 408);
+      ctx.closePath();
+      ctx.fill();
+
+      // Bright toy orange flame body
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(10, 146);
+      ctx.quadraticCurveTo(56, 178, 44, 248);
+      ctx.lineTo(60, 232);
+      ctx.quadraticCurveTo(56, 292, 36, 336);
+      ctx.lineTo(48, 326);
+      ctx.quadraticCurveTo(32, 374, 10, 394);
+      ctx.closePath();
+      ctx.fill();
+
+      // Sunny yellow inner flame core
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.moveTo(12, 162);
+      ctx.quadraticCurveTo(44, 192, 34, 250);
+      ctx.quadraticCurveTo(42, 294, 12, 358);
+      ctx.closePath();
       ctx.fill();
       ctx.restore();
     }
-  } else if (livery === 'toyCarBlocks') {
-    // Bright Glossy Primary-Color Plastic Toy / Building-Brick Car Wrap with 3D Brick Studs!
-    // Color-blocked zones: red hood, sunny yellow roof, cobalt blue rear & emerald green flanks
-    ctx.fillStyle = '#2563eb';
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(64, 0, 384, 192);
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(64, 192, 384, 160);
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(0, 64, 64, 384);
-    ctx.fillRect(448, 64, 64, 384);
 
-    // Crisp plastic brick-seam grid lines
-    ctx.strokeStyle = 'rgba(0,0,0,0.22)';
-    ctx.lineWidth = 3;
-    for (let g = 0; g <= 512; g += 64) {
-      ctx.beginPath();
-      ctx.moveTo(g, 0);
-      ctx.lineTo(g, 512);
-      ctx.moveTo(0, g);
-      ctx.lineTo(512, g);
-      ctx.stroke();
-    }
-
-    // Iconic 3D-shaded circular plastic toy brick studs across the entire body!
-    for (let x = 32; x < 512; x += 64) {
-      for (let y = 32; y < 512; y += 64) {
-        // Drop shadow under stud
-        ctx.fillStyle = 'rgba(0,0,0,0.26)';
-        ctx.beginPath();
-        ctx.arc(x + 3, y + 4, 17, 0, Math.PI * 2);
-        ctx.fill();
-        // Glossy rim highlight on top-left of stud
-        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.arc(x, y, 15, Math.PI * 0.9, Math.PI * 1.85);
-        ctx.stroke();
-        // Dark bottom-right stud bevel
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(x, y, 15, 0, Math.PI * 0.85);
-        ctx.stroke();
-      }
-    }
-
-    // Playful crisp white toy-racer star sticker on hood
+    // 6. Bold Glossy Toy-Racer "#01" Hood Racing Roundel Sticker!
     ctx.save();
     ctx.translate(256, 112);
+    // Drop shadow under sticker
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.beginPath();
+    ctx.arc(3, 4, 58, 0, Math.PI * 2);
+    ctx.fill();
+    // Outer blue toy-sticker ring
+    ctx.fillStyle = '#1d4ed8';
+    ctx.beginPath();
+    ctx.arc(0, 0, 58, 0, Math.PI * 2);
+    ctx.fill();
+    // Crisp white inner roundel
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
+    ctx.arc(0, 0, 49, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner red racing pinstripe ring
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 43, 0, Math.PI * 2);
+    ctx.stroke();
+    // Bold Toy Racer "01" typography
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '900 46px "Oxanium", "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('01', 0, 3);
+    // Cute glossy toy star badge above number
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
     for (let i = 0; i < 10; i++) {
-      const r = i % 2 === 0 ? 44 : 20;
+      const r = i % 2 === 0 ? 11 : 5;
       const a = (i * Math.PI) / 5 - Math.PI * 0.5;
-      if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-      else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      if (i === 0) ctx.moveTo(Math.cos(a) * r, -28 + Math.sin(a) * r);
+      else ctx.lineTo(Math.cos(a) * r, -28 + Math.sin(a) * r);
     }
     ctx.closePath();
     ctx.fill();
@@ -4752,53 +5986,6 @@ export function createLiveryTexture(
     ctx.fillStyle = '#fb923c';
     ctx.fillText('GİZEM', 0, 2);
     ctx.restore();
-  } else if (livery === 'jojaMartCorp') {
-    // Stardew Valley Humorous JojaMart Corporate Fleet Wrap: Clean Joja Blue, White Stripes & "JOJA" Crest!
-    ctx.fillStyle = '#1d4ed8';
-    ctx.fillRect(0, 0, 512, 512);
-
-    // Crisp white corporate delivery-fleet side bands & sky-blue wave accent
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(0, 0, 88, 512);
-    ctx.fillRect(424, 0, 88, 512);
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(88, 0, 16, 512);
-    ctx.fillRect(408, 0, 16, 512);
-
-    // Clean corporate white hood/roof banner
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(104, 118, 304, 150);
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(104, 112, 304, 8);
-    ctx.fillRect(104, 266, 304, 8);
-
-    // Iconic Joja Blue "JOJA" Corporate Logo + Cheerful Corporate Smile Arc!
-    ctx.fillStyle = '#1d4ed8';
-    ctx.font = '900 72px "Oxanium", "Arial Black", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('JOJA', 256, 174);
-
-    // Corporate blue smile swoosh underneath JOJA
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 9;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.arc(256, 186, 62, 0.2 * Math.PI, 0.8 * Math.PI);
-    ctx.stroke();
-
-    // Humorous corporate slogan strip on hood & rear
-    ctx.fillStyle = '#1e3a8a';
-    ctx.font = '700 18px "Segoe UI", "Arial", sans-serif';
-    ctx.fillText('JOJAMART • HAYATI IYILESTIRIN', 256, 250);
-
-    // Corporate "THRIVE" badge on rear trunk
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '900 30px "Oxanium", "Arial Black", sans-serif';
-    ctx.fillText('JOIN US. THRIVE.', 256, 396);
-    ctx.fillStyle = '#93c5fd';
-    ctx.font = '600 14px "Consolas", monospace';
-    ctx.fillText('FLEET UNIT #042 • PELICAN TOWN', 256, 434);
   }
 
   const tex = new THREE.CanvasTexture(canvas);

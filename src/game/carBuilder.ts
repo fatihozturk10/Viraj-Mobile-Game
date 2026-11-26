@@ -111,6 +111,200 @@ export interface PoliceCarRig {
   dispose: () => void;
 }
 
+interface SharedCarStaticTextures {
+  carbonTex: THREE.CanvasTexture;
+  grilleTex: THREE.CanvasTexture;
+  rotorTex: THREE.CanvasTexture;
+  treadTex: THREE.CanvasTexture;
+  panelBumpTex: THREE.CanvasTexture;
+  underglowOuterTex: THREE.CanvasTexture;
+  underglowInnerTex: THREE.CanvasTexture;
+  headFlareTex: THREE.CanvasTexture;
+  headBeamGroundTex: THREE.CanvasTexture;
+}
+
+let sharedCarStaticTextures: SharedCarStaticTextures | null = null;
+
+function buildUnderglowOuterTexture(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+  if (ctx) {
+    ctx.clearRect(0, 0, 256, 512);
+    ctx.save();
+    ctx.translate(128, 256);
+    ctx.scale(1, 2.0);
+    const grad = ctx.createRadialGradient(0, 0, 12, 0, 0, 114);
+    grad.addColorStop(0.0, 'rgba(255,255,255,0.45)');
+    grad.addColorStop(0.38, 'rgba(255,255,255,0.42)');
+    grad.addColorStop(0.68, 'rgba(255,255,255,0.14)');
+    grad.addColorStop(0.88, 'rgba(255,255,255,0.03)');
+    grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(0, 0, 114, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function buildUnderglowInnerTexture(): THREE.CanvasTexture {
+  const w = 160;
+  const h = 320;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  if (ctx) {
+    const img = ctx.createImageData(w, h);
+    const data = img.data;
+    const halfW = 36;
+    const halfH = 98;
+    const cornerR = 18;
+    for (let py = 0; py < h; py++) {
+      const y = py - h * 0.5;
+      for (let px = 0; px < w; px++) {
+        const x = px - w * 0.5;
+        const qx = Math.max(Math.abs(x) - (halfW - cornerR), 0);
+        const qy = Math.max(Math.abs(y) - (halfH - cornerR), 0);
+        const sd =
+          Math.hypot(qx, qy) +
+          Math.min(
+            Math.max(
+              Math.abs(x) - (halfW - cornerR),
+              Math.abs(y) - (halfH - cornerR),
+            ),
+            0,
+          ) -
+          cornerR;
+
+        let alpha = 0;
+        if (sd >= 0) {
+          const normOut = sd / 38;
+          alpha = Math.exp(-normOut * normOut * 3.1);
+        } else {
+          const normIn = Math.min(1, Math.abs(sd) / 34);
+          alpha = 0.94 - normIn * 0.56;
+        }
+        const edgeX = Math.min(px, w - 1 - px) / 14;
+        const edgeY = Math.min(py, h - 1 - py) / 14;
+        const edgeFade = Math.min(1, edgeX, edgeY);
+        const finalA = Math.max(0, Math.min(1, alpha * edgeFade));
+
+        const idx = (py * w + px) * 4;
+        data[idx] = 255;
+        data[idx + 1] = 255;
+        data[idx + 2] = 255;
+        data[idx + 3] = Math.round(finalA * 255);
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function buildHeadlightFlareTexture(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 256;
+  const ctx = c.getContext('2d');
+  if (ctx) {
+    ctx.clearRect(0, 0, 256, 256);
+    const outer = ctx.createRadialGradient(128, 128, 2, 128, 128, 118);
+    outer.addColorStop(0.0, 'rgba(255,255,255,0.95)');
+    outer.addColorStop(0.14, 'rgba(255,255,255,0.62)');
+    outer.addColorStop(0.36, 'rgba(255,255,255,0.18)');
+    outer.addColorStop(0.68, 'rgba(255,255,255,0.03)');
+    outer.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+    ctx.fillStyle = outer;
+    ctx.fillRect(0, 0, 256, 256);
+
+    ctx.save();
+    ctx.translate(128, 128);
+    ctx.scale(1.0, 0.085);
+    const streak = ctx.createRadialGradient(0, 0, 2, 0, 0, 122);
+    streak.addColorStop(0.0, 'rgba(255,255,255,0.85)');
+    streak.addColorStop(0.35, 'rgba(255,255,255,0.32)');
+    streak.addColorStop(0.75, 'rgba(255,255,255,0.05)');
+    streak.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+    ctx.fillStyle = streak;
+    ctx.beginPath();
+    ctx.arc(0, 0, 122, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function buildGroundBeamTexture(): THREE.CanvasTexture {
+  const w = 256;
+  const h = 512;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  if (ctx) {
+    const img = ctx.createImageData(w, h);
+    const data = img.data;
+    for (let py = 0; py < h; py++) {
+      const v = 1 - py / (h - 1);
+      const longFade =
+        Math.min(1, v / 0.12) * Math.pow(Math.max(0, 1 - v), 1.65);
+      for (let px = 0; px < w; px++) {
+        const u = (px / (w - 1)) * 2 - 1;
+        const halfSpread = 0.16 + v * 0.68;
+        const cL = -0.24 - v * 0.18;
+        const cR = 0.24 + v * 0.18;
+        const dL = (u - cL) / halfSpread;
+        const dR = (u - cR) / halfSpread;
+        const bL = Math.exp(-dL * dL * 2.4);
+        const bR = Math.exp(-dR * dR * 2.4);
+        const combined = Math.min(1, (bL + bR) * 0.78);
+
+        const edgeX = Math.min(px, w - 1 - px) / 18;
+        const edgeY = Math.min(py, h - 1 - py) / 18;
+        const edgeFade = Math.min(1, edgeX, edgeY);
+        const alpha = Math.max(0, Math.min(1, combined * longFade * edgeFade));
+
+        const idx = (py * w + px) * 4;
+        data[idx] = 255;
+        data[idx + 1] = 255;
+        data[idx + 2] = 255;
+        data[idx + 3] = Math.round(alpha * 255);
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function getSharedCarStaticTextures(): SharedCarStaticTextures {
+  if (!sharedCarStaticTextures) {
+    sharedCarStaticTextures = {
+      carbonTex: createCarbonTexture(),
+      grilleTex: createGrilleMeshTexture(),
+      rotorTex: createBrakeRotorTexture(),
+      treadTex: createTireTreadTexture(),
+      panelBumpTex: createPanelLineBumpTexture(),
+      underglowOuterTex: buildUnderglowOuterTexture(),
+      underglowInnerTex: buildUnderglowInnerTexture(),
+      headFlareTex: buildHeadlightFlareTexture(),
+      headBeamGroundTex: buildGroundBeamTexture(),
+    };
+  }
+  return sharedCarStaticTextures;
+}
+
 export function createPlayerCar(
   modelId: CarModelId,
   initialHex: number,
@@ -136,10 +330,6 @@ export function createPlayerCar(
     materials.push(m);
     return m;
   };
-  const trackTex = <T extends THREE.Texture>(t: T): T => {
-    textures.push(t);
-    return t;
-  };
 
   const bp = getCarBlueprint(modelId);
   const {
@@ -156,12 +346,18 @@ export function createPlayerCar(
   const rearWheelRadius = bp.rearWheelRadius ?? wheelRadius;
   const rearTireWidth = bp.rearTireWidth ?? tireWidth;
 
-  // Procedural Automotive PBR Surface Textures
-  const carbonTex = trackTex(createCarbonTexture());
-  const grilleTex = trackTex(createGrilleMeshTexture());
-  const rotorTex = trackTex(createBrakeRotorTexture());
-  const treadTex = trackTex(createTireTreadTexture());
-  const panelBumpTex = trackTex(createPanelLineBumpTexture());
+  // Shared Static Procedural Automotive PBR & Light Textures (built once, reused across all car switches)
+  const {
+    carbonTex,
+    grilleTex,
+    rotorTex,
+    treadTex,
+    panelBumpTex,
+    underglowOuterTex,
+    underglowInnerTex,
+    headFlareTex,
+    headBeamGroundTex,
+  } = getSharedCarStaticTextures();
 
   // Studio Clearcoat Metallic Paint with Stamped Sheet-Metal Panel Seams
   const paintMaterial = trackMat(
@@ -543,6 +739,7 @@ export function createPlayerCar(
 
   // 1b. Special 3D Liquid Aquarium Tank Interior (Visible only when livery === 'animLiquidAquarium')
   // Sloshing blue water physics + low-poly swimming orange goldfish + rising air bubbles inside translucent glass chassis!
+  // Lazily populated only if `animLiquidAquarium` livery is equipped (avoids ~45 meshes + 7 materials on every car switch).
   const aquariumGroup = new THREE.Group();
   aquariumGroup.visible = false;
   chassisGroup.add(aquariumGroup);
@@ -558,85 +755,6 @@ export function createPlayerCar(
   aquariumWaterPivot.position.set(0, aqCenterY, aqCenterZ);
   aquariumGroup.add(aquariumWaterPivot);
 
-  const aqWaterMat = trackMat(
-    new THREE.MeshPhysicalMaterial({
-      color: 0x0ea5e9,
-      emissive: 0x0284c7,
-      emissiveIntensity: 0.48,
-      roughness: 0.08,
-      metalness: 0.05,
-      transparent: true,
-      opacity: 0.64,
-      depthWrite: false,
-    }),
-  );
-  const aqSurfaceMat = trackMat(
-    new THREE.MeshStandardMaterial({
-      color: 0x7dd3fc,
-      emissive: 0x38bdf8,
-      emissiveIntensity: 0.85,
-      roughness: 0.1,
-      transparent: true,
-      opacity: 0.78,
-      side: THREE.DoubleSide,
-    }),
-  );
-  const aqWaterBox = new THREE.Mesh(
-    trackGeo(new THREE.BoxGeometry(aqW, aqH, aqL)),
-    aqWaterMat,
-  );
-  aquariumWaterPivot.add(aqWaterBox);
-
-  const aqWaterSurface = new THREE.Mesh(
-    trackGeo(new THREE.PlaneGeometry(aqW * 0.99, aqL * 0.99, 6, 10)),
-    aqSurfaceMat,
-  );
-  aqWaterSurface.rotation.x = -Math.PI * 0.5;
-  aqWaterSurface.position.y = aqH * 0.5;
-  aquariumWaterPivot.add(aqWaterSurface);
-
-  // Subtle swaying emerald aquarium seaweed tufts along tank bottom
-  const aqPlantMat = trackMat(
-    new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.75 }),
-  );
-  const aqPlantGeo = trackGeo(new THREE.ConeGeometry(0.032, aqH * 0.52, 5));
-  for (const [px, pz] of [
-    [-aqW * 0.3, -aqL * 0.25],
-    [aqW * 0.28, -aqL * 0.12],
-    [-aqW * 0.24, aqL * 0.22],
-    [aqW * 0.26, aqL * 0.28],
-  ]) {
-    const plant = new THREE.Mesh(aqPlantGeo, aqPlantMat);
-    plant.position.set(px, -aqH * 0.24, pz);
-    aquariumWaterPivot.add(plant);
-  }
-
-  // 5 Low-Poly 3D Orange Goldfish swimming dynamically inside the water tank!
-  const fishOrangeMat = trackMat(
-    new THREE.MeshStandardMaterial({
-      color: 0xff7a18,
-      emissive: 0xea580c,
-      emissiveIntensity: 0.65,
-      roughness: 0.26,
-      metalness: 0.12,
-    }),
-  );
-  const fishGoldFinMat = trackMat(
-    new THREE.MeshStandardMaterial({
-      color: 0xfde047,
-      emissive: 0xf59e0b,
-      emissiveIntensity: 0.5,
-      roughness: 0.28,
-    }),
-  );
-  const fishEyeMat = trackMat(
-    new THREE.MeshBasicMaterial({ color: 0x09090b }),
-  );
-  const fishBodyGeo = trackGeo(new THREE.OctahedronGeometry(0.068, 0));
-  const fishTailGeo = trackGeo(new THREE.ConeGeometry(0.052, 0.088, 3));
-  const fishFinGeo = trackGeo(new THREE.ConeGeometry(0.028, 0.056, 3));
-  const fishEyeGeo = trackGeo(new THREE.SphereGeometry(0.012, 6, 6));
-
   interface AquariumFishEntry {
     root: THREE.Group;
     tail: THREE.Mesh;
@@ -648,74 +766,153 @@ export function createPlayerCar(
     dir: number;
   }
   const aquariumFishes: AquariumFishEntry[] = [];
-  for (let i = 0; i < 5; i++) {
-    const fg = new THREE.Group();
-    const scale = 0.85 + (i % 3) * 0.18;
-    fg.scale.setScalar(scale);
+  const aquariumBubbles: { mesh: THREE.Mesh; x: number; z: number; phase: number; speed: number }[] = [];
+  let aquariumBuilt = false;
 
-    // Low-poly diamond goldfish body oriented along +Z
-    const fBody = new THREE.Mesh(fishBodyGeo, fishOrangeMat);
-    fBody.scale.set(0.62, 0.92, 1.48);
-    fg.add(fBody);
+  const ensureAquariumBuilt = (): void => {
+    if (aquariumBuilt) return;
+    aquariumBuilt = true;
 
-    // Dorsal fin
-    const dorsal = new THREE.Mesh(fishFinGeo, fishGoldFinMat);
-    dorsal.position.set(0, 0.062, -0.01);
-    dorsal.rotation.x = -0.5;
-    fg.add(dorsal);
+    const aqWaterMat = trackMat(
+      new THREE.MeshPhysicalMaterial({
+        color: 0x0ea5e9,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.48,
+        roughness: 0.08,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 0.64,
+        depthWrite: false,
+      }),
+    );
+    const aqSurfaceMat = trackMat(
+      new THREE.MeshStandardMaterial({
+        color: 0x7dd3fc,
+        emissive: 0x38bdf8,
+        emissiveIntensity: 0.85,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.78,
+        side: THREE.DoubleSide,
+      }),
+    );
+    const aqWaterBox = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(aqW, aqH, aqL)),
+      aqWaterMat,
+    );
+    aquariumWaterPivot.add(aqWaterBox);
 
-    // Wagging fanned goldfish tail fin at rear (-Z)
-    const fTail = new THREE.Mesh(fishTailGeo, fishGoldFinMat);
-    fTail.rotation.x = Math.PI * 0.5;
-    fTail.scale.set(0.32, 1.0, 1.15);
-    fTail.position.set(0, 0, -0.115);
-    fg.add(fTail);
+    const aqWaterSurface = new THREE.Mesh(
+      trackGeo(new THREE.PlaneGeometry(aqW * 0.99, aqL * 0.99, 6, 10)),
+      aqSurfaceMat,
+    );
+    aqWaterSurface.rotation.x = -Math.PI * 0.5;
+    aqWaterSurface.position.y = aqH * 0.5;
+    aquariumWaterPivot.add(aqWaterSurface);
 
-    // Cute tiny black eyes on both sides of head (+Z)
-    for (const sx of [-1, 1]) {
-      const eye = new THREE.Mesh(fishEyeGeo, fishEyeMat);
-      eye.position.set(sx * 0.032, 0.016, 0.055);
-      fg.add(eye);
+    const aqPlantMat = trackMat(
+      new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.75 }),
+    );
+    const aqPlantGeo = trackGeo(new THREE.ConeGeometry(0.032, aqH * 0.52, 5));
+    for (const [px, pz] of [
+      [-aqW * 0.3, -aqL * 0.25],
+      [aqW * 0.28, -aqL * 0.12],
+      [-aqW * 0.24, aqL * 0.22],
+      [aqW * 0.26, aqL * 0.28],
+    ]) {
+      const plant = new THREE.Mesh(aqPlantGeo, aqPlantMat);
+      plant.position.set(px, -aqH * 0.24, pz);
+      aquariumWaterPivot.add(plant);
     }
 
-    aquariumWaterPivot.add(fg);
-    aquariumFishes.push({
-      root: fg,
-      tail: fTail,
-      phase: i * 1.28,
-      speed: 0.72 + (i % 3) * 0.24,
-      radiusX: aqW * (0.22 + (i % 2) * 0.12),
-      radiusZ: aqL * (0.24 + ((i + 1) % 3) * 0.08),
-      baseY: (i - 2) * (aqH * 0.13),
-      dir: i % 2 === 0 ? 1 : -1,
-    });
-  }
+    const fishOrangeMat = trackMat(
+      new THREE.MeshStandardMaterial({
+        color: 0xff7a18,
+        emissive: 0xea580c,
+        emissiveIntensity: 0.65,
+        roughness: 0.26,
+        metalness: 0.12,
+      }),
+    );
+    const fishGoldFinMat = trackMat(
+      new THREE.MeshStandardMaterial({
+        color: 0xfde047,
+        emissive: 0xf59e0b,
+        emissiveIntensity: 0.5,
+        roughness: 0.28,
+      }),
+    );
+    const fishEyeMat = trackMat(
+      new THREE.MeshBasicMaterial({ color: 0x09090b }),
+    );
+    const fishBodyGeo = trackGeo(new THREE.OctahedronGeometry(0.068, 0));
+    const fishTailGeo = trackGeo(new THREE.ConeGeometry(0.052, 0.088, 3));
+    const fishFinGeo = trackGeo(new THREE.ConeGeometry(0.028, 0.056, 3));
+    const fishEyeGeo = trackGeo(new THREE.SphereGeometry(0.012, 6, 6));
 
-  // 14 Rising Air Bubbles floating upward through the aquarium water
-  const aqBubbleMat = trackMat(
-    new THREE.MeshBasicMaterial({
-      color: 0xe0f2fe,
-      transparent: true,
-      opacity: 0.72,
-    }),
-  );
-  const aqBubbleGeo = trackGeo(new THREE.SphereGeometry(0.018, 6, 6));
-  const aquariumBubbles: { mesh: THREE.Mesh; x: number; z: number; phase: number; speed: number }[] = [];
-  for (let i = 0; i < 14; i++) {
-    const bm = new THREE.Mesh(aqBubbleGeo, aqBubbleMat);
-    const s = 0.65 + (i % 4) * 0.28;
-    bm.scale.setScalar(s);
-    const bx = (((i * 73) % 100) / 100 - 0.5) * aqW * 0.78;
-    const bz = (((i * 41) % 100) / 100 - 0.5) * aqL * 0.78;
-    aquariumWaterPivot.add(bm);
-    aquariumBubbles.push({
-      mesh: bm,
-      x: bx,
-      z: bz,
-      phase: i * 0.47,
-      speed: 0.35 + (i % 4) * 0.12,
-    });
-  }
+    for (let i = 0; i < 5; i++) {
+      const fg = new THREE.Group();
+      const scale = 0.85 + (i % 3) * 0.18;
+      fg.scale.setScalar(scale);
+
+      const fBody = new THREE.Mesh(fishBodyGeo, fishOrangeMat);
+      fBody.scale.set(0.62, 0.92, 1.48);
+      fg.add(fBody);
+
+      const dorsal = new THREE.Mesh(fishFinGeo, fishGoldFinMat);
+      dorsal.position.set(0, 0.062, -0.01);
+      dorsal.rotation.x = -0.5;
+      fg.add(dorsal);
+
+      const fTail = new THREE.Mesh(fishTailGeo, fishGoldFinMat);
+      fTail.rotation.x = Math.PI * 0.5;
+      fTail.scale.set(0.32, 1.0, 1.15);
+      fTail.position.set(0, 0, -0.115);
+      fg.add(fTail);
+
+      for (const sx of [-1, 1]) {
+        const eye = new THREE.Mesh(fishEyeGeo, fishEyeMat);
+        eye.position.set(sx * 0.032, 0.016, 0.055);
+        fg.add(eye);
+      }
+
+      aquariumWaterPivot.add(fg);
+      aquariumFishes.push({
+        root: fg,
+        tail: fTail,
+        phase: i * 1.28,
+        speed: 0.72 + (i % 3) * 0.24,
+        radiusX: aqW * (0.22 + (i % 2) * 0.12),
+        radiusZ: aqL * (0.24 + ((i + 1) % 3) * 0.08),
+        baseY: (i - 2) * (aqH * 0.13),
+        dir: i % 2 === 0 ? 1 : -1,
+      });
+    }
+
+    const aqBubbleMat = trackMat(
+      new THREE.MeshBasicMaterial({
+        color: 0xe0f2fe,
+        transparent: true,
+        opacity: 0.72,
+      }),
+    );
+    const aqBubbleGeo = trackGeo(new THREE.SphereGeometry(0.018, 6, 6));
+    for (let i = 0; i < 14; i++) {
+      const bm = new THREE.Mesh(aqBubbleGeo, aqBubbleMat);
+      const s = 0.65 + (i % 4) * 0.28;
+      bm.scale.setScalar(s);
+      const bx = (((i * 73) % 100) / 100 - 0.5) * aqW * 0.78;
+      const bz = (((i * 41) % 100) / 100 - 0.5) * aqL * 0.78;
+      aquariumWaterPivot.add(bm);
+      aquariumBubbles.push({
+        mesh: bm,
+        x: bx,
+        z: bz,
+        phase: i * 0.47,
+        speed: 0.35 + (i % 4) * 0.12,
+      });
+    }
+  };
 
   let aquariumSloshAngle = 0;
   let aquariumSloshVel = 0;
@@ -3082,99 +3279,7 @@ export function createPlayerCar(
   contactShadow.position.y = 0.025;
   root.add(contactShadow);
 
-  // 6b. Underbody Neon Kit (2-Layer Organic Ground Spill + Real PointLight Bounce + Recessed Slim LED Strips)
-  const createUnderglowOuterTexture = (): THREE.CanvasTexture => {
-    const c = document.createElement('canvas');
-    c.width = 256;
-    c.height = 512;
-    const ctx = c.getContext('2d');
-    if (ctx) {
-      ctx.clearRect(0, 0, 256, 512);
-      ctx.save();
-      ctx.translate(128, 256);
-      ctx.scale(1, 2.0);
-      const grad = ctx.createRadialGradient(0, 0, 12, 0, 0, 114);
-      grad.addColorStop(0.0, 'rgba(255,255,255,0.45)');
-      grad.addColorStop(0.38, 'rgba(255,255,255,0.42)');
-      grad.addColorStop(0.68, 'rgba(255,255,255,0.14)');
-      grad.addColorStop(0.88, 'rgba(255,255,255,0.03)');
-      grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(0, 0, 114, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  };
-
-  const createUnderglowInnerTexture = (): THREE.CanvasTexture => {
-    const w = 160;
-    const h = 320;
-    const c = document.createElement('canvas');
-    c.width = w;
-    c.height = h;
-    const ctx = c.getContext('2d');
-    if (ctx) {
-      const img = ctx.createImageData(w, h);
-      const data = img.data;
-      // Rounded-capsule signed distance field hugging the rocker sills & bumpers
-      // Softly recessed center so the car's dark contact shadow stays grounded!
-      const halfW = 36;
-      const halfH = 98;
-      const cornerR = 18;
-      for (let py = 0; py < h; py++) {
-        const y = py - h * 0.5;
-        for (let px = 0; px < w; px++) {
-          const x = px - w * 0.5;
-          const qx = Math.max(Math.abs(x) - (halfW - cornerR), 0);
-          const qy = Math.max(Math.abs(y) - (halfH - cornerR), 0);
-          const sd =
-            Math.hypot(qx, qy) +
-            Math.min(
-              Math.max(
-                Math.abs(x) - (halfW - cornerR),
-                Math.abs(y) - (halfH - cornerR),
-              ),
-              0,
-            ) -
-            cornerR;
-
-          // Peak glow smoothly right under the sill perimeter (sd ≈ 2), soft fade outward & dimmer under axle center
-          let alpha = 0;
-          if (sd >= 0) {
-            const normOut = sd / 38;
-            alpha = Math.exp(-normOut * normOut * 3.1);
-          } else {
-            // Gently dip toward center so contactShadow underneath stays crisp
-            const normIn = Math.min(1, Math.abs(sd) / 34);
-            alpha = 0.94 - normIn * 0.56;
-          }
-          // Guarantee 0 strictly before canvas borders so zero rectangular seams ever appear
-          const edgeX = Math.min(px, w - 1 - px) / 14;
-          const edgeY = Math.min(py, h - 1 - py) / 14;
-          const edgeFade = Math.min(1, edgeX, edgeY);
-          const finalA = Math.max(0, Math.min(1, alpha * edgeFade));
-
-          const idx = (py * w + px) * 4;
-          data[idx] = 255;
-          data[idx + 1] = 255;
-          data[idx + 2] = 255;
-          data[idx + 3] = Math.round(finalA * 255);
-        }
-      }
-      ctx.putImageData(img, 0, 0);
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  };
-
-  const underglowOuterTex = trackTex(createUnderglowOuterTexture());
-  const underglowInnerTex = trackTex(createUnderglowInnerTexture());
-
+  // 6b. Underbody Neon Kit (uses shared pre-baked outer & inner SDF spill textures)
   const underglowOuterMat = trackMat(
     new THREE.MeshBasicMaterial({
       map: underglowOuterTex,
@@ -3308,94 +3413,7 @@ export function createPlayerCar(
   const [spotL, targetL] = makeSpot(-hlAnchor.x);
   const [spotR, targetR] = makeSpot(hlAnchor.x);
 
-  const createHeadlightFlareTexture = (): THREE.CanvasTexture => {
-    const c = document.createElement('canvas');
-    c.width = 256;
-    c.height = 256;
-    const ctx = c.getContext('2d');
-    if (ctx) {
-      ctx.clearRect(0, 0, 256, 256);
-      // Soft outer optical bloom
-      const outer = ctx.createRadialGradient(128, 128, 2, 128, 128, 118);
-      outer.addColorStop(0.0, 'rgba(255,255,255,0.95)');
-      outer.addColorStop(0.14, 'rgba(255,255,255,0.62)');
-      outer.addColorStop(0.36, 'rgba(255,255,255,0.18)');
-      outer.addColorStop(0.68, 'rgba(255,255,255,0.03)');
-      outer.addColorStop(1.0, 'rgba(255,255,255,0.0)');
-      ctx.fillStyle = outer;
-      ctx.fillRect(0, 0, 256, 256);
-
-      // Subtle horizontal anamorphic Xenon streak
-      ctx.save();
-      ctx.translate(128, 128);
-      ctx.scale(1.0, 0.085);
-      const streak = ctx.createRadialGradient(0, 0, 2, 0, 0, 122);
-      streak.addColorStop(0.0, 'rgba(255,255,255,0.85)');
-      streak.addColorStop(0.35, 'rgba(255,255,255,0.32)');
-      streak.addColorStop(0.75, 'rgba(255,255,255,0.05)');
-      streak.addColorStop(1.0, 'rgba(255,255,255,0.0)');
-      ctx.fillStyle = streak;
-      ctx.beginPath();
-      ctx.arc(0, 0, 122, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  };
-
-  const createGroundBeamTexture = (): THREE.CanvasTexture => {
-    const w = 256;
-    const h = 512;
-    const c = document.createElement('canvas');
-    c.width = w;
-    c.height = h;
-    const ctx = c.getContext('2d');
-    if (ctx) {
-      const img = ctx.createImageData(w, h);
-      const data = img.data;
-      // Dual overlapping soft headlight cones projecting forward (v=1 at bumper -> v=0 far ahead)
-      for (let py = 0; py < h; py++) {
-        // v = 0 right in front of bumper (bottom of canvas), v = 1 far ahead (top of canvas)
-        const v = 1 - py / (h - 1);
-        const longFade =
-          Math.min(1, v / 0.12) * Math.pow(Math.max(0, 1 - v), 1.65);
-        for (let px = 0; px < w; px++) {
-          const u = (px / (w - 1)) * 2 - 1; // -1 .. +1
-          const halfSpread = 0.16 + v * 0.68;
-          // Two headlight beam centers gently diverging outward
-          const cL = -0.24 - v * 0.18;
-          const cR = 0.24 + v * 0.18;
-          const dL = (u - cL) / halfSpread;
-          const dR = (u - cR) / halfSpread;
-          const bL = Math.exp(-dL * dL * 2.4);
-          const bR = Math.exp(-dR * dR * 2.4);
-          const combined = Math.min(1, (bL + bR) * 0.78);
-
-          // Soft border fade so plane edges are 100% invisible
-          const edgeX = Math.min(px, w - 1 - px) / 18;
-          const edgeY = Math.min(py, h - 1 - py) / 18;
-          const edgeFade = Math.min(1, edgeX, edgeY);
-          const alpha = Math.max(0, Math.min(1, combined * longFade * edgeFade));
-
-          const idx = (py * w + px) * 4;
-          data[idx] = 255;
-          data[idx + 1] = 255;
-          data[idx + 2] = 255;
-          data[idx + 3] = Math.round(alpha * 255);
-        }
-      }
-      ctx.putImageData(img, 0, 0);
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  };
-
-  const headFlareTex = trackTex(createHeadlightFlareTexture());
-  const headBeamGroundTex = trackTex(createGroundBeamTexture());
-
+  // Headlight flare & ground beam use shared pre-baked static textures
   const headFlareMat = trackMat(
     new THREE.SpriteMaterial({
       map: headFlareTex,
@@ -5136,6 +5154,7 @@ export function createPlayerCar(
     }
 
     const isAquarium = currentCustom.livery === 'animLiquidAquarium';
+    if (isAquarium) ensureAquariumBuilt();
     aquariumGroup.visible = isAquarium;
     if (isAquarium) {
       paintMaterial.transparent = true;
@@ -5155,6 +5174,11 @@ export function createPlayerCar(
         paintMaterial.metalness = 0.35;
         paintMaterial.clearcoat = 1.0;
         paintMaterial.clearcoatRoughness = 0.03;
+      } else if (currentCustom.livery === 'animCrysisNanosuit') {
+        paintMaterial.roughness = 0.24;
+        paintMaterial.metalness = 0.72;
+        paintMaterial.clearcoat = 0.68;
+        paintMaterial.clearcoatRoughness = 0.14;
       } else if (
         currentCustom.livery === 'knittedSweater' ||
         currentCustom.livery === 'lushGrassTurf'
@@ -10175,6 +10199,7 @@ export function createPlayerCar(
   rebuildRoofHat(currentCustom.roofHat ?? 'none');
 
   const setPaintColor = (hex: number): void => {
+    if (hex === currentPaintHex) return;
     currentPaintHex = hex;
     applyPaintAndLivery();
   };
@@ -10408,17 +10433,20 @@ export function createPlayerCar(
         paintMaterial.emissive.copy(_fxColor);
         paintMaterial.emissiveIntensity = 1.0 + Math.sin(timeSec * 2.8) * 0.32;
       } else if (liv === 'animGoldenDragon') {
-        const oy = -(timeSec * 0.26) % 1;
-        activeLiveryTex.offset.set(0, oy);
+        // Locked imperial dragon motif + surging molten 24K gold scale wave along emissive layer
+        activeLiveryTex.offset.set(0, 0);
+        const oy = -(timeSec * 0.34) % 1;
         activeLiveryEmissiveTex.offset.set(0, oy);
         paintMaterial.emissive.setHex(0xffe08a);
-        paintMaterial.emissiveIntensity = 1.1 + Math.sin(timeSec * 3.6) * 0.38;
+        paintMaterial.emissiveIntensity = 1.25 + Math.sin(timeSec * 3.8) * 0.42;
       } else if (liv === 'animComicSpeed') {
-        const oy = -(timeSec * 0.85) % 1;
+        // Initial-D style manga speed streaks accelerating dramatically with vehicle speed!
+        const mangaSpeed = 0.72 + THREE.MathUtils.clamp(speedMs, 0, 85) * 0.016;
+        const oy = -(timeSec * mangaSpeed) % 1;
         activeLiveryTex.offset.set(0, oy);
-        activeLiveryEmissiveTex.offset.set(0, oy);
+        activeLiveryEmissiveTex.offset.set(0, oy * 1.5);
         paintMaterial.emissive.setHex(0xffffff);
-        paintMaterial.emissiveIntensity = 1.0 + Math.sin(timeSec * 12.0) * 0.3;
+        paintMaterial.emissiveIntensity = 1.08 + Math.sin(timeSec * 14.0) * 0.32;
       } else if (liv === 'animCandyPop') {
         const ox = Math.sin(timeSec * 0.55) * 0.14;
         const oy = -(timeSec * 0.28) % 1;
@@ -10427,13 +10455,15 @@ export function createPlayerCar(
         paintMaterial.emissive.setHex(0xffffff);
         paintMaterial.emissiveIntensity = 0.95 + Math.sin(timeSec * 3.4) * 0.28;
       } else if (liv === 'animVenomSymbiote') {
-        // Subtle living organic symbiote ripple keeping white Venom eyes & spider veins locked on hood/flanks
-        const ox = Math.sin(timeSec * 2.1) * 0.011;
-        const oy = Math.cos(timeSec * 1.65) * 0.011;
-        activeLiveryTex.offset.set(ox, oy);
-        activeLiveryEmissiveTex.offset.set(ox, oy);
-        paintMaterial.emissive.setHex(0xf8fafc);
-        paintMaterial.emissiveIntensity = 0.52 + Math.sin(timeSec * 3.2) * 0.24;
+        // Living glossy Venom: subtle organic breathing on hood eyes/spider + crawling white symbiote veins along emissive!
+        const breatheX = Math.sin(timeSec * 2.3) * 0.006;
+        const breatheY = Math.cos(timeSec * 1.8) * 0.006;
+        activeLiveryTex.offset.set(breatheX, breatheY);
+        const crawlY = -(timeSec * 0.26) % 1;
+        const crawlX = Math.sin(timeSec * 1.9) * 0.035;
+        activeLiveryEmissiveTex.offset.set(crawlX, crawlY);
+        paintMaterial.emissive.setHex(0xe2e8f0);
+        paintMaterial.emissiveIntensity = 0.92 + Math.sin(timeSec * 4.1) * 0.34;
       } else if (liv === 'animLiquidAquarium') {
         // Glass caustic surface shimmer + REAL physics-driven sloshing water tank & swimming low-poly goldfish!
         const ox = Math.sin(timeSec * 0.6) * 0.06;
@@ -10498,12 +10528,23 @@ export function createPlayerCar(
         paintMaterial.emissive.setHex(0xbae6fd);
         paintMaterial.emissiveIntensity = 0.82 + Math.sin(timeSec * 5.2) * 0.25;
       } else if (liv === 'omnitrixAlien') {
-        // Keep Omnitrix hourglass dial locked squarely on hood/roof while pulsing alien neon-green energy!
+        // Locked Ben-10 black/white alien armor & hood hourglass + live scrolling neon-green DNA/energy waves!
         activeLiveryTex.offset.set(0, 0);
-        activeLiveryEmissiveTex.offset.set(0, 0);
-        const surge = Math.pow(0.5 + 0.5 * Math.sin(timeSec * 3.6), 2);
-        paintMaterial.emissive.setHex(0x86efac);
-        paintMaterial.emissiveIntensity = 0.78 + surge * 0.92;
+        const omniSpeed = 0.48 + THREE.MathUtils.clamp(speedMs, 0, 85) * 0.008;
+        const oy = -(timeSec * omniSpeed) % 1;
+        activeLiveryEmissiveTex.offset.set(0, oy);
+        const surge = Math.pow(0.5 + 0.5 * Math.sin(timeSec * 4.4), 2);
+        paintMaterial.emissive.setHex(surge > 0.65 ? 0xbbf7d0 : 0x4ade80);
+        paintMaterial.emissiveIntensity = 1.05 + surge * 1.15;
+      } else if (liv === 'animCrysisNanosuit') {
+        // Crysis Nanosuit 2.0: Locked synthetic carbon muscle-fiber armor & crimson visor + live sweeping Maximum Armor hex-shield wave!
+        activeLiveryTex.offset.set(0, 0);
+        const nanoSpeed = 0.36 + THREE.MathUtils.clamp(speedMs, 0, 85) * 0.0075;
+        const oy = -(timeSec * nanoSpeed) % 1;
+        activeLiveryEmissiveTex.offset.set(0, oy);
+        const armorPulse = Math.pow(0.5 + 0.5 * Math.sin(timeSec * 3.6), 2.2);
+        paintMaterial.emissive.setHex(armorPulse > 0.68 ? 0xe0f2fe : 0x38bdf8);
+        paintMaterial.emissiveIntensity = 0.95 + armorPulse * 1.35;
       } else if (liv === 'animSakuraStorm') {
         // Diagonal gentle breeze sweeping glowing cherry blossom petals across the chassis
         const ox = (timeSec * 0.12) % 1;
@@ -10902,8 +10943,10 @@ export function createPlayerCar(
     headLightSpots: [spotL, spotR],
     headLightTargets: [targetL, targetR],
     flameMeshes,
-    setLicensePlate: (text: string) =>
-      drawLicensePlate(text, currentCustom.plateStyle ?? 'classic'),
+    setLicensePlate: (text: string) => {
+      if (text === currentPlateText) return;
+      drawLicensePlate(text, currentCustom.plateStyle ?? 'classic');
+    },
     setWheelConfig,
     setPaintColor,
     setCustomConfig,
@@ -11332,17 +11375,13 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       hRing.position.z = 0.014;
       wheelGroup.add(hRing);
 
-      // 7 Live RPM Shift LEDs along the top carbon bridge
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.012, 0.009, 0.008));
-      for (let i = 0; i < 7; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (3 - i) * 0.13;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.135, Math.sin(a) * 0.135, 0.017);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
+      // Crisp motorsport red 12-o'clock top alignment band
+      const topMarker = new THREE.Mesh(
+        trackWGeo(new THREE.BoxGeometry(0.022, 0.024, 0.038)),
+        redAccentMat,
+      );
+      topMarker.position.set(0, 0.135, 0);
+      wheelGroup.add(topMarker);
     } else if (style === 'driftNeo') {
       const gripMat = trackWMat(
         new THREE.MeshStandardMaterial({
@@ -11864,18 +11903,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       );
       hubRing.position.z = 0.014;
       wheelGroup.add(hubRing);
-
-      // 7 Live RPM Shift LEDs
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.012, 0.009, 0.008));
-      for (let i = 0; i < 7; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (3 - i) * 0.13;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.019);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'magmaCore') {
       // Animated Volcanic Obsidian Wheel with pulsing molten lava veins + 7 live RPM LEDs
       const basaltMat = trackWMat(
@@ -11929,17 +11956,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       );
       coreOrb.position.z = 0.008;
       wheelGroup.add(coreOrb);
-
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.012, 0.009, 0.008));
-      for (let i = 0; i < 7; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (3 - i) * 0.13;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.019);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'stealthJet') {
       // Animated Fighter Jet Dual-Horn Yoke + pulsing emerald radar bar + 7 live RPM LEDs
       const stealthMat = trackWMat(
@@ -12000,16 +12016,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       );
       radarBar.position.set(0, -0.018, 0.018);
       wheelGroup.add(radarBar);
-
-      // 7 Live RPM Shift LEDs across top of avionics bridge
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.011, 0.008, 0.008));
-      for (let i = 0; i < 7; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(-0.048 + i * 0.016, 0.018, 0.016);
-        wheelGroup.add(led);
-      }
     } else if (style === 'rgbPrismWheel') {
       // Animated Full-Spectrum RGB Cycling Steering Wheel + 9 live RPM LEDs
       const carbonMatW = trackWMat(
@@ -12064,18 +12070,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       );
       hubRgb.position.z = 0.015;
       wheelGroup.add(hubRgb);
-
-      // 9 Live RPM Shift LEDs
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (4 - i) * 0.11;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.019);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'hyperHolo') {
       // Animated Futuristic Holographic Wheel with translucent cyan energy arcs + spinning gyro hub + 9 RPM LEDs
       const obsMat = trackWMat(
@@ -12150,18 +12144,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         holoAccentMat,
       );
       spinCore.add(diamond);
-
-      // 9 Live RPM Shift LEDs along upper holo arc
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (4 - i) * 0.11;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.018);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'levelCarbonPro') {
       // Level 45 Exclusive: Forged Carbon GT Wheel with 24K Gold Top Center Strip & 9 Shift LEDs
       const carbonMat = trackWMat(
@@ -12193,16 +12175,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const badge = new THREE.Mesh(trackWGeo(new THREE.OctahedronGeometry(0.016, 0)), goldMat);
       badge.position.z = 0.02;
       wheelGroup.add(badge);
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (4 - i) * 0.11;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.018);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'apexEmperorWheel') {
       // Level 92 Exclusive: Crimson & 24K Gold Formula Emperor Yoke
       const bodyMat = trackWMat(
@@ -12242,14 +12214,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const centerGem = new THREE.Mesh(trackWGeo(new THREE.OctahedronGeometry(0.022, 0)), goldMat);
       centerGem.position.z = 0.018;
       wheelGroup.add(centerGem);
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.011, 0.008, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set((i - 4) * 0.022, 0.068, 0.016);
-        wheelGroup.add(led);
-      }
     } else if (style === 'leatherRed') {
       // Black perforated leather GT wheel + crimson spokes & top center marker
       const leatherM = trackWMat(new THREE.MeshStandardMaterial({ color: 0x16161a, roughness: 0.72, metalness: 0.12 }));
@@ -12326,16 +12290,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         wheelGroup.add(sp);
       }
       wheelGroup.add(new THREE.Mesh(hubGeo, carbM));
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (4 - i) * 0.11;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.019);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'plasmaYoke') {
       // Animated Obsidian Butterfly Yoke with Pulsing Violet-Cyan Plasma Rim + 9 Shift LEDs
       const obsM = trackWMat(new THREE.MeshStandardMaterial({ color: 0x10101c, roughness: 0.22, metalness: 0.85 }));
@@ -12373,14 +12327,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       wheelGroup.add(spinCore);
       wheelHoloSpinGroup = spinCore;
       spinCore.add(new THREE.Mesh(trackWGeo(new THREE.OctahedronGeometry(0.02, 0)), cyanM));
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.011, 0.008, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set((i - 4) * 0.022, 0.064, 0.016);
-        wheelGroup.add(led);
-      }
     } else if (style === 'scrapMadMax') {
       // Wasteland Rusted Scrap-Iron Mad Max Steering Wheel:
       // Welded iron ring, jagged perimeter spikes, ragged cloth grip wraps, bolted rebar spokes & cog hub
@@ -12559,18 +12505,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       wheelHoloSpinGroup = spinCore;
       spinCore.add(new THREE.Mesh(trackWGeo(new THREE.OctahedronGeometry(0.02, 0)), goldEmberMat));
       spinCore.add(new THREE.Mesh(trackWGeo(new THREE.TorusGeometry(0.028, 0.0038, 6, 6)), magmaMat));
-
-      // 9 Molten RPM Shift LEDs along upper obsidian crown
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (4 - i) * 0.11;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.022);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'pixelVoxel') {
       // Pure 8-Bit / Voxel Block Steering Wheel — 100% Crisp Quantized Cubes, Zero Curves!
       const darkVoxelMat = trackWMat(
@@ -12654,16 +12588,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         const cell = new THREE.Mesh(pxGeo, diamondVoxelMat);
         cell.position.set(px * 0.011, py * 0.011, 0.014);
         wheelGroup.add(cell);
-      }
-
-      // 7 Chunky Square Pixel RPM Shift LEDs along upper voxel bar
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.012, 0.012, 0.008));
-      for (let i = 0; i < 7; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set((i - 3) * 0.016, 5 * step, 0.016);
-        wheelGroup.add(led);
       }
     } else if (style === 'hevLambda') {
       // Half-Life HEV Suit Mark IV / V Armored Steering Wheel with Glowing Center Lambda (λ) Emblem!
@@ -12823,18 +12747,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       leftLeg.position.set(-0.0095, -0.009, 0);
       leftLeg.rotation.z = -0.56;
       lambdaGrp.add(leftLeg);
-
-      // 9 HEV Suit Power-Bar RPM Shift LEDs embedded in top armored orange shell
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.008, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (4 - i) * 0.11;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.137, Math.sin(a) * 0.137, 0.02);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'headcrab') {
       // Half-Life Headcrab Steering Wheel:
       // Organic segmented chitin rim + sculpted 3D Headcrab clinging to the hub with 4 articulated claw legs!
@@ -13082,16 +12994,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
           wheelGroup.add(slot);
         }
       }
-
-      // 7 Chunky Square Pixel RPM Shift LEDs along upper wooden bar
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.012, 0.012, 0.008));
-      for (let i = 0; i < 7; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set((i - 3) * 0.016, 5 * step, 0.016);
-        wheelGroup.add(led);
-      }
     } else if (style === 'aperturePortal') {
       // Portal – Aperture Science Laboratories Steering Wheel:
       // Sterile glossy white Aperture shells, dual Portal Blue & Orange plasma arcs + 8-Blade Camera Shutter Logo!
@@ -13227,18 +13129,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       );
       miniOrange.rotation.z = Math.PI + 0.1;
       spinPortal.add(miniOrange);
-
-      // 9 Aperture Test-Chamber RPM Shift LEDs along upper white crown
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.0075, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (4 - i) * 0.11;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.137, Math.sin(a) * 0.137, 0.0195);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     } else if (style === 'wheatleyCore') {
       // Portal 2 Wheatley Personality Core Steering Wheel:
       // Management-rail handle rim + full 3D Wheatley Core Sphere with expressive eyelids & glowing spinning cyan optic!
@@ -13410,18 +13300,6 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       lowerLid.position.set(0, -0.022, 0.038);
       lowerLid.rotation.z = 0.05;
       wheelGroup.add(lowerLid);
-
-      // 9 Aperture Cyan-Framed RPM Shift LEDs along upper track rim
-      const ledGeo = trackWGeo(new THREE.BoxGeometry(0.01, 0.0075, 0.008));
-      for (let i = 0; i < 9; i++) {
-        const lMat = trackWMat(new THREE.MeshBasicMaterial({ color: 0x1f2937 }));
-        shiftLedMats.push(lMat);
-        const a = Math.PI * 0.5 + (4 - i) * 0.11;
-        const led = new THREE.Mesh(ledGeo, lMat);
-        led.position.set(Math.cos(a) * 0.136, Math.sin(a) * 0.136, 0.0185);
-        led.rotation.z = a - Math.PI * 0.5;
-        wheelGroup.add(led);
-      }
     }
   };
 
@@ -13571,6 +13449,20 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       seg.position.copy(p0).addScaledVector(dir, 0.5);
       seg.quaternion.setFromUnitVectors(upAxis, dir.normalize());
       mirrorCharmPivot.add(seg);
+    };
+    const addBailRing = (
+      y: number,
+      mat: THREE.Material = cordMat,
+      radius = 0.0052,
+      x = 0,
+      z = 0,
+    ): void => {
+      const ring = new THREE.Mesh(
+        trackCGeo(new THREE.TorusGeometry(radius, 0.0018, 6, 12)),
+        mat,
+      );
+      ring.position.set(x, y, z);
+      mirrorCharmPivot.add(ring);
     };
 
     // Anchor collar bead right at the bottom of the rearview mirror
@@ -14331,9 +14223,10 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       );
       charmHeartMat = heartM;
 
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.072, 0));
-      const loop = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.006, 0.002, 6, 14)), cordMat);
-      loop.position.set(0, -0.075, 0);
+      // Cord & loop seated solidly into the top cleft of the heart (cleft y = -0.091)
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.091, 0));
+      const loop = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.0058, 0.002, 6, 14)), cordMat);
+      loop.position.set(0, -0.088, 0);
       mirrorCharmPivot.add(loop);
 
       const hGrp = new THREE.Group();
@@ -14425,11 +14318,19 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       abCone.position.set(0, -0.104, -0.04);
       mirrorCharmPivot.add(abCone);
     } else if (charm === 'checkeredFlag') {
-      // Level 8 Exclusive: Checkered Racing Flag Charm
+      // Level 8 Exclusive: Checkered Racing Flag Charm (twin cords anchored to pole top & upper flag corner)
       const whiteM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 }));
       const blackM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4 }));
       const poleM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.9, roughness: 0.2 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.074, 0));
+      const knotPos = new THREE.Vector3(0, -0.054, 0);
+      addCordSegment(topOrigin, knotPos);
+      const knot = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.0038, 8, 6)), poleM);
+      knot.position.copy(knotPos);
+      mirrorCharmPivot.add(knot);
+      addCordSegment(knotPos, new THREE.Vector3(-0.022, -0.076, 0), 0.0019);
+      addCordSegment(knotPos, new THREE.Vector3(0.016, -0.08, 0), 0.0019);
+      addBailRing(-0.075, poleM, 0.0042, -0.022, 0);
+      addBailRing(-0.079, poleM, 0.0042, 0.016, 0);
       const pole = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.0025, 0.0025, 0.056, 8)), poleM);
       pole.position.set(-0.022, -0.102, 0);
       mirrorCharmPivot.add(pole);
@@ -14453,7 +14354,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         }),
       );
       const steelM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xe4e4e7, metalness: 0.92, roughness: 0.18 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.072, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.077, 0));
+      addBailRing(-0.074, goldM);
       const head = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.018, 0.018, 0.026, 16)), goldM);
       head.position.set(0, -0.088, 0);
       mirrorCharmPivot.add(head);
@@ -14464,7 +14366,7 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       crank.position.set(0, -0.136, 0);
       mirrorCharmPivot.add(crank);
     } else if (charm === 'apexStar') {
-      // Level 85 Exclusive: Spinning Crimson-Gold Diamond Star
+      // Level 85 Exclusive: Spinning Crimson-Gold Diamond Star mounted inside a fixed gold cradle hoop
       const goldM = trackCMat(
         new THREE.MeshStandardMaterial({
           color: 0xfde047,
@@ -14482,7 +14384,11 @@ export function createCockpitRig(initialHex: number): CockpitRig {
           roughness: 0.12,
         }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.078, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.074, 0));
+      addBailRing(-0.072, goldM, 0.0056);
+      const cradle = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.031, 0.0024, 8, 24)), goldM);
+      cradle.position.set(0, -0.106, 0);
+      mirrorCharmPivot.add(cradle);
       const starGrp = new THREE.Group();
       starGrp.position.set(0, -0.106, 0);
       mirrorCharmPivot.add(starGrp);
@@ -14501,7 +14407,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       // Emerald Four-Leaf Clover Charm
       const leafM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.35, metalness: 0.2 }));
       const stemM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.25, metalness: 0.85 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.078, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.092, 0));
+      addBailRing(-0.085, stemM);
       const leafGeo = trackCGeo(new THREE.SphereGeometry(0.014, 10, 8));
       for (let i = 0; i < 4; i++) {
         const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
@@ -14517,7 +14424,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       // Miniature Gold-Silver Racing Cup
       const goldM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.94, roughness: 0.14 }));
       const baseM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x27272a, metalness: 0.6, roughness: 0.3 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.076, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.084, 0));
+      addBailRing(-0.08, goldM);
       const cup = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.02, 0.009, 0.028, 14)), goldM);
       cup.position.set(0, -0.095, 0);
       mirrorCharmPivot.add(cup);
@@ -14528,7 +14436,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       // Metallic Blue NOS Bottle with Chrome Valve
       const nosM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.85, roughness: 0.16 }));
       const chromeM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.95, roughness: 0.1 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.072, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.076, 0));
+      addBailRing(-0.072, chromeM);
       const valve = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.005, 0.007, 0.012, 10)), chromeM);
       valve.position.set(0, -0.078, 0);
       mirrorCharmPivot.add(valve);
@@ -14536,7 +14445,7 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       tank.position.set(0, -0.106, 0);
       mirrorCharmPivot.add(tank);
     } else if (charm === 'diamondGem') {
-      // Spinning Faceted Ice-Sapphire Diamond Gem
+      // Spinning Faceted Ice-Sapphire Diamond Gem (spins cleanly around vertical Y axis beneath bail)
       const diaM = trackCMat(
         new THREE.MeshStandardMaterial({
           color: 0x7dd3fc,
@@ -14548,11 +14457,12 @@ export function createCockpitRig(initialHex: number): CockpitRig {
           opacity: 0.9,
         }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.075, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.092, 0));
+      addBailRing(-0.088, cordMat);
       const dGrp = new THREE.Group();
       dGrp.position.set(0, -0.105, 0);
       mirrorCharmPivot.add(dGrp);
-      charmTurboImpeller = dGrp;
+      charmDiscoGroup = dGrp;
       const top = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.013, 0.022, 0.012, 8)), diaM);
       top.position.y = 0.009;
       dGrp.add(top);
@@ -14579,7 +14489,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
           roughness: 0.12,
         }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.076, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.083, 0));
+      addBailRing(-0.079, skullM);
       const head = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.018, 12, 10)), skullM);
       head.position.set(0, -0.098, 0);
       mirrorCharmPivot.add(head);
@@ -14596,7 +14507,7 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       mirrorCharmPivot.add(ring);
       charmPlasmaRingA = ring;
     } else if (charm === 'turkishTea') {
-      // Iconic Turkish Tulip Glass Tea (İnce Belli Çay) on Saucer with Mini Teaspoon!
+      // Iconic Turkish Tulip Glass Tea (İnce Belli Çay) suspended by twin cords gripped cleanly on the glass rim!
       const glassM = trackCMat(
         new THREE.MeshStandardMaterial({
           color: 0xe0f2fe,
@@ -14618,7 +14529,18 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const spoonM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.92, roughness: 0.15 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.078, 0));
+      const knotPos = new THREE.Vector3(0, -0.056, 0);
+      addCordSegment(topOrigin, knotPos);
+      const knot = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.0038, 8, 6)), spoonM);
+      knot.position.copy(knotPos);
+      mirrorCharmPivot.add(knot);
+      for (const sx of [-1, 1]) {
+        addCordSegment(knotPos, new THREE.Vector3(sx * 0.012, -0.083, 0), 0.0018);
+      }
+      const rimCollar = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.0125, 0.0014, 6, 16)), spoonM);
+      rimCollar.rotation.x = Math.PI * 0.5;
+      rimCollar.position.set(0, -0.083, 0);
+      mirrorCharmPivot.add(rimCollar);
       // Tulip waist lower bulb + upper flare
       const bulb = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.0085, 0.012, 0.018, 14)), teaM);
       bulb.position.set(0, -0.106, 0);
@@ -14641,7 +14563,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       // Classic Black & White Faceted Soccer Ball
       const whiteM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.48 }));
       const blackM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.52 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.082, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.086, 0));
+      addBailRing(-0.081, cordMat);
       const ball = new THREE.Mesh(trackCGeo(new THREE.IcosahedronGeometry(0.02, 1)), whiteM);
       ball.position.set(0, -0.102, 0);
       mirrorCharmPivot.add(ball);
@@ -14657,11 +14580,12 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         mirrorCharmPivot.add(p);
       }
     } else if (charm === 'miniDuck') {
-      // Adorable Dangling Glossy Yellow Rubber Ducky
+      // Adorable Dangling Glossy Yellow Rubber Ducky (cord angled directly into top of duck's head)
       const yelM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.25 }));
       const billM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.35 }));
       const eyeM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.12 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.082, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.084, 0.009));
+      addBailRing(-0.08, cordMat, 0.0046, 0, 0.009);
       const body = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.016, 12, 10)), yelM);
       body.scale.set(0.95, 0.8, 1.25);
       body.position.set(0, -0.108, 0);
@@ -14683,7 +14607,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const cupM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.55 }));
       const kraftM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.85 }));
       const lidM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.08, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.085, 0));
+      addBailRing(-0.08, lidM);
       const cup = new THREE.Mesh(trackCGeo(new THREE.CylinderGeometry(0.014, 0.01, 0.032, 14)), cupM);
       cup.position.set(0, -0.102, 0);
       mirrorCharmPivot.add(cup);
@@ -14698,6 +14623,7 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const breadM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xc26d1f, roughness: 0.78 }));
       const sesameM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.85 }));
       addCordSegment(topOrigin, new THREE.Vector3(0, -0.082, 0));
+      addBailRing(-0.076, cordMat, 0.0048);
       const ring = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.019, 0.0068, 8, 18)), breadM);
       ring.position.set(0, -0.102, 0);
       mirrorCharmPivot.add(ring);
@@ -14714,7 +14640,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const cheeseM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.45 }));
       const crustM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.8 }));
       const pepM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.35 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.08, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.084, 0));
+      addBailRing(-0.079, cordMat);
       const slice = new THREE.Mesh(trackCGeo(new THREE.ConeGeometry(0.022, 0.036, 3)), cheeseM);
       slice.scale.set(1.0, 1.0, 0.25);
       slice.rotation.x = Math.PI;
@@ -14736,6 +14663,7 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const doughM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xd98a3c, roughness: 0.72 }));
       const icingM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.22 }));
       addCordSegment(topOrigin, new THREE.Vector3(0, -0.082, 0));
+      addBailRing(-0.076, cordMat, 0.0048);
       const base = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.017, 0.0085, 10, 20)), doughM);
       base.position.set(0, -0.102, 0);
       mirrorCharmPivot.add(base);
@@ -14758,7 +14686,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       // Miniature Matte-Black Console Gamepad Controller with Glowing Buttons!
       const bodyM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.38, metalness: 0.45 }));
       const stickM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x3f3f46, roughness: 0.6 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.086, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.091, 0));
+      addBailRing(-0.088, stickM);
       const pad = new THREE.Mesh(trackCGeo(new THREE.BoxGeometry(0.036, 0.018, 0.01)), bodyM);
       pad.position.set(0, -0.098, 0);
       mirrorCharmPivot.add(pad);
@@ -14786,7 +14715,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       // Glossy Jet-Black Billiard 8-Ball Lucky Charm
       const ballM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.08, metalness: 0.4 }));
       const whiteM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.082, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.086, 0));
+      addBailRing(-0.081, cordMat);
       const sph = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.02, 16, 14)), ballM);
       sph.position.set(0, -0.102, 0);
       mirrorCharmPivot.add(sph);
@@ -14807,7 +14737,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const fleshM = trackCMat(new THREE.MeshStandardMaterial({ color: 0xc99c72, roughness: 0.72 }));
       const clawM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x3b2316, roughness: 0.35 }));
       const mawM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x7f1d2d, roughness: 0.45 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.084, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.088, 0));
+      addBailRing(-0.084, cordMat);
       const dome = new THREE.Mesh(trackCGeo(new THREE.SphereGeometry(0.016, 12, 10)), fleshM);
       dome.scale.set(1.1, 0.82, 1.15);
       dome.position.set(0, -0.098, 0);
@@ -14835,7 +14766,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const pinkM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0xf472b6, emissive: 0xec4899, emissiveIntensity: 2.0, roughness: 0.14 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.082, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.091, 0));
+      addBailRing(-0.087, shellM);
       const grp = new THREE.Group();
       grp.position.set(0, -0.104, 0);
       mirrorCharmPivot.add(grp);
@@ -14866,7 +14798,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const btnGlowM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xef4444, emissiveIntensity: 2.0, roughness: 0.1 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.082, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.086, 0));
+      addBailRing(-0.082, cordMat);
       const topHalf = new THREE.Mesh(
         trackCGeo(new THREE.SphereGeometry(0.019, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.5)),
         redM,
@@ -14893,7 +14826,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x16a34a, emissiveIntensity: 0.6, roughness: 0.72 }),
       );
       const blkM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.85 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.084, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.09, 0));
+      addBailRing(-0.086, cordMat);
       const cube = new THREE.Mesh(trackCGeo(new THREE.BoxGeometry(0.03, 0.03, 0.03)), greenM);
       cube.position.set(0, -0.102, 0);
       mirrorCharmPivot.add(cube);
@@ -14915,7 +14849,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const domeM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0x4ade80, emissive: 0x22c55e, emissiveIntensity: 1.8, roughness: 0.12 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.086, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.091, 0));
+      addBailRing(-0.087, hullM);
       const grp = new THREE.Group();
       grp.position.set(0, -0.104, 0);
       mirrorCharmPivot.add(grp);
@@ -14956,7 +14891,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         }),
       );
       const eyeM = trackCMat(new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.15 }));
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.08, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.085, 0));
+      addBailRing(-0.08, cordMat);
       const grp = new THREE.Group();
       grp.position.set(0, -0.102, 0);
       mirrorCharmPivot.add(grp);
@@ -14979,7 +14915,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const glowM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0xffa733, emissive: 0xf97316, emissiveIntensity: 2.3, roughness: 0.14 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.078, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.082, 0));
+      addBailRing(-0.077, steelM);
       const grp = new THREE.Group();
       grp.position.set(0, -0.104, 0);
       mirrorCharmPivot.add(grp);
@@ -15007,7 +14944,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const blueEyeM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0ea5e9, emissiveIntensity: 2.4, roughness: 0.1 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.078, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.083, 0));
+      addBailRing(-0.079, greyM);
       const grp = new THREE.Group();
       grp.position.set(0, -0.104, 0);
       mirrorCharmPivot.add(grp);
@@ -15031,7 +14969,7 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       pupil.position.z = 0.0195;
       grp.add(pupil);
     } else if (charm === 'saturnPlanet') {
-      // Spinning Golden Ringed Saturn Planet with Dual Counter-Rotating Energy Rings!
+      // Spinning Golden Ringed Saturn Planet mounted inside a fixed golden orbital cradle!
       const planetM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xb45309, emissiveIntensity: 0.65, roughness: 0.35 }),
       );
@@ -15041,7 +14979,11 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const ringBM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 1.8, roughness: 0.15 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.078, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.07, 0));
+      addBailRing(-0.068, ringAM, 0.0056);
+      const cradle = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.034, 0.0022, 8, 24)), cordMat);
+      cradle.position.set(0, -0.104, 0);
+      mirrorCharmPivot.add(cradle);
       const grp = new THREE.Group();
       grp.position.set(0, -0.104, 0);
       mirrorCharmPivot.add(grp);
@@ -15061,7 +15003,8 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const lavaM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0xff5a1f, emissive: 0xdc2626, emissiveIntensity: 2.3, roughness: 0.12 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.078, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.087, 0));
+      addBailRing(-0.082, obsM);
       const grp = new THREE.Group();
       grp.position.set(0, -0.104, 0);
       mirrorCharmPivot.add(grp);
@@ -15076,7 +15019,7 @@ export function createCockpitRig(initialHex: number): CockpitRig {
         grp.add(vein);
       }
     } else if (charm === 'infinityCube') {
-      // Holographic Shifting Tesseract Energy Cube inside Counter-Rotating Gold Gyro Rings!
+      // Holographic Shifting Tesseract Energy Cube inside Counter-Rotating Gold Gyro Rings & Fixed Gimbal Cradle!
       const cubeM = trackCMat(
         new THREE.MeshStandardMaterial({
           color: 0x22d3ee,
@@ -15090,7 +15033,11 @@ export function createCockpitRig(initialHex: number): CockpitRig {
       const goldM = trackCMat(
         new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xeab308, emissiveIntensity: 1.5, metalness: 0.9, roughness: 0.15 }),
       );
-      addCordSegment(topOrigin, new THREE.Vector3(0, -0.074, 0));
+      addCordSegment(topOrigin, new THREE.Vector3(0, -0.071, 0));
+      addBailRing(-0.069, goldM, 0.0056);
+      const cradle = new THREE.Mesh(trackCGeo(new THREE.TorusGeometry(0.032, 0.0022, 8, 24)), goldM);
+      cradle.position.set(0, -0.104, 0);
+      mirrorCharmPivot.add(cradle);
       const grp = new THREE.Group();
       grp.position.set(0, -0.104, 0);
       mirrorCharmPivot.add(grp);

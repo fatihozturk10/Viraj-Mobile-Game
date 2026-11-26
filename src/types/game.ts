@@ -1385,8 +1385,6 @@ export type LiveryId =
   | 'hazardStripes'
   | 'sharkMouth'
   | 'martiniRally'
-  | 'rustWasteland'
-  | 'apertureLab'
   | 'minecraftPixel'
   | 'animSynthwave'
   | 'animAuroraFrost'
@@ -1394,7 +1392,6 @@ export type LiveryId =
   | 'istanbulTaxi'
   | 'toyCarBlocks'
   | 'watermelonWrap'
-  | 'pepperoniPizza'
   | 'policeInterceptor'
   | 'comicSketch'
   | 'streetGraffiti'
@@ -1409,7 +1406,6 @@ export type LiveryId =
   | 'knittedSweater'
   | 'carvedWood'
   | 'lushGrassTurf'
-  | 'jojaMartCorp'
   | 'mysteryMachine'
   | 'animWindStream'
   | 'omnitrixAlien'
@@ -1422,7 +1418,8 @@ export type LiveryId =
   | 'animHypnoSpiral'
   | 'animWarpHyperdrive'
   | 'animCyberEqualizer'
-  | 'animSolarEclipse';
+  | 'animSolarEclipse'
+  | 'animCrysisNanosuit';
 
 export interface BodyKitSpec {
   id: BodyKitId;
@@ -2641,9 +2638,9 @@ export const LIVERIES: LiverySpec[] = [
     id: 'cyberHexArmor',
     rarity: 'epic',
     name: 'Altıgen Zırh',
-    subtitle: 'Koyu karbon altıgen zırh plakaları ve neon kenar vurgusu',
+    subtitle: '3D pahlı titanyum-karbon altıgen zırh plakaları, cıvatalı ek yerleri ve cyan-amber enerji hatları',
     priceGold: 1240,
-    accentSwatch: 'linear-gradient(135deg, #090d16 0%, #1e293b 45%, #f59e0b 65%, #06b6d4 100%)',
+    accentSwatch: 'linear-gradient(135deg, #0b1120 0%, #334155 42%, #22d3ee 72%, #f59e0b 100%)',
     category: 'fullWrap',
     overridesBaseColor: true,
   },
@@ -2695,26 +2692,6 @@ export const LIVERIES: LiverySpec[] = [
     category: 'decal',
   },
   {
-    id: 'rustWasteland',
-    rarity: 'epic',
-    name: 'Mad Max Paslı Hurda',
-    subtitle: 'Çorak arazi paslı sac plakaları, kaynak dikişleri ve aşınmış ikaz boyası',
-    priceGold: 880,
-    accentSwatch: 'linear-gradient(135deg, #3f2212 0%, #9a3412 42%, #52525b 72%, #ca8a04 100%)',
-    category: 'fullWrap',
-    overridesBaseColor: true,
-  },
-  {
-    id: 'apertureLab',
-    rarity: 'epic',
-    name: 'Aperture Laboratuvarı',
-    subtitle: 'Steril beyaz test odası panelleri, mavi-turuncu portal şeritleri ve lab logosu',
-    priceGold: 960,
-    accentSwatch: 'linear-gradient(125deg, #0284c7 0%, #f8fafc 46%, #f8fafc 58%, #f97316 100%)',
-    category: 'fullWrap',
-    overridesBaseColor: true,
-  },
-  {
     id: 'minecraftPixel',
     rarity: 'epic',
     name: 'Piksel Voxel Blok',
@@ -2749,10 +2726,10 @@ export const LIVERIES: LiverySpec[] = [
   {
     id: 'animGoldenDragon',
     rarity: 'legendary',
-    name: 'Altın Ejderha Pulu',
-    subtitle: 'Obsidyen ejderha pulları üzerinde akan erimiş 24K altın enerji dalgaları',
+    name: 'Altın Ejderha',
+    subtitle: 'Kızıl-obsidyen kabartma ejderha pulları, imparatorluk altın ejderha silueti ve akan 24K alev dalgaları',
     priceGold: 2550,
-    accentSwatch: 'linear-gradient(135deg, #0c0a09 0%, #b45309 42%, #facc15 72%, #fef08a 100%)',
+    accentSwatch: 'linear-gradient(135deg, #1c0705 0%, #991b1b 34%, #f59e0b 68%, #fef08a 100%)',
     category: 'animated',
     overridesBaseColor: true,
     animated: true,
@@ -2778,22 +2755,12 @@ export const LIVERIES: LiverySpec[] = [
     overridesBaseColor: true,
   },
   {
-    id: 'pepperoniPizza',
-    rarity: 'rare',
-    name: 'Sıcak Pizza',
-    subtitle: 'Çıtır kenarlı erimiş peynir gövde, dilim pepperoni, zeytin ve taze fesleğen',
-    priceGold: 450,
-    accentSwatch: 'linear-gradient(135deg, #b45309 0%, #facc15 48%, #dc2626 75%, #16a34a 100%)',
-    category: 'fullWrap',
-    overridesBaseColor: true,
-  },
-  {
     id: 'toyCarBlocks',
     rarity: 'rare',
     name: 'Oyuncak Araba',
-    subtitle: 'Parlak plastik blok renkleri, kabartmalı oyuncak çivileri ve eğlenceli yıldızlar',
+    subtitle: 'Parlak plastik yapı blokları, 3D lego çıkıntıları, #01 yarış rozeti ve oyuncak alev şeritleri',
     priceGold: 480,
-    accentSwatch: 'linear-gradient(135deg, #ef4444 0%, #facc15 45%, #2563eb 78%, #22c55e 100%)',
+    accentSwatch: 'linear-gradient(135deg, #ef4444 0%, #facc15 40%, #2563eb 74%, #22c55e 100%)',
     category: 'fullWrap',
     overridesBaseColor: true,
   },
@@ -2841,9 +2808,9 @@ export const LIVERIES: LiverySpec[] = [
     id: 'animComicSpeed',
     rarity: 'legendary',
     name: 'Manga Hız Çizgileri',
-    subtitle: 'Anime drift sahnesi gibi gövdede hızla akan siyah-beyaz ve neon hız çizgileri',
+    subtitle: 'Initial-D tarzı yüksek kontrastlı siyah-beyaz manga mürekkep taraması, halftone noktalar ve hızla akan neon şok çizgileri',
     priceGold: 2180,
-    accentSwatch: 'linear-gradient(180deg, #09090b 0%, #f8fafc 42%, #22d3ee 72%, #f43f5e 100%)',
+    accentSwatch: 'linear-gradient(180deg, #f8fafc 0%, #09090b 46%, #06b6d4 76%, #f43f5e 100%)',
     category: 'animated',
     overridesBaseColor: true,
     animated: true,
@@ -2893,9 +2860,9 @@ export const LIVERIES: LiverySpec[] = [
     id: 'animVenomSymbiote',
     rarity: 'legendary',
     name: 'Simbiyot (Venom)',
-    subtitle: 'Parlak canlı siyah organik doku, kaputta keskin beyaz gözler ve örümcek damarları',
+    subtitle: 'Islak siyah-lacivert kaslı simbiyot gövde, kaputta yırtıcı beyaz gözler, örümcek arması ve canlı sürünen damarlar',
     priceGold: 2480,
-    accentSwatch: 'linear-gradient(135deg, #050507 0%, #18181b 56%, #f8fafc 78%, #09090b 100%)',
+    accentSwatch: 'linear-gradient(135deg, #030306 0%, #1e1b4b 42%, #f8fafc 74%, #09090b 100%)',
     category: 'animated',
     overridesBaseColor: true,
     animated: true,
@@ -2942,16 +2909,6 @@ export const LIVERIES: LiverySpec[] = [
     overridesBaseColor: true,
   },
   {
-    id: 'jojaMartCorp',
-    rarity: 'rare',
-    name: 'JojaMart Kurumsal',
-    subtitle: 'Joja mavisi kurumsal filo şeritleri, JOJA logosu ve "Hayatı İyileştirin" mizahi kaplama',
-    priceGold: 460,
-    accentSwatch: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 52%, #f8fafc 74%, #38bdf8 100%)',
-    category: 'fullWrap',
-    overridesBaseColor: true,
-  },
-  {
     id: 'mysteryMachine',
     rarity: 'epic',
     name: 'Gizem Makinesi',
@@ -2975,9 +2932,20 @@ export const LIVERIES: LiverySpec[] = [
     id: 'omnitrixAlien',
     rarity: 'legendary',
     name: 'Omnitrix',
-    subtitle: 'Siyah-beyaz keskin fütüristik zırh çizgileri ve kaputta parlayan neon yeşil kum saati',
+    subtitle: 'Siyah-beyaz uzaylı teknoloji zırhı, kaputta parlayan kum saati çekirdeği ve gövdede akan canlı DNA enerji dalgaları',
     priceGold: 2320,
-    accentSwatch: 'linear-gradient(135deg, #09090b 0%, #f8fafc 38%, #22c55e 70%, #86efac 100%)',
+    accentSwatch: 'linear-gradient(135deg, #09090b 0%, #f8fafc 32%, #22c55e 66%, #bbf7d0 100%)',
+    category: 'animated',
+    overridesBaseColor: true,
+    animated: true,
+  },
+  {
+    id: 'animCrysisNanosuit',
+    rarity: 'legendary',
+    name: 'Nanosuit 2.0 (Crysis)',
+    subtitle: 'Yapay karbon kas lifli Nanosuit zırhı, kızıl vizör yarığı ve gövdede dalgalanan Maksimum Zırh altıgen kalkanı',
+    priceGold: 2360,
+    accentSwatch: 'linear-gradient(135deg, #090c12 0%, #334155 36%, #38bdf8 66%, #ef4444 92%)',
     category: 'animated',
     overridesBaseColor: true,
     animated: true,
@@ -4904,11 +4872,9 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     id: 'carbonD',
     rarity: 'epic',
     name: 'Karbon D-Kesim',
-    subtitle: 'Altı düz karbon simit ve canlı üst RPM LED ışıkları',
+    subtitle: 'Altı düz dövme karbon simit, kırmızı 12-saat şeridi ve spor göbek',
     priceGold: 460,
-    swatch: 'linear-gradient(135deg, #111827 0%, #374151 60%, #22c55e 100%)',
-    hasShiftLeds: true,
-    animated: true,
+    swatch: 'linear-gradient(135deg, #111827 0%, #374151 60%, #dc2626 100%)',
   },
   {
     id: 'camoTactical',
@@ -4939,7 +4905,7 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     id: 'f1Yoke',
     rarity: 'epic',
     name: 'F1 Formula Yoke',
-    subtitle: 'Kelebek Formula direksiyonu, dijital ekran ve RPM LED',
+    subtitle: 'Kelebek Formula direksiyonu, dijital ekran ve özel canlı RPM LED barı',
     priceGold: 620,
     swatch: 'linear-gradient(135deg, #0f172a 0%, #ef4444 55%, #38bdf8 100%)',
     hasShiftLeds: true,
@@ -4957,20 +4923,18 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     id: 'cyberTron',
     rarity: 'legendary',
     name: 'Siber Tron',
-    subtitle: 'Altıgen siyah gövde, atan cyan ışık hatları ve RPM LED',
+    subtitle: 'Altıgen siyah gövde ve nabız atan cyan ışık hatları',
     priceGold: 860,
     swatch: 'linear-gradient(135deg, #09090b 0%, #06b6d4 55%, #38bdf8 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
     id: 'magmaCore',
     rarity: 'legendary',
     name: 'İnferno Lav',
-    subtitle: 'Obsidyen simit, nefes alan lav damarları ve kızıl LED',
+    subtitle: 'Obsidyen simit, nefes alan lav damarları ve kor çekirdek',
     priceGold: 940,
     swatch: 'linear-gradient(135deg, #1c0a06 0%, #dc2626 52%, #facc15 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
@@ -4980,27 +4944,24 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: 'Çift boynuzlu jet kumandası, radar ekranı ve ateş tetiği',
     priceGold: 1050,
     swatch: 'linear-gradient(135deg, #1e293b 0%, #10b981 60%, #ef4444 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
     id: 'rgbPrismWheel',
     rarity: 'legendary',
     name: 'RGB Prizma Yarış',
-    subtitle: 'Gökkuşağı spektrumunda dönen iç neon halka ve 9 RPM LED',
+    subtitle: 'Gökkuşağı spektrumunda dönen iç neon halka ve karbon gövde',
     priceGold: 1180,
     swatch: 'linear-gradient(90deg, #ef4444, #f59e0b, #22c55e, #06b6d4, #a855f7)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
     id: 'hyperHolo',
     rarity: 'legendary',
     name: 'Hiper Hologram',
-    subtitle: 'Yüzen saydam holo-ark simit, dönen çekirdek ve RPM LED',
+    subtitle: 'Yüzen saydam holo-ark simit ve dönen enerji çekirdeği',
     priceGold: 1380,
     swatch: 'linear-gradient(135deg, #22d3ee 0%, #818cf8 55%, #e879f9 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
@@ -5010,18 +4971,15 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: 'Seviye 45 Özel · Altın merkez şeritli dövme karbon GT direksiyonu',
     priceGold: 0,
     swatch: 'linear-gradient(135deg, #111827 0%, #374151 55%, #facc15 100%)',
-    hasShiftLeds: true,
-    animated: true,
     levelRoadLevel: 45,
   },
   {
     id: 'apexEmperorWheel',
     rarity: 'legendary',
     name: 'İmparator Altın Yoke',
-    subtitle: 'Seviye 92 Özel · Kızıl-altın Formula yoke ve canlı RPM barı',
+    subtitle: 'Seviye 92 Özel · Kızıl-altın Formula yoke ve yakut ışıklı tutamaklar',
     priceGold: 0,
     swatch: 'linear-gradient(135deg, #450a0a 0%, #facc15 55%, #f43f5e 100%)',
-    hasShiftLeds: true,
     animated: true,
     levelRoadLevel: 92,
   },
@@ -5053,20 +5011,18 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     id: 'emeraldCarbon',
     rarity: 'epic',
     name: 'Zümrüt Karbon GT',
-    subtitle: 'Karbon D-kesim simit, zümrüt neon şerit ve 9 RPM LED',
+    subtitle: 'Karbon D-kesim simit ve nabız atan zümrüt neon iç şerit',
     priceGold: 740,
     swatch: 'linear-gradient(135deg, #09090b 0%, #10b981 62%, #6ee7b7 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
     id: 'plasmaYoke',
     rarity: 'legendary',
     name: 'Plazma Fütürist Yoke',
-    subtitle: 'Atan mor-camgöbeği plazma kelebek kumanda ve 9 RPM LED',
+    subtitle: 'Atan mor-camgöbeği plazma kelebek kumanda ve dönen kristal çekirdek',
     priceGold: 1280,
     swatch: 'linear-gradient(135deg, #1e1b4b 0%, #a855f7 52%, #22d3ee 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
@@ -5084,7 +5040,6 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: '8-bit küp bloklardan oluşan retro voxel simit ve elmas piksel göbek',
     priceGold: 760,
     swatch: 'linear-gradient(135deg, #18181b 0%, #22c55e 48%, #22d3ee 100%)',
-    hasShiftLeds: true,
   },
   {
     id: 'obsidianMagma',
@@ -5093,7 +5048,6 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: 'Kırık obsidyen kaya zırhı, erimiş lav çatlakları ve dönen volkan çekirdeği',
     priceGold: 1150,
     swatch: 'linear-gradient(135deg, #0c0a0f 0%, #dc2626 48%, #facc15 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
@@ -5103,7 +5057,6 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: 'Zırhlı tehlike turuncusu HEV Mark IV/V direksiyonu, ortada ışıklı λ amblemi',
     priceGold: 1320,
     swatch: 'linear-gradient(135deg, #18181b 0%, #f97316 55%, #facc15 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
@@ -5121,7 +5074,6 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: 'Minecraft meşe blok voxel simit, yan demir alet pikselleri ve 3×3 üretim ızgarası',
     priceGold: 790,
     swatch: 'linear-gradient(135deg, #5c3a1e 0%, #c89e66 52%, #94a3b8 100%)',
-    hasShiftLeds: true,
   },
   {
     id: 'aperturePortal',
@@ -5130,7 +5082,6 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: 'Mavi-turuncu portal halkalı beyaz laboratuvar simidi ve 8 kanatlı Aperture logosu',
     priceGold: 1240,
     swatch: 'linear-gradient(135deg, #0284c7 0%, #f8fafc 50%, #f97316 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
   {
@@ -5140,7 +5091,6 @@ export const STEERING_WHEELS: SteeringWheelSpec[] = [
     subtitle: 'Portal 2 Wheatley kişilik çekirdeği, dönen mavi optik göz ve ray tutamakları',
     priceGold: 1290,
     swatch: 'linear-gradient(135deg, #1e293b 0%, #e2e8f0 48%, #38bdf8 100%)',
-    hasShiftLeds: true,
     animated: true,
   },
 ];

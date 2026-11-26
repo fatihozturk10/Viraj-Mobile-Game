@@ -791,6 +791,10 @@ export class HighwayEngine {
   private garageKeyLight: THREE.PointLight | null = null;
   private garageRimLight: THREE.PointLight | null = null;
   private garageBrightMode = false;
+  // LRU cache of built PlayerCarRigs while browsing the Garage (flushed on exit so 0 extra RAM during gameplay)
+  private garageCarCache: Map<CarModelId, PlayerCarRig> = new Map();
+  private readonly maxGarageCarCacheSize = 6;
+  private garagePrewarmTimer: number | null = null;
 
   // 3D Record Checkpoint Arch & Waving Flags
   private recordMarkerGroup: THREE.Group;
@@ -2129,31 +2133,140 @@ export class HighwayEngine {
     this.cockpit.paintMaterial.color.setHex(opt.hex);
   }
 
+  private cancelGaragePrewarm(): void {
+    if (this.garagePrewarmTimer !== null) {
+      window.clearTimeout(this.garagePrewarmTimer);
+      this.garagePrewarmTimer = null;
+    }
+  }
+
+  private parkCarInGarageCache(modelId: CarModelId, rig: PlayerCarRig): void {
+    const existing = this.garageCarCache.get(modelId);
+    if (existing && existing !== rig) {
+      existing.dispose();
+    }
+    this.garageCarCache.delete(modelId);
+    this.garageCarCache.set(modelId, rig);
+
+    while (this.garageCarCache.size > this.maxGarageCarCacheSize) {
+      const oldestKey = this.garageCarCache.keys().next().value as
+        | CarModelId
+        | undefined;
+      if (!oldestKey) break;
+      const oldestRig = this.garageCarCache.get(oldestKey);
+      this.garageCarCache.delete(oldestKey);
+      if (oldestRig && oldestRig !== this.playerCar) {
+        oldestRig.dispose();
+      }
+    }
+  }
+
+  private clearGarageCarCache(): void {
+    this.cancelGaragePrewarm();
+    for (const rig of this.garageCarCache.values()) {
+      if (rig !== this.playerCar) {
+        rig.dispose();
+      }
+    }
+    this.garageCarCache.clear();
+  }
+
+  private scheduleGarageAdjacentPrewarm(): void {
+    this.cancelGaragePrewarm();
+    if (this.phase !== 'garage' || this.disposed) return;
+
+    const total = CAR_MODELS.length;
+    if (total <= 1) return;
+    const curIdx = CAR_MODELS.findIndex((m) => m.id === this.carModelId);
+    if (curIdx < 0) return;
+
+    const candidates: CarModelId[] = [
+      CAR_MODELS[(curIdx + 1) % total].id,
+      CAR_MODELS[(curIdx - 1 + total) % total].id,
+    ].filter(
+      (cid, i, arr) =>
+        cid !== this.carModelId &&
+        arr.indexOf(cid) === i &&
+        !this.garageCarCache.has(cid),
+    );
+    if (candidates.length === 0) return;
+
+    let stepIdx = 0;
+    const runStep = () => {
+      this.garagePrewarmTimer = null;
+      if (this.phase !== 'garage' || this.disposed) return;
+      if (this.garageDragging) {
+        this.garagePrewarmTimer = window.setTimeout(runStep, 180);
+        return;
+      }
+      const targetId = candidates[stepIdx];
+      if (!targetId) return;
+      if (targetId !== this.carModelId && !this.garageCarCache.has(targetId)) {
+        const paintHex =
+          CAR_COLORS.find((c) => c.id === this.carColorId)?.hex ?? 0xf4f4f5;
+        const prebuilt = createPlayerCar(
+          targetId,
+          paintHex,
+          this.textures.contactShadowMap,
+          this.isSoftwareGl,
+          this.licensePlate,
+          this.carWheels[targetId],
+          this.carCustom[targetId],
+        );
+        this.parkCarInGarageCache(targetId, prebuilt);
+      }
+      stepIdx++;
+      if (stepIdx < candidates.length) {
+        this.garagePrewarmTimer = window.setTimeout(runStep, 220);
+      }
+    };
+
+    this.garagePrewarmTimer = window.setTimeout(runStep, 180);
+  }
+
   public setCarModel(id: CarModelId): void {
     if (this.carModelId === id) return;
+    const prevModelId = this.carModelId;
     this.carModelId = id;
     this.carSpec = CAR_MODELS.find((m) => m.id === id) || CAR_MODELS[0];
     this.audio.setCarProfile(id);
+    this.cancelGaragePrewarm();
 
     const oldPos = this.playerCar.root.position.clone();
     const oldQuat = this.playerCar.root.quaternion.clone();
     this.scene.remove(this.playerCar.root);
-    this.playerCar.dispose();
+    if (this.phase === 'garage') {
+      this.parkCarInGarageCache(prevModelId, this.playerCar);
+    } else {
+      this.playerCar.dispose();
+    }
 
     const paintHex =
       CAR_COLORS.find((c) => c.id === this.carColorId)?.hex ?? 0xf4f4f5;
-    this.playerCar = createPlayerCar(
-      this.carModelId,
-      paintHex,
-      this.textures.contactShadowMap,
-      this.isSoftwareGl,
-      this.licensePlate,
-      this.carWheels[this.carModelId],
-      this.carCustom[this.carModelId],
-    );
+    const cachedRig = this.garageCarCache.get(id);
+    if (cachedRig) {
+      this.garageCarCache.delete(id);
+      this.playerCar = cachedRig;
+      this.playerCar.setPaintColor(paintHex);
+      this.playerCar.setLicensePlate(this.licensePlate);
+      const wheelCfg = this.carWheels[this.carModelId];
+      this.playerCar.setWheelConfig(wheelCfg.style, wheelCfg.color);
+      this.playerCar.setCustomConfig(this.carCustom[this.carModelId]);
+    } else {
+      this.playerCar = createPlayerCar(
+        this.carModelId,
+        paintHex,
+        this.textures.contactShadowMap,
+        this.isSoftwareGl,
+        this.licensePlate,
+        this.carWheels[this.carModelId],
+        this.carCustom[this.carModelId],
+      );
+    }
     if (this.phase === 'garage') {
       this.playerCar.root.position.set(0, 0.01, 0);
       this.playerCar.root.quaternion.identity();
+      this.playerCar.chassisGroup.rotation.set(0, 0, 0);
       this.playerCar.root.visible = true;
       this.playerCar.frontLeftPivot.rotation.y = 0.22;
       this.playerCar.frontRightPivot.rotation.y = 0.22;
@@ -2164,9 +2277,12 @@ export class HighwayEngine {
     this.scene.add(this.playerCar.root);
     this.previewCustomOverride = null;
     this.syncActiveEffectColors(this.carCustom[this.carModelId]);
-    this.applyAtmosphere(this.atmosphereId);
     if (this.phase === 'garage') {
       this.applyGarageShowroomHeadlights();
+      this.applyGarageLighting();
+      this.scheduleGarageAdjacentPrewarm();
+    } else {
+      this.applyAtmosphere(this.atmosphereId);
     }
     if (this.unlockedCars.has(id) && this.rentedCarModel !== id) {
       this.equippedCarModel = id;
@@ -3957,6 +4073,7 @@ export class HighwayEngine {
     );
     this.callbacks.onPhaseChange('garage');
     this.callbacks.onMusicChange?.(this.audio.getMusicState());
+    this.scheduleGarageAdjacentPrewarm();
   }
 
   private applyGarageShowroomHeadlights(): void {
@@ -4161,6 +4278,7 @@ export class HighwayEngine {
     this.audio.setCarProfile(this.carModelId);
     this.audio.startMusicIfEnabled();
     this.audio.setRainActive(this.isRainAudioActiveNow());
+    this.clearGarageCarCache();
     this.garageGroup.visible = false;
     this.cockpit.root.visible = false;
     this.cockpit.root.position.set(0, 0, 0);
@@ -4235,6 +4353,7 @@ export class HighwayEngine {
     this.weatherSnowLevel = 0;
     this.weatherSandLevel = 0;
     this.applyAtmosphere(this.atmosphereId);
+    this.clearGarageCarCache();
     this.garageGroup.visible = false;
     this.cockpit.root.visible = false;
     this.cockpit.root.position.set(0, 0, 0);
@@ -9930,6 +10049,7 @@ export class HighwayEngine {
     this.audio.dispose();
     this.road.dispose();
     this.roadEvents.dispose();
+    this.clearGarageCarCache();
     this.playerCar.dispose();
     this.cockpit.dispose();
     for (const pu of this.policeUnits) {
