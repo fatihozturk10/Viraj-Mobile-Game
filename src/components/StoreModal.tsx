@@ -401,22 +401,25 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
     return (
       <div
         onPointerDown={(e) => e.stopPropagation()}
-        className="pointer-events-auto fixed inset-0 z-50 flex items-end justify-center bg-black/84 p-0 sm:items-center sm:p-4"
+        className="pointer-events-auto fixed inset-0 z-50 flex items-end justify-center bg-black/86 p-0 sm:items-center sm:p-4"
       >
-        <div className="animate-sheet-up relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl border-t border-white/14 bg-zinc-950 shadow-2xl sm:max-h-[92vh] sm:w-[min(96vw,940px)] sm:rounded-2xl sm:border">
+        <div className="animate-sheet-up ug-sheet relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border-t sm:ug-cut sm:max-h-[92vh] sm:w-[min(96vw,940px)] sm:rounded-none sm:border">
           {/* Mobile grab handle */}
           <div className="flex justify-center pt-2.5 pb-1 sm:hidden">
-            <span className="h-1 w-10 rounded-full bg-white/20" />
+            <span className="h-1 w-10 rounded-full bg-orange-400/45" />
           </div>
 
           {/* Top Header */}
-          <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-950 px-4 py-3 sm:px-6 sm:py-3.5">
+          <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-[#0b0d14]/90 px-4 py-3 sm:px-6 sm:py-3.5">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 shrink-0">
+              <div className="ug-cut-sm flex h-11 w-11 items-center justify-center border border-orange-500/40 bg-orange-500/18 text-orange-400 shrink-0">
                 <ShoppingBag className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <h2 className="font-display text-lg font-extrabold tracking-tight text-white sm:text-xl truncate">
+                <div className="font-display text-[10px] font-bold tracking-[0.18em] text-orange-400 uppercase">
+                  UNDERGROUND // MARKET
+                </div>
+                <h2 className="font-display italic text-lg font-extrabold uppercase tracking-wide text-white sm:text-xl truncate">
                   Viraj Market
                 </h2>
                 <div className="flex flex-wrap items-center gap-x-2 text-xs text-zinc-400">
@@ -430,12 +433,12 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <div
                 title="Elmas Bakiyesi"
-                className="flex h-11 items-center gap-1.5 rounded-xl border border-cyan-400/35 bg-cyan-950/50 px-2.5 sm:px-3 text-sm font-bold text-cyan-200 font-mono-num"
+                className="ug-cut-sm flex h-11 items-center gap-1.5 border border-cyan-400/40 bg-[#0a1420] px-2.5 sm:px-3 text-sm font-bold text-cyan-200 font-mono-num"
               >
                 <Gem className="h-4 w-4 text-cyan-400 shrink-0" />
                 <span>{diamonds.toLocaleString('tr-TR')}</span>
               </div>
-              <div className="flex h-11 items-center gap-1.5 rounded-xl border border-amber-400/30 bg-zinc-900 px-2.5 sm:px-3 text-sm font-bold text-amber-300 font-mono-num">
+              <div className="ug-cut-sm flex h-11 items-center gap-1.5 border border-amber-400/35 bg-[#121622] px-2.5 sm:px-3 text-sm font-bold text-amber-300 font-mono-num">
                 <Coins className="h-4 w-4 text-amber-400 shrink-0" />
                 <span>{goldCoins.toLocaleString('tr-TR')}</span>
               </div>
@@ -443,7 +446,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                 type="button"
                 onClick={onClose}
                 aria-label="Marketi Kapat"
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 bg-zinc-900 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
+                className="ug-cut-sm ug-btn-metal flex h-11 w-11 items-center justify-center cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -451,8 +454,8 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
           </div>
 
           {/* 4-Tab Navigation Bar */}
-          <div className="border-b border-white/10 bg-zinc-900/50 px-3.5 py-2.5 sm:px-6">
-            <div className="grid grid-cols-4 gap-1.5 rounded-xl bg-zinc-900 p-1">
+          <div className="border-b border-white/10 bg-[#0e111a] px-3.5 py-2.5 sm:px-6">
+            <div className="ug-cut-sm grid grid-cols-4 gap-1.5 border border-white/10 bg-[#090b12] p-1">
               {(
                 [
                   { id: 'bundles', label: 'Paketler', icon: Crown },
@@ -468,9 +471,9 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex min-h-[46px] flex-col items-center justify-center gap-1 rounded-lg px-1.5 py-1.5 text-xs font-bold whitespace-nowrap transition-colors cursor-pointer sm:min-h-[42px] sm:flex-row sm:gap-1.5 sm:px-2 sm:text-sm ${
+                    className={`ug-cut-sm flex min-h-[46px] flex-col items-center justify-center gap-1 px-1.5 py-1.5 font-display italic text-xs font-extrabold uppercase tracking-wide whitespace-nowrap transition-all cursor-pointer sm:min-h-[42px] sm:flex-row sm:gap-1.5 sm:px-2 sm:text-sm ${
                       active
-                        ? 'bg-amber-500 text-zinc-950'
+                        ? 'ug-tab-active'
                         : 'text-zinc-300 hover:text-white'
                     }`}
                   >
@@ -484,7 +487,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
 
           {/* Main Scrollable Catalog Body */}
           <div
-            className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5"
+            className="flex-1 overflow-y-auto custom-scroll px-4 py-4 sm:px-6 sm:py-5"
             style={{
               paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
             }}
@@ -492,15 +495,15 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
             {/* ONE-TIME WORLDWIDE PROMO / GIFT CODE REDEMPTION BAR */}
             <form
               onSubmit={handleRedeemPromo}
-              className="mb-5 rounded-2xl border border-amber-400/25 bg-zinc-900/75 p-3.5 sm:p-4"
+              className="ug-cut-sm ug-card mb-5 border-orange-500/30 p-3.5 sm:p-4"
             >
               <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 shrink-0">
+                  <div className="ug-cut-sm flex h-9 w-9 items-center justify-center border border-orange-400/35 bg-orange-500/18 text-orange-400 shrink-0">
                     <Ticket className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="font-display text-sm font-bold text-white">
+                    <div className="font-display italic text-sm font-bold uppercase tracking-wide text-white">
                       Tek Seferlik Kod Kullan
                     </div>
                     <p className="text-xs text-zinc-400">
@@ -523,12 +526,12 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                       autoCapitalize="characters"
                       autoCorrect="off"
                       spellCheck={false}
-                      className="h-11 min-w-0 flex-1 rounded-xl border border-white/15 bg-zinc-950 px-3.5 font-mono-num text-sm font-bold tracking-wider text-white placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-zinc-500 focus:border-amber-400/60 focus:outline-none"
+                      className="ug-cut-sm h-11 min-w-0 flex-1 border border-white/15 bg-[#090b12] px-3.5 font-mono-num text-sm font-bold tracking-wider text-white placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-zinc-500 focus:border-orange-500/70 focus:outline-none"
                     />
                     <button
                       type="submit"
                       disabled={redeemingPromo || !promoInput.trim()}
-                      className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 font-display text-sm font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 disabled:opacity-45 whitespace-nowrap cursor-pointer shrink-0"
+                      className="ug-cut-sm ug-btn-fire flex h-11 items-center justify-center gap-1.5 px-4 font-display italic text-sm font-extrabold uppercase tracking-wider disabled:opacity-45 whitespace-nowrap cursor-pointer shrink-0"
                     >
                       {redeemingPromo ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -542,12 +545,12 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     type="button"
                     onClick={handleGoogleSignIn}
                     disabled={signingIn}
-                    className="flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-zinc-100 px-4 text-sm font-bold text-zinc-950 transition-colors hover:bg-white disabled:opacity-60 whitespace-nowrap cursor-pointer shrink-0"
+                    className="ug-cut-sm ug-btn-metal flex h-11 w-full sm:w-auto items-center justify-center gap-2 px-4 font-display text-xs sm:text-sm font-bold uppercase tracking-wide disabled:opacity-60 whitespace-nowrap cursor-pointer shrink-0"
                   >
                     {signingIn ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <ShieldCheck className="h-4 w-4" />
+                      <ShieldCheck className="h-4 w-4 text-orange-400" />
                     )}
                     <span>Kod İçin Google ile Giriş</span>
                   </button>
@@ -555,7 +558,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
               </div>
 
               {promoError && (
-                <div className="mt-2.5 rounded-xl border border-rose-400/35 bg-rose-500/12 px-3 py-2 text-xs font-medium text-rose-200">
+                <div className="ug-cut-sm mt-2.5 border border-rose-400/35 bg-rose-500/12 px-3 py-2 text-xs font-medium text-rose-200">
                   {promoError}
                 </div>
               )}
@@ -574,7 +577,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
               return (
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                    <h3 className="font-display text-base font-bold text-white sm:text-lg">
+                    <h3 className="font-display italic text-base font-bold uppercase tracking-wide text-white sm:text-lg">
                       Özel Paketler ve Kalıcı Ayrıcalıklar
                     </h3>
                     <p className="text-xs text-zinc-400">
@@ -583,9 +586,9 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                   </div>
 
                   {availableBundles.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-emerald-400/30 bg-emerald-500/8 px-6 py-12 text-center">
+                    <div className="ug-cut ug-card flex flex-col items-center justify-center gap-2.5 border-emerald-400/35 px-6 py-12 text-center">
                       <CheckCircle2 className="h-9 w-9 text-emerald-400" />
-                      <div className="font-display text-base font-extrabold text-white">
+                      <div className="font-display italic text-base font-extrabold uppercase text-white">
                         Tüm Tek Seferlik Paketlere Sahipsin!
                       </div>
                       <p className="max-w-sm text-xs text-zinc-300">
@@ -597,24 +600,24 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                       {availableBundles.map((bundle) => (
                         <div
                           key={bundle.sku}
-                          className={`flex flex-col overflow-hidden rounded-2xl border ${bundle.accentBorderClass} bg-zinc-900/75`}
+                          className={`ug-cut flex flex-col overflow-hidden border ${bundle.accentBorderClass} bg-[#131722]`}
                         >
-                          <div className="relative h-44 w-full overflow-hidden bg-zinc-950">
+                          <div className="relative h-44 w-full overflow-hidden bg-[#090b12]">
                             <ResilientArt
                               src={bundle.imageUrl}
                               alt={bundle.title}
                               className="h-full w-full object-cover object-center"
                               fallbackIcon={<Crown className="h-10 w-10" />}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/35 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#131722] via-black/35 to-transparent" />
                             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-2">
                               <div className="min-w-0">
                                 <div
-                                  className={`text-xs font-semibold ${bundle.accentTextClass}`}
+                                  className={`font-display text-xs font-bold uppercase tracking-wider ${bundle.accentTextClass}`}
                                 >
                                   {bundle.subtitle}
                                 </div>
-                                <h4 className="font-display text-lg font-extrabold text-white truncate">
+                                <h4 className="font-display italic text-lg font-extrabold uppercase text-white truncate">
                                   {bundle.title}
                                 </h4>
                               </div>
@@ -624,7 +627,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                                     {formatPriceTry(bundle.compareAtTry)}
                                   </div>
                                 )}
-                                <div className="font-mono-num font-display text-lg font-extrabold text-white">
+                                <div className="font-mono-num font-display italic text-lg font-extrabold text-white">
                                   {formatPriceTry(bundle.priceTry)}
                                 </div>
                               </div>
@@ -642,7 +645,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                                     key={line}
                                     className="flex items-start gap-2"
                                   >
-                                    <Check className="mt-0.5 h-3.5 w-3.5 text-amber-400 shrink-0" />
+                                    <Check className="mt-0.5 h-3.5 w-3.5 text-orange-400 shrink-0" />
                                     <span>{line}</span>
                                   </li>
                                 ))}
@@ -652,7 +655,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                             <button
                               type="button"
                               onClick={() => startBundleCheckout(bundle)}
-                              className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 font-display text-base font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 cursor-pointer"
+                              className="ug-cut ug-btn-fire flex min-h-[50px] w-full items-center justify-center gap-2 px-4 font-display italic text-base font-extrabold uppercase tracking-wider cursor-pointer"
                             >
                               <span>Satın Al</span>
                               <span aria-hidden="true">·</span>
@@ -673,7 +676,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
             {activeTab === 'crates' && (
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                  <h3 className="font-display text-base font-bold text-white sm:text-lg">
+                  <h3 className="font-display italic text-base font-bold uppercase tracking-wide text-white sm:text-lg">
                     Otomotiv Kasaları
                   </h3>
                   <p className="text-xs text-zinc-400">
@@ -687,19 +690,19 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     return (
                       <div
                         key={crate.tierId}
-                        className={`flex flex-col overflow-hidden rounded-2xl border ${crate.borderClass} bg-zinc-900/75`}
+                        className={`ug-cut flex flex-col overflow-hidden border ${crate.borderClass} bg-[#131722]`}
                       >
-                        <div className="relative aspect-square w-full overflow-hidden bg-zinc-950">
+                        <div className="relative aspect-square w-full overflow-hidden bg-[#090b12]">
                           <ResilientArt
                             src={crate.imageUrl}
                             alt={crate.title}
                             className="h-full w-full object-cover"
                             fallbackIcon={<Box className="h-12 w-12" />}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#131722] via-black/30 to-transparent" />
                           <div className="absolute bottom-3 left-4 right-4">
                             <h4
-                              className={`font-display text-lg font-extrabold ${crate.accentClass}`}
+                              className={`font-display italic text-lg font-extrabold uppercase ${crate.accentClass}`}
                             >
                               {crate.title}
                             </h4>
@@ -762,7 +765,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                             <button
                               type="button"
                               onClick={() => startCrateCheckout(crate, 1)}
-                              className="flex min-h-[48px] w-full items-center justify-between rounded-xl border border-white/15 bg-zinc-950 px-4 text-sm font-bold text-white transition-colors hover:bg-zinc-800 cursor-pointer"
+                              className="ug-cut-sm ug-btn-metal flex min-h-[48px] w-full items-center justify-between px-4 font-display italic text-sm font-bold uppercase tracking-wide cursor-pointer"
                             >
                               <span>1× Kasa Aç</span>
                               <span className="font-mono-num text-amber-300">
@@ -773,11 +776,11 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                             <button
                               type="button"
                               onClick={() => startCrateCheckout(crate, 3)}
-                              className="flex min-h-[50px] w-full items-center justify-between rounded-xl bg-amber-500 px-4 font-display text-sm font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 cursor-pointer"
+                              className="ug-cut ug-btn-fire flex min-h-[50px] w-full items-center justify-between px-4 font-display italic text-sm font-extrabold uppercase tracking-wider cursor-pointer"
                             >
                               <div className="flex items-center gap-1.5">
                                 <span>3× Kasa</span>
-                                <span className="text-xs font-semibold opacity-80">
+                                <span className="text-xs font-semibold opacity-90">
                                   · {crate.tripleSaveLabel}
                                 </span>
                               </div>
@@ -798,28 +801,28 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
             {activeTab === 'gold' && (
               <div className="flex flex-col gap-5">
                 {/* DIAMOND -> GOLD EXCHANGE SECTION */}
-                <div className="rounded-2xl border border-cyan-400/35 bg-gradient-to-br from-cyan-950/45 via-zinc-900/90 to-zinc-950 p-4 sm:p-5">
+                <div className="ug-cut border border-cyan-400/35 bg-gradient-to-br from-cyan-950/40 via-[#121622] to-[#0b0d14] p-4 sm:p-5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+                      <div className="inline-flex items-center gap-1.5 font-display text-xs font-bold tracking-wider uppercase text-cyan-300">
                         <Gem className="h-4 w-4 text-cyan-400 shrink-0" />
                         <span>ELMAS TAKASI · ÜCRETSİZ ALTIN</span>
                       </div>
-                      <h3 className="mt-1 font-display text-lg font-extrabold text-white sm:text-xl">
+                      <h3 className="mt-1 font-display italic text-lg font-extrabold uppercase tracking-wide text-white sm:text-xl">
                         Elmas ile Altın Al
                       </h3>
                       <p className="mt-0.5 text-xs text-zinc-300">
                         Yolda sürerken nadir çıkan Elmasları anında Altına çevir.
                       </p>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-400/40 bg-zinc-950/90 px-3 py-2 font-mono-num text-sm font-extrabold text-cyan-200 shrink-0">
+                    <div className="ug-cut-sm inline-flex items-center gap-1.5 border border-cyan-400/40 bg-[#090c14] px-3 py-2 font-mono-num text-sm font-extrabold text-cyan-200 shrink-0">
                       <Gem className="h-4 w-4 text-cyan-400" />
                       <span>{diamonds.toLocaleString('tr-TR')} Elmas</span>
                     </div>
                   </div>
 
                   {exchangeNotice && (
-                    <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-400/45 bg-emerald-500/15 px-3.5 py-2.5 text-xs font-bold text-emerald-200">
+                    <div className="ug-cut-sm mt-3 flex items-center gap-2 border border-emerald-400/45 bg-emerald-500/15 px-3.5 py-2.5 text-xs font-bold text-emerald-200">
                       <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                       <span>{exchangeNotice}</span>
                     </div>
@@ -831,25 +834,25 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                       return (
                         <div
                           key={pack.id}
-                          className="flex flex-col justify-between gap-3.5 rounded-2xl border border-white/10 bg-zinc-950/75 p-3.5 transition-colors"
+                          className="ug-cut-sm ug-card flex flex-col justify-between gap-3.5 p-3.5 transition-colors"
                         >
                           <div>
                             <div className="flex items-baseline justify-between gap-2 text-xs">
-                              <span className="font-semibold text-zinc-200">
+                              <span className="font-display font-bold uppercase tracking-wide text-zinc-200">
                                 {pack.title}
                               </span>
                               {pack.bonusLabel && (
-                                <span className="font-bold text-cyan-300">
+                                <span className="font-mono-num font-bold text-cyan-300">
                                   {pack.bonusLabel}
                                 </span>
                               )}
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                               <Coins className="h-5 w-5 text-amber-400 shrink-0" />
-                              <span className="font-display text-2xl font-extrabold text-white font-mono-num">
+                              <span className="font-display italic text-2xl font-extrabold text-white font-mono-num">
                                 {pack.goldAmount.toLocaleString('tr-TR')}
                               </span>
-                              <span className="text-xs font-semibold text-zinc-400">
+                              <span className="font-display text-xs font-bold uppercase text-zinc-400">
                                 Altın
                               </span>
                             </div>
@@ -862,10 +865,10 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                             type="button"
                             disabled={!canAfford}
                             onClick={() => handleExchangeDiamondPack(pack)}
-                            className={`flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl px-3 font-display text-sm font-extrabold font-mono-num transition-colors ${
+                            className={`ug-cut-sm flex min-h-[44px] w-full items-center justify-center gap-1.5 px-3 font-display italic text-sm font-extrabold uppercase tracking-wider font-mono-num transition-colors ${
                               canAfford
                                 ? 'border border-cyan-400/50 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-400 hover:text-zinc-950 cursor-pointer'
-                                : 'border border-white/8 bg-zinc-900 text-zinc-500 cursor-not-allowed'
+                                : 'border border-white/8 bg-[#0b0d14] text-zinc-500 cursor-not-allowed'
                             }`}
                           >
                             <Gem className="h-4 w-4 shrink-0" />
@@ -878,7 +881,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                 </div>
 
                 {/* Vault Showcase Banner */}
-                <div className="relative overflow-hidden rounded-2xl border border-amber-400/30 bg-zinc-900">
+                <div className="ug-cut relative overflow-hidden border border-orange-500/35 bg-[#121622]">
                   <div className="grid grid-cols-1 items-stretch sm:grid-cols-5">
                     <div className="relative h-36 sm:col-span-2 sm:h-auto">
                       <ResilientArt
@@ -887,14 +890,14 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                         className="h-full w-full object-cover"
                         fallbackIcon={<Coins className="h-10 w-10" />}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-900/20 to-zinc-900 hidden sm:block" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent sm:hidden" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#121622]/25 to-[#121622] hidden sm:block" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#121622] to-transparent sm:hidden" />
                     </div>
                     <div className="flex flex-col justify-center gap-1.5 p-4 sm:col-span-3 sm:p-5">
-                      <div className="text-xs font-semibold text-amber-400">
+                      <div className="font-display text-xs font-bold uppercase tracking-wider text-orange-400">
                         Anında Teslimat · Garaj ve Modifiye Kasası
                       </div>
-                      <h3 className="font-display text-xl font-extrabold text-white">
+                      <h3 className="font-display italic text-xl font-extrabold uppercase tracking-wide text-white">
                         Altın Kasaları
                       </h3>
                       <p className="text-xs leading-relaxed text-zinc-300">
@@ -905,20 +908,20 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                   </div>
                 </div>
 
-                {/* 6 Gold Tiers Grid */}
+                {/* 6 Gold Tiers Grid (Uniform Card & Button Style) */}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {GOLD_PACKS.map((pack) => (
                     <div
                       key={pack.sku}
-                      className="flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-zinc-900/75 p-4 transition-colors"
+                      className="ug-cut-sm ug-card flex flex-col justify-between gap-4 p-4 transition-colors"
                     >
                       <div>
                         <div className="flex items-baseline justify-between gap-2 text-xs">
-                          <span className="font-semibold text-zinc-300">
+                          <span className="font-display font-bold uppercase tracking-wide text-zinc-300">
                             {pack.title}
                           </span>
                           {(pack.highlightLabel || pack.bonusLabel) && (
-                            <span className="font-semibold text-amber-300">
+                            <span className="font-display font-bold text-orange-300">
                               {[pack.highlightLabel, pack.bonusLabel]
                                 .filter(Boolean)
                                 .join(' · ')}
@@ -928,10 +931,10 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
 
                         <div className="mt-2.5 flex items-center gap-2">
                           <Coins className="h-6 w-6 text-amber-400 shrink-0" />
-                          <span className="font-display text-2xl font-extrabold text-white font-mono-num">
+                          <span className="font-display italic text-2xl font-extrabold text-white font-mono-num">
                             {pack.goldAmount.toLocaleString('tr-TR')}
                           </span>
-                          <span className="text-xs font-semibold text-zinc-400">
+                          <span className="font-display text-xs font-bold uppercase text-zinc-400">
                             Altın
                           </span>
                         </div>
@@ -943,7 +946,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                       <button
                         type="button"
                         onClick={() => startGoldCheckout(pack)}
-                        className="flex min-h-[48px] w-full items-center justify-center rounded-xl border border-amber-400/35 bg-zinc-950 px-4 font-display text-base font-extrabold text-amber-300 font-mono-num transition-colors hover:bg-amber-500 hover:text-zinc-950 cursor-pointer"
+                        className="ug-cut-sm flex min-h-[48px] w-full items-center justify-center border border-orange-500/40 bg-[#0b0d14] px-4 font-display italic text-base font-extrabold text-orange-300 font-mono-num transition-all hover:border-orange-400 hover:bg-orange-500 hover:text-white cursor-pointer"
                       >
                         {formatPriceTry(pack.priceTry)}
                       </button>
@@ -956,9 +959,9 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
             {/* TAB 4: RECEIPTS & CLOUD RESTORE */}
             {activeTab === 'history' && (
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-zinc-900/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="ug-cut-sm ug-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
-                    <div className="font-display text-sm font-bold text-white">
+                    <div className="font-display italic text-sm font-bold uppercase text-white">
                       {currentUser
                         ? `Bulut Yedekleme Açık · ${currentUser.displayName || 'Google Hesabı'}`
                         : 'Satın Alımlarını Google Hesabına Bağla'}
@@ -976,7 +979,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                         type="button"
                         onClick={handleGoogleSignIn}
                         disabled={signingIn}
-                        className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-xl bg-zinc-100 px-3.5 text-xs font-bold text-zinc-950 hover:bg-white cursor-pointer"
+                        className="ug-cut-sm ug-btn-fire flex min-h-[42px] items-center justify-center gap-1.5 px-3.5 font-display italic text-xs font-extrabold uppercase tracking-wider cursor-pointer"
                       >
                         {signingIn ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -991,7 +994,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                       type="button"
                       onClick={handleRestore}
                       disabled={restoring}
-                      className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-zinc-950 px-3.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800 cursor-pointer"
+                      className="ug-cut-sm ug-btn-metal flex min-h-[42px] items-center justify-center gap-1.5 px-3.5 font-display text-xs font-bold uppercase tracking-wide cursor-pointer"
                     >
                       <RefreshCw
                         className={`h-3.5 w-3.5 ${restoring ? 'animate-spin' : ''}`}
@@ -1002,7 +1005,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                 </div>
 
                 {restoreNotice && (
-                  <div className="rounded-xl border border-sky-400/35 bg-sky-500/10 px-3.5 py-2.5 text-xs font-medium text-sky-200">
+                  <div className="ug-cut-sm border border-sky-400/35 bg-sky-500/10 px-3.5 py-2.5 text-xs font-medium text-sky-200">
                     {restoreNotice}
                   </div>
                 )}
@@ -1023,9 +1026,9 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                 </div>
 
                 {entitlements.receipts.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-zinc-900/40 py-12 text-center">
+                  <div className="ug-cut-sm ug-card flex flex-col items-center justify-center gap-2 py-12 text-center">
                     <History className="h-7 w-7 text-zinc-500" />
-                    <div className="font-display text-sm font-bold text-zinc-200">
+                    <div className="font-display text-sm font-bold uppercase text-zinc-200">
                       Henüz satın alma makbuzu yok
                     </div>
                     <p className="max-w-xs text-xs text-zinc-400">
@@ -1034,7 +1037,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/8 overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60">
+                  <div className="ug-cut-sm ug-card divide-y divide-white/8 overflow-hidden">
                     {entitlements.receipts.map((receipt) => (
                       <div
                         key={receipt.orderId}
@@ -1059,7 +1062,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                             </span>
                           </div>
                         </div>
-                        <div className="font-mono-num font-display text-sm font-extrabold text-amber-300 shrink-0">
+                        <div className="font-mono-num font-display italic text-sm font-extrabold text-orange-300 shrink-0">
                           {formatPriceTry(receipt.priceTry)}
                         </div>
                       </div>
@@ -1074,20 +1077,20 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
           {checkoutItem && (
             <div
               onPointerDown={(e) => e.stopPropagation()}
-              className="absolute inset-0 z-20 flex items-end justify-center bg-black/84 p-0 sm:items-center sm:p-4"
+              className="absolute inset-0 z-20 flex items-end justify-center bg-black/86 p-0 sm:items-center sm:p-4"
             >
               <div
-                className="animate-sheet-up flex w-full flex-col rounded-t-3xl border-t border-amber-400/35 bg-zinc-950 p-5 shadow-2xl sm:max-w-md sm:rounded-2xl sm:border"
+                className="animate-sheet-up ug-sheet flex w-full flex-col rounded-t-2xl border-t p-5 sm:ug-cut sm:max-w-md sm:rounded-none sm:border"
                 style={{
                   paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
                 }}
               >
                 <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3.5">
                   <div>
-                    <div className="text-xs font-semibold text-amber-400">
+                    <div className="font-display text-xs font-bold uppercase tracking-wider text-orange-400">
                       Güvenli Ödeme Onayı
                     </div>
-                    <h3 className="mt-0.5 font-display text-lg font-extrabold text-white">
+                    <h3 className="mt-0.5 font-display italic text-lg font-extrabold uppercase text-white">
                       {checkoutItem.title}
                     </h3>
                     <p className="text-xs text-zinc-400">
@@ -1099,7 +1102,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     disabled={processing}
                     onClick={() => setCheckoutItem(null)}
                     aria-label="Ödemeyi İptal Et"
-                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 bg-zinc-900 text-zinc-300 hover:text-white cursor-pointer shrink-0"
+                    className="ug-cut-sm ug-btn-metal flex h-11 w-11 items-center justify-center cursor-pointer shrink-0"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -1107,7 +1110,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
 
                 {/* Payment Method Picker */}
                 <div className="mt-4 space-y-2">
-                  <div className="text-xs font-semibold text-zinc-300">
+                  <div className="font-display text-xs font-bold uppercase tracking-wide text-zinc-300">
                     Ödeme Yöntemi
                   </div>
                   <div className="space-y-1.5">
@@ -1119,16 +1122,16 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                           type="button"
                           disabled={processing}
                           onClick={() => setPaymentMethod(pm.id)}
-                          className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-colors cursor-pointer ${
+                          className={`ug-cut-sm flex w-full items-center justify-between gap-3 border px-3.5 py-2.5 text-left transition-colors cursor-pointer ${
                             selected
-                              ? 'border-amber-400/60 bg-amber-500/10'
-                              : 'border-white/10 bg-zinc-900/75 hover:bg-zinc-900'
+                              ? 'border-orange-400/70 bg-orange-500/14'
+                              : 'ug-card hover:border-white/20'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             {pm.icon}
                             <div className="min-w-0">
-                              <div className="text-xs font-bold text-white">
+                              <div className="font-display text-xs font-bold text-white">
                                 {pm.label}
                               </div>
                               <div className="text-[11px] text-zinc-400 truncate">
@@ -1139,7 +1142,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                           <div
                             className={`flex h-5 w-5 items-center justify-center rounded-full border shrink-0 ${
                               selected
-                                ? 'border-amber-400 bg-amber-400 text-zinc-950'
+                                ? 'border-orange-400 bg-orange-500 text-white'
                                 : 'border-zinc-600'
                             }`}
                           >
@@ -1159,13 +1162,13 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                       {checkoutItem.sku}
                     </span>
                   </div>
-                  <div className="font-display text-xl font-extrabold text-amber-300 font-mono-num">
+                  <div className="font-display italic text-xl font-extrabold text-orange-300 font-mono-num">
                     {formatPriceTry(checkoutItem.priceTry)}
                   </div>
                 </div>
 
                 {!billingMode.isLiveBilling && (
-                  <div className="mt-3 flex items-start gap-2 rounded-xl border border-white/10 bg-zinc-900/80 px-3 py-2 text-[11px] leading-relaxed text-zinc-400">
+                  <div className="ug-cut-sm ug-card mt-3 flex items-start gap-2 px-3 py-2 text-[11px] leading-relaxed text-zinc-400">
                     <Lock className="mt-0.5 h-3.5 w-3.5 text-emerald-400 shrink-0" />
                     <span>
                       Önizleme ödeme modundasın; gerçek kartından ücret çekilmez.
@@ -1176,7 +1179,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                 )}
 
                 {checkoutError && (
-                  <div className="mt-3 rounded-xl border border-rose-400/40 bg-rose-500/12 px-3 py-2 text-xs font-medium text-rose-200">
+                  <div className="ug-cut-sm mt-3 border border-rose-400/40 bg-rose-500/12 px-3 py-2 text-xs font-medium text-rose-200">
                     {checkoutError}
                   </div>
                 )}
@@ -1186,7 +1189,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     type="button"
                     disabled={processing}
                     onClick={handleConfirmCheckout}
-                    className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 font-display text-sm font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 disabled:opacity-65 cursor-pointer"
+                    className="ug-cut ug-btn-fire flex min-h-[48px] w-full items-center justify-center gap-2 px-5 font-display italic text-sm font-extrabold uppercase tracking-wider disabled:opacity-65 cursor-pointer"
                   >
                     {processing ? (
                       <>
@@ -1206,7 +1209,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                     type="button"
                     disabled={processing}
                     onClick={() => setCheckoutItem(null)}
-                    className="flex min-h-[40px] w-full items-center justify-center rounded-xl border border-white/10 bg-zinc-900 text-xs font-semibold text-zinc-300 hover:bg-zinc-800 cursor-pointer"
+                    className="ug-cut-sm ug-btn-metal flex min-h-[40px] w-full items-center justify-center font-display text-xs font-bold uppercase tracking-wide cursor-pointer"
                   >
                     Vazgeç
                   </button>

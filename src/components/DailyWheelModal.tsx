@@ -111,27 +111,30 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
-      className="pointer-events-auto fixed inset-0 z-40 flex items-end justify-center bg-black/80 p-0 sm:items-center sm:p-4"
+      className="pointer-events-auto fixed inset-0 z-40 flex items-end justify-center bg-black/84 p-0 sm:items-center sm:p-4"
     >
       <div
-        className="animate-sheet-up flex max-h-[90dvh] w-full flex-col overflow-y-auto custom-scroll rounded-t-3xl border-t border-white/15 bg-zinc-950 px-5 pt-3 shadow-2xl sm:max-h-[88vh] sm:w-[min(94vw,470px)] sm:rounded-2xl sm:border sm:p-5"
+        className="animate-sheet-up ug-sheet flex max-h-[90dvh] w-full flex-col overflow-y-auto custom-scroll rounded-t-2xl border-t px-5 pt-3.5 sm:ug-cut sm:max-h-[88vh] sm:w-[min(94vw,470px)] sm:rounded-none sm:border sm:p-5"
         style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
       >
         {/* Mobile grab handle */}
         <div className="mb-2 flex justify-center sm:hidden">
-          <span className="h-1 w-10 rounded-full bg-white/20" />
+          <span className="h-1 w-10 rounded-full bg-orange-400/45" />
         </div>
 
         {/* Header */}
         <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3.5">
           <div>
-            <div className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-amber-400" />
-              <h2 className="font-display text-xl font-extrabold text-white">
-                Günlük Ödüller & Çark
+            <div className="font-display text-[10px] font-bold tracking-[0.18em] text-orange-400 uppercase">
+              UNDERGROUND // İKMAL
+            </div>
+            <div className="mt-0.5 flex items-center gap-2">
+              <Gift className="h-5 w-5 text-orange-400" />
+              <h2 className="font-display italic text-xl font-extrabold uppercase tracking-wide text-white">
+                Günlük Ödüller &amp; Çark
               </h2>
             </div>
-            <p className="mt-1 text-xs sm:text-xs text-zinc-400">
+            <p className="mt-1 text-xs text-zinc-400">
               Her gün giriş yaparak seriyi büyüt, çarktan altın, XP ve Sokak Kasası kap
             </p>
           </div>
@@ -141,21 +144,21 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
             onClick={onClose}
             disabled={spinning}
             aria-label="Kapat"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-zinc-900 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer disabled:opacity-40 shrink-0"
+            className="ug-cut-sm ug-btn-metal flex h-11 w-11 items-center justify-center cursor-pointer disabled:opacity-40 shrink-0"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Clean 2-Tab Switcher */}
-        <div className="mt-3.5 grid grid-cols-2 gap-1.5 rounded-xl bg-zinc-900 p-1">
+        <div className="ug-cut-sm mt-3.5 grid grid-cols-2 gap-1.5 border border-white/10 bg-[#111520] p-1">
           <button
             type="button"
             disabled={spinning}
             onClick={() => setActiveTab('streak')}
-            className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg px-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer disabled:opacity-50 ${
+            className={`ug-cut-sm flex min-h-[44px] items-center justify-center gap-1.5 px-3 font-display italic text-xs sm:text-sm font-extrabold uppercase tracking-wide transition-all cursor-pointer disabled:opacity-50 ${
               activeTab === 'streak'
-                ? 'bg-amber-500 text-zinc-950'
+                ? 'ug-tab-active'
                 : 'text-zinc-300 hover:text-white'
             }`}
           >
@@ -168,9 +171,9 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
             type="button"
             disabled={spinning}
             onClick={() => setActiveTab('wheel')}
-            className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg px-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer disabled:opacity-50 ${
+            className={`ug-cut-sm flex min-h-[44px] items-center justify-center gap-1.5 px-3 font-display italic text-xs sm:text-sm font-extrabold uppercase tracking-wide transition-all cursor-pointer disabled:opacity-50 ${
               activeTab === 'wheel'
-                ? 'bg-amber-500 text-zinc-950'
+                ? 'ug-tab-active'
                 : 'text-zinc-300 hover:text-white'
             }`}
           >
@@ -181,20 +184,20 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
 
         {activeTab === 'streak' ? (
           <div className="mt-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900/70 px-3.5 py-2.5">
+            <div className="ug-cut-sm ug-card flex items-center justify-between px-3.5 py-2.5">
               <div>
-                <div className="text-[11px] font-semibold text-zinc-400">
+                <div className="font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                   Mevcut Seri
                 </div>
-                <div className="font-display text-lg font-extrabold text-white font-mono-num">
-                  {streakStatus.activeStreakCount} / 7 Gün
+                <div className="font-display italic text-lg font-extrabold text-white font-mono-num">
+                  {streakStatus.activeStreakCount} / 7 GÜN
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[11px] text-zinc-400">
+                <div className="font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                   {streakStatus.availableToday ? 'Bugünkü Ödül' : 'Yarınki Ödül'}
                 </div>
-                <div className="font-display text-base font-extrabold text-amber-400 font-mono-num">
+                <div className="font-display italic text-base font-extrabold text-amber-300 font-mono-num">
                   +{streakStatus.nextRewardGold} Altın
                 </div>
               </div>
@@ -211,20 +214,20 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                 return (
                   <div
                     key={day}
-                    className={`flex flex-col items-center justify-between rounded-xl border p-3 text-center ${
+                    className={`ug-cut-sm flex flex-col items-center justify-between border p-3 text-center ${
                       isGrandDay ? 'col-span-2' : ''
                     } ${
                       isTodayClaimable
-                        ? 'border-amber-400 bg-amber-500/15'
+                        ? 'border-orange-400 bg-orange-500/16 shadow-[0_0_16px_rgba(249,115,22,0.2)]'
                         : isClaimed
                           ? 'border-emerald-400/35 bg-emerald-500/10'
-                          : 'border-white/10 bg-zinc-900/65'
+                          : 'ug-card'
                     }`}
                   >
                     <span
-                      className={`text-xs font-bold ${
+                      className={`font-display text-xs font-bold uppercase ${
                         isTodayClaimable
-                          ? 'text-amber-300'
+                          ? 'text-orange-300'
                           : isClaimed
                             ? 'text-emerald-300'
                             : 'text-zinc-400'
@@ -244,7 +247,7 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                       )}
                       <span>+{rewardGold}</span>
                     </div>
-                    <span className="text-[11px] font-semibold text-zinc-400">
+                    <span className="font-display text-[10.5px] font-bold uppercase tracking-wide text-zinc-400">
                       {isClaimed
                         ? 'Alındı'
                         : isTodayClaimable
@@ -263,7 +266,7 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                 <button
                   type="button"
                   onClick={onClaimStreakFree}
-                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 font-display text-sm sm:text-base font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 cursor-pointer"
+                  className="ug-cut ug-btn-fire flex min-h-[50px] w-full items-center justify-center gap-2 px-5 font-display italic text-sm sm:text-base font-extrabold uppercase tracking-wider cursor-pointer"
                 >
                   <Coins className="h-4 w-4" />
                   <span>
@@ -280,7 +283,7 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                       streakStatus.nextRewardGold,
                     )
                   }
-                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl border border-sky-400/50 bg-sky-500/18 px-5 font-display text-sm font-bold text-sky-200 transition-colors hover:bg-sky-500/28 cursor-pointer"
+                  className="ug-cut-sm flex min-h-[50px] w-full items-center justify-center gap-2 border border-sky-400/50 bg-sky-500/18 px-5 font-display italic text-sm font-bold uppercase tracking-wide text-sky-200 transition-colors hover:bg-sky-500/28 cursor-pointer"
                 >
                   <PlayCircle className="h-4 w-4 text-sky-400" />
                   <span>
@@ -290,7 +293,7 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                 </button>
               </div>
             ) : (
-              <div className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-300">
+              <div className="ug-cut-sm flex min-h-[48px] items-center justify-center gap-2 border border-emerald-400/30 bg-emerald-500/10 px-4 font-display text-sm font-bold uppercase text-emerald-300">
                 <CheckCircle2 className="h-4 w-4" />
                 <span>Bugünün seri ödülü alındı. Yarın devam et!</span>
               </div>
@@ -302,10 +305,10 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
             <div className="relative my-5 flex flex-col items-center justify-center">
               <div
                 aria-hidden="true"
-                className="z-20 -mb-2.5 h-0 w-0 border-x-[11px] border-t-[18px] border-x-transparent border-t-amber-400 drop-shadow-md"
+                className="z-20 -mb-2.5 h-0 w-0 border-x-[11px] border-t-[18px] border-x-transparent border-t-orange-400 drop-shadow-md"
               />
 
-              <div className="relative h-60 w-60 rounded-full border-4 border-amber-400/70 p-1 shadow-2xl sm:h-68 sm:w-68">
+              <div className="relative h-60 w-60 rounded-full border-4 border-orange-500/80 p-1 shadow-[0_0_32px_rgba(234,88,12,0.3)] sm:h-68 sm:w-68">
                 <div
                   className="relative h-full w-full overflow-hidden rounded-full transition-transform duration-[3300ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   style={{
@@ -331,14 +334,14 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                   })}
                 </div>
 
-                <div className="pointer-events-none absolute top-1/2 left-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-300 bg-zinc-950 shadow-lg">
-                  <Sparkles className="h-6 w-6 text-amber-400" />
+                <div className="pointer-events-none absolute top-1/2 left-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-orange-400 bg-[#0b0d14] shadow-lg">
+                  <Sparkles className="h-6 w-6 text-orange-400" />
                 </div>
               </div>
             </div>
 
             {wonSlice && (
-              <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-emerald-400/45 bg-emerald-500/12 px-4 py-3">
+              <div className="ug-cut-sm mb-4 flex items-center justify-between gap-3 border border-emerald-400/45 bg-emerald-500/12 px-4 py-3">
                 <div className="flex items-center gap-2.5">
                   {wonSlice.kind === 'gold' ? (
                     <Coins className="h-5 w-5 text-amber-400 shrink-0" />
@@ -348,12 +351,12 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                     <Award className="h-5 w-5 text-sky-400 shrink-0" />
                   )}
                   <div>
-                    <div className="text-xs font-semibold text-emerald-300">
+                    <div className="font-display text-xs font-bold uppercase text-emerald-300">
                       {wonSlice.kind === 'crate'
                         ? 'Kasa Kazandın! Açılış Başlıyor...'
                         : 'Ödül Hesabına Eklendi!'}
                     </div>
-                    <div className="font-display text-base font-extrabold text-white">
+                    <div className="font-display italic text-base font-extrabold text-white">
                       {wonSlice.label}
                     </div>
                   </div>
@@ -367,17 +370,17 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                   type="button"
                   onClick={handleFreeSpinClick}
                   disabled={spinning}
-                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 font-display text-base font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 cursor-pointer disabled:opacity-50"
+                  className="ug-cut ug-btn-fire flex min-h-[52px] w-full items-center justify-center gap-2 px-5 py-2.5 font-display italic text-base font-extrabold uppercase tracking-wider cursor-pointer disabled:opacity-50"
                 >
                   <Gift className="h-5 w-5" />
                   <span>
                     {spinning
                       ? 'Çark Dönüyor...'
-                      : 'Ücretsiz Çevir (Günlük Hediye)'}
+                      : 'Ücretsiz Çevir · Günlük Hediye'}
                   </span>
                 </button>
               ) : (
-                <div className="flex min-h-[46px] items-center justify-center rounded-xl border border-white/10 bg-zinc-900/70 px-4 text-sm font-semibold text-zinc-400">
+                <div className="ug-cut-sm ug-card flex min-h-[46px] items-center justify-center px-4 font-display text-sm font-bold uppercase text-zinc-400">
                   Bugünün ücretsiz çark hakkı kullanıldı
                 </div>
               )}
@@ -387,7 +390,7 @@ export const DailyWheelModal: React.FC<DailyWheelModalProps> = React.memo(
                   type="button"
                   onClick={handleExtraAdClick}
                   disabled={spinning}
-                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl border border-sky-400/45 bg-sky-500/15 px-5 py-2.5 font-display text-sm sm:text-base font-bold text-sky-200 transition-colors hover:bg-sky-500/25 cursor-pointer disabled:opacity-50"
+                  className="ug-cut-sm flex min-h-[50px] w-full items-center justify-center gap-2 border border-sky-400/45 bg-sky-500/15 px-5 py-2.5 font-display italic text-sm sm:text-base font-bold uppercase tracking-wide text-sky-200 transition-colors hover:bg-sky-500/25 cursor-pointer disabled:opacity-50"
                 >
                   <PlayCircle className="h-5 w-5 text-sky-400" />
                   <span>Reklam İzle · Ekstra Çevirme</span>

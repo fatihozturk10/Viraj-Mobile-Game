@@ -209,7 +209,7 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
     >
       {/* Slim Top Header Bar */}
       <header
-        className="relative z-20 shrink-0 border-b border-white/10 bg-zinc-950/95 px-3 pb-2.5 sm:px-6"
+        className="relative z-20 shrink-0 border-b border-white/12 bg-[#0b0d14]/96 px-3 pb-2.5 shadow-[inset_0_2px_0_#f97316] sm:px-6"
         style={{ paddingTop: 'max(0.65rem, env(safe-area-inset-top))' }}
       >
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-2">
@@ -217,17 +217,17 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-10 items-center gap-1.5 rounded-xl border border-white/12 bg-zinc-900 px-3 text-sm font-bold text-zinc-100 transition-colors hover:bg-zinc-800 whitespace-nowrap shrink-0 cursor-pointer"
+              className="ug-cut-sm ug-btn-metal flex h-10 items-center gap-1.5 px-3 font-display italic text-sm font-bold uppercase tracking-wide whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <ArrowLeft className="h-4 w-4 text-amber-400 shrink-0" />
+              <ArrowLeft className="h-4 w-4 text-orange-400 shrink-0" />
               <span>Geri</span>
             </button>
             <div className="min-w-0">
-              <h1 className="truncate font-display text-base font-extrabold tracking-tight text-white sm:text-lg">
-                Kariyer Yolu
+              <h1 className="truncate font-display italic text-base font-extrabold uppercase tracking-wide text-white sm:text-lg">
+                Sokak Kariyeri
               </h1>
               <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-mono-num">
-                <span>{progress.completedLevelsCount}/100 Bölüm</span>
+                <span>{progress.completedLevelsCount}/100 Yarış</span>
                 <span aria-hidden="true">·</span>
                 <span className="text-amber-300 font-bold">
                   ★ {progress.totalStars}/{progress.maxStars}
@@ -240,26 +240,26 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
             <button
               type="button"
               onClick={() => setChestsDrawerOpen((v) => !v)}
-              className={`relative flex h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+              className={`ug-cut-sm relative flex h-10 items-center gap-1.5 border px-3 font-display italic text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-colors cursor-pointer ${
                 claimableChestsCount > 0
                   ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
-                  : 'border-white/12 bg-zinc-900 text-zinc-200 hover:bg-zinc-800'
+                  : 'ug-btn-metal'
               }`}
             >
               <Gift
                 className={`h-4 w-4 shrink-0 ${
-                  claimableChestsCount > 0 ? 'text-emerald-300' : 'text-amber-400'
+                  claimableChestsCount > 0 ? 'text-emerald-300' : 'text-orange-400'
                 }`}
               />
               <span className="hidden sm:inline">Yıldız Ödülü</span>
               {claimableChestsCount > 0 && (
-                <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-emerald-400 px-1 text-[10px] font-extrabold text-zinc-950 font-mono-num">
+                <span className="ug-skew flex h-4.5 min-w-[18px] items-center justify-center bg-emerald-400 px-1 text-[10px] font-extrabold text-zinc-950 font-mono-num">
                   {claimableChestsCount}
                 </span>
               )}
             </button>
 
-            <div className="flex h-10 items-center gap-1.5 rounded-xl border border-amber-400/25 bg-zinc-900/90 px-3 text-xs font-bold text-amber-300 font-mono-num">
+            <div className="ug-cut-sm flex h-10 items-center gap-1.5 border border-amber-400/30 bg-[#121622] px-3 text-xs font-bold text-amber-300 font-mono-num">
               <Coins className="h-3.5 w-3.5 text-amber-400 shrink-0" />
               <span>{goldCoins.toLocaleString('tr-TR')}</span>
             </div>
@@ -267,7 +267,7 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
         </div>
 
         {/* Chapter Quick-Jump Strip */}
-        <div className="mx-auto mt-2 grid w-full max-w-4xl grid-cols-4 gap-1 rounded-xl bg-zinc-900/90 p-1">
+        <div className="ug-cut-sm mx-auto mt-2 grid w-full max-w-4xl grid-cols-4 gap-1 border border-white/10 bg-[#090b12] p-1">
           {CAREER_CHAPTERS.map((ch) => {
             const chapterUnlocked = progress.highestUnlockedLevel >= ch.startLevel;
             return (
@@ -275,7 +275,7 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                 key={ch.biome}
                 type="button"
                 onClick={() => scrollToLevel(ch.startLevel, true)}
-                className={`flex min-h-[34px] items-center justify-center gap-1 rounded-lg px-1.5 py-1 text-[11px] sm:text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                className={`ug-cut-sm flex min-h-[34px] items-center justify-center gap-1 px-1.5 py-1 font-display text-[11px] sm:text-xs font-bold uppercase tracking-wide whitespace-nowrap transition-colors cursor-pointer ${
                   chapterUnlocked
                     ? 'text-zinc-200 hover:bg-white/10 hover:text-white'
                     : 'text-zinc-500 hover:bg-white/5'
@@ -730,10 +730,10 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
             <button
               type="button"
               onClick={() => onStartLevel(selectedLevel.id)}
-              className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 font-display text-base font-extrabold text-zinc-950 shadow-[0_6px_24px_rgba(245,158,11,0.28)] transition-colors hover:bg-amber-400 active:scale-[0.99] cursor-pointer"
+              className="ug-cut ug-btn-fire mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 px-5 font-display italic text-base font-extrabold uppercase tracking-wider active:scale-[0.99] cursor-pointer"
             >
               <Play className="h-5 w-5 fill-current shrink-0" />
-              <span>Bölüm {selectedLevel.id} Başlat</span>
+              <span>Bölüm {selectedLevel.id} · Gazla</span>
             </button>
           </div>
         </div>
@@ -743,19 +743,19 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
       {chestsDrawerOpen && (
         <div
           onClick={() => setChestsDrawerOpen(false)}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/68 p-0 sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/78 p-0 sm:items-center sm:p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="animate-sheet-up max-h-[84dvh] w-full overflow-y-auto custom-scroll rounded-t-3xl border-t border-white/14 bg-zinc-950 px-5 pt-3.5 shadow-2xl sm:w-[min(94vw,430px)] sm:rounded-2xl sm:border sm:p-6"
+            className="animate-sheet-up ug-sheet max-h-[84dvh] w-full overflow-y-auto custom-scroll rounded-t-2xl border-t px-5 pt-3.5 sm:ug-cut sm:w-[min(94vw,430px)] sm:rounded-none sm:border sm:p-6"
             style={{
               paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
             }}
           >
-            <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-white/20 sm:hidden" />
+            <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-orange-400/45 sm:hidden" />
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h2 className="font-display text-lg font-extrabold text-white">
+                <h2 className="font-display italic text-lg font-extrabold uppercase tracking-wide text-white">
                   Yıldız Sandıkları
                 </h2>
                 <p className="text-xs text-zinc-400 font-mono-num">
@@ -766,7 +766,7 @@ export const CareerMapModal: React.FC<CareerMapModalProps> = ({
                 type="button"
                 onClick={() => setChestsDrawerOpen(false)}
                 aria-label="Kapat"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                className="ug-cut-sm ug-btn-metal flex h-9 w-9 items-center justify-center cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>

@@ -342,16 +342,15 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
               key={id}
               type="button"
               onClick={() => onSelectCategory(id)}
-              className={`inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+              className={`ug-skew inline-flex min-h-[36px] shrink-0 items-center gap-1.5 border px-3 py-1.5 font-display italic text-xs font-bold uppercase tracking-wide transition-all cursor-pointer ${
                 active
-                  ? accentActive ||
-                    'border-amber-400/70 bg-amber-500/20 text-amber-200'
-                  : 'border-white/10 bg-zinc-900/90 text-zinc-400 hover:border-white/20 hover:text-white'
+                  ? accentActive || 'ug-tab-active border-orange-400/75'
+                  : 'border-white/10 bg-[#111520] text-zinc-400 hover:border-orange-500/40 hover:text-white'
               }`}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />
               <span>{label}</span>
-              <span className="font-mono-num text-[11px] opacity-80">
+              <span className="font-mono-num text-[11px] opacity-85">
                 {catUnlocked}/{catItems.length}
               </span>
               {catClaimable > 0 && (
@@ -377,7 +376,7 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
 
           const medallion = (
             <div
-              className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${ts.medallionBorder} shadow-md ${
+              className={`ug-cut-sm relative flex h-12 w-12 shrink-0 items-center justify-center border ${ts.medallionBorder} shadow-md ${
                 !ach.unlocked ? 'opacity-85' : ''
               }`}
               style={{ background: ts.medallionBg }}
@@ -402,36 +401,36 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
                 key={ach.id}
                 type="button"
                 onClick={() => onClaimAchievement(ach.id)}
-                className="group relative w-full overflow-hidden rounded-2xl border border-amber-400/75 bg-gradient-to-r from-amber-500/18 via-amber-500/10 to-emerald-500/14 p-3 text-left transition-all hover:border-amber-300 active:scale-[0.99] cursor-pointer"
+                className="ug-cut-sm group relative w-full overflow-hidden border border-orange-400/75 bg-gradient-to-r from-rose-500/18 via-orange-500/14 to-emerald-500/14 p-3 text-left transition-all hover:border-orange-300 active:scale-[0.99] cursor-pointer"
               >
                 <div className="flex items-start gap-3">
                   {medallion}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-display text-sm font-extrabold text-white">
+                      <span className="font-display italic text-sm font-extrabold uppercase text-white">
                         {ach.title}
                       </span>
                       <span
-                        className={`rounded-md border px-1.5 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider ${ts.pillClass}`}
+                        className={`ug-skew border px-1.5 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider ${ts.pillClass}`}
                       >
                         {ts.label}
                       </span>
                       {ach.singleRun && (
-                        <span className="rounded-md border border-rose-400/40 bg-rose-500/18 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-rose-200">
+                        <span className="ug-skew border border-rose-400/40 bg-rose-500/18 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-rose-200">
                           Tek Sürüş
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-amber-100/85">
+                    <p className="mt-0.5 text-xs text-orange-100/85">
                       {ach.description}
                     </p>
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/15">
-                        <div className="h-full w-full bg-gradient-to-r from-amber-400 to-emerald-400" />
+                      <div className="ug-skew h-1.5 flex-1 overflow-hidden bg-white/15">
+                        <div className="h-full w-full bg-gradient-to-r from-orange-400 to-emerald-400" />
                       </div>
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-amber-400 px-2.5 py-1 text-xs font-extrabold text-zinc-950 font-mono-num shrink-0 shadow-sm">
+                      <span className="ug-cut-sm ug-btn-fire inline-flex items-center gap-1 px-2.5 py-1 text-xs font-extrabold font-mono-num shrink-0">
                         <Coins className="h-3.5 w-3.5" />
-                        <span>Ödülü Al +{ach.rewardGold}</span>
+                        <span>ÖDÜLÜ AL +{ach.rewardGold}</span>
                       </span>
                     </div>
                   </div>
@@ -443,10 +442,10 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
           return (
             <div
               key={ach.id}
-              className={`rounded-2xl border p-3 transition-colors ${
+              className={`ug-cut-sm border p-3 transition-colors ${
                 ach.claimed
                   ? 'border-emerald-400/25 bg-emerald-500/[0.06]'
-                  : `${ts.cardBorder} bg-[#141824]/90`
+                  : `${ts.cardBorder} bg-[#131722]/95`
               }`}
             >
               <div className="flex items-start gap-3">
@@ -459,12 +458,12 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
                           {ach.title}
                         </span>
                         <span
-                          className={`rounded-md border px-1.5 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider ${ts.pillClass}`}
+                          className={`ug-skew border px-1.5 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider ${ts.pillClass}`}
                         >
                           {ts.label}
                         </span>
                         {ach.singleRun && (
-                          <span className="rounded-md border border-rose-400/35 bg-rose-500/14 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-rose-200">
+                          <span className="ug-skew border border-rose-400/35 bg-rose-500/14 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-rose-200">
                             Tek Sürüş
                           </span>
                         )}
@@ -475,12 +474,12 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
                     </div>
 
                     {ach.claimed ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-500/12 px-2 py-1 text-[11px] font-bold text-emerald-300 shrink-0">
+                      <span className="ug-skew inline-flex items-center gap-1 border border-emerald-400/30 bg-emerald-500/12 px-2 py-1 font-display text-[11px] font-bold uppercase text-emerald-300 shrink-0">
                         <CheckCircle2 className="h-3 w-3" />
                         <span>Alındı</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-xs font-extrabold text-amber-300 font-mono-num shrink-0">
+                      <span className="ug-skew inline-flex items-center gap-1 border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-xs font-extrabold text-amber-300 font-mono-num shrink-0">
                         <Coins className="h-3 w-3 text-amber-400" />
                         <span>+{ach.rewardGold}</span>
                       </span>
@@ -488,9 +487,9 @@ export const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
                   </div>
 
                   <div className="mt-2.5 flex items-center gap-2.5">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+                    <div className="ug-skew h-1.5 flex-1 overflow-hidden bg-white/10">
                       <div
-                        className={`h-full rounded-full ${
+                        className={`h-full ${
                           ach.claimed ? 'bg-emerald-400' : ts.barClass
                         }`}
                         style={{ width: `${pct}%` }}

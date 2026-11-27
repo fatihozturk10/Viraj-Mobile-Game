@@ -254,7 +254,15 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
       >
         {/* Floating frameless label tucked cleanly into the left aerodynamic curve */}
         <div className="pointer-events-none absolute top-0 left-1 z-10 flex items-center gap-2 leading-none">
-          <span className="inline-flex items-center gap-1 [text-shadow:0_1px_5px_rgba(0,0,0,0.95)]">
+          <span
+            className={`ug-skew inline-flex items-center gap-1 px-2 py-0.5 border ${
+              nitroActive
+                ? 'border-cyan-300/70 bg-cyan-500/30'
+                : isReady
+                  ? 'border-cyan-400/40 bg-[#0b1320]/90'
+                  : 'border-white/10 bg-[#0b0e16]/85'
+            }`}
+          >
             <Flame
               className={`h-3.5 w-3.5 shrink-0 transition-colors duration-200 ${
                 nitroActive
@@ -265,7 +273,7 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
               }`}
             />
             <span
-              className={`font-display italic text-[11px] sm:text-xs font-black tracking-[0.18em] transition-colors duration-200 ${
+              className={`font-display italic text-[10.5px] sm:text-xs font-bold tracking-[0.16em] uppercase transition-colors duration-200 ${
                 nitroActive
                   ? 'text-white'
                   : isReady
@@ -273,7 +281,7 @@ export const NitroWingBar: React.FC<NitroWingBarProps> = React.memo(
                     : 'text-zinc-400'
               }`}
             >
-              {nitroActive ? 'TURBO AKTİF' : 'NİTRO'}
+              {nitroActive ? 'NOS AKTİF' : 'NİTRO'}
             </span>
           </span>
           <span

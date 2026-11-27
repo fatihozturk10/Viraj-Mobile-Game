@@ -1382,25 +1382,31 @@ export const GarageView: React.FC<GarageViewProps> = ({
         key={opts.keyId}
         type="button"
         onClick={opts.onClick}
-        className={`group relative flex flex-col overflow-hidden rounded-2xl border p-2 text-left transition-all cursor-pointer ${
+        className={`ug-cut-sm group relative flex flex-col overflow-hidden border p-2 text-left transition-all cursor-pointer ${
           opts.isSelected
-            ? 'border-[#f59e0b] bg-[#1a1f2c] ring-1 ring-[#f59e0b]/45'
-            : 'border-white/[0.06] bg-[#161a24] hover:border-white/[0.15] hover:bg-[#1a1e2a]'
+            ? 'border-orange-500 bg-[#1c1622] ring-1 ring-orange-500/45 shadow-[0_0_16px_rgba(234,88,12,0.22)]'
+            : 'border-white/[0.08] bg-[#131722] hover:border-orange-500/35 hover:bg-[#191f2e]'
         }`}
       >
-        <div className="relative mb-2 h-14 sm:h-16 w-full overflow-hidden rounded-xl border border-white/[0.06] bg-[#0e1118]">
+        {opts.isSelected && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-rose-500 to-orange-400"
+          />
+        )}
+        <div className="ug-cut-sm relative mb-2 h-14 sm:h-16 w-full overflow-hidden border border-white/[0.08] bg-[#0b0d14]">
           {opts.thumbnail}
           {opts.badgeTag && (
-            <span className="absolute right-1.5 top-1.5 rounded-md bg-zinc-950/85 px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wider text-cyan-300 border border-cyan-400/35">
+            <span className="ug-skew absolute right-1 top-1 bg-zinc-950/90 px-1.5 py-0.5 font-display text-[8.5px] font-extrabold uppercase tracking-wider text-cyan-300 border border-cyan-400/35">
               {opts.badgeTag}
             </span>
           )}
         </div>
-        <div className="w-full truncate text-[12px] font-bold leading-tight text-white">
+        <div className="w-full truncate font-display text-[12px] font-bold leading-tight text-white">
           {opts.name}
         </div>
         <div
-          className="mt-0.5 w-full truncate text-[10.5px] font-semibold leading-tight"
+          className="mt-0.5 w-full truncate font-display text-[10px] font-bold uppercase tracking-wide leading-tight"
           style={{ color: r.textHex }}
         >
           {r.label}
@@ -1408,7 +1414,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
         <div
           className={`mt-1 w-full truncate font-mono-num text-[11px] font-semibold leading-tight ${
             opts.isEquipped
-              ? 'text-white'
+              ? 'text-orange-300'
               : opts.isUnlocked
                 ? 'text-zinc-300'
                 : opts.levelRoadLevel
@@ -1429,7 +1435,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
           <button
             type="button"
             onClick={() => onOpenLevelRoad(pendingUnlock.levelRoadLevel)}
-            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#f59e0b] px-4 font-display text-[15px] font-black text-zinc-950 shadow-[0_6px_22px_rgba(245,158,11,0.28)] transition-all hover:bg-[#fbbf24] active:scale-[0.99] cursor-pointer"
+            className="ug-cut ug-btn-fire flex min-h-[48px] w-full items-center justify-center gap-2 px-4 font-display italic text-[15px] font-extrabold uppercase tracking-wider active:scale-[0.99] cursor-pointer"
           >
             <Crown className="h-4.5 w-4.5 shrink-0" />
             <span>Seviye {pendingUnlock.levelRoadLevel} Yolu · Aç</span>
@@ -1443,7 +1449,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
           <button
             type="button"
             onClick={pendingUnlock.onUnlock}
-            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#f59e0b] px-4 font-display text-[15px] font-black text-zinc-950 shadow-[0_6px_22px_rgba(245,158,11,0.28)] transition-all hover:bg-[#fbbf24] active:scale-[0.99] cursor-pointer"
+            className="ug-cut ug-btn-fire flex min-h-[48px] w-full items-center justify-center gap-2 px-4 font-display italic text-[15px] font-extrabold uppercase tracking-wider active:scale-[0.99] cursor-pointer"
           >
             <span>
               Satın Al · {pendingUnlock.priceGold.toLocaleString('tr-TR')} Altın
@@ -1458,7 +1464,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
         <button
           type="button"
           onClick={() => onWatchAdTopUpGold(topUp, pendingUnlock.label)}
-          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#f59e0b] px-4 font-display text-sm sm:text-[15px] font-black text-zinc-950 shadow-[0_6px_22px_rgba(245,158,11,0.25)] transition-all hover:bg-[#fbbf24] active:scale-[0.99] cursor-pointer"
+          className="ug-cut ug-btn-fire flex min-h-[48px] w-full items-center justify-center gap-2 px-4 font-display italic text-sm sm:text-[15px] font-extrabold uppercase tracking-wider active:scale-[0.99] cursor-pointer"
         >
           <PlayCircle className="h-4.5 w-4.5 shrink-0" />
           <span>
@@ -1476,16 +1482,16 @@ export const GarageView: React.FC<GarageViewProps> = ({
           <button
             type="button"
             onClick={() => onRentCar(activeModel.id, activeModel.name)}
-            className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl border border-white/12 bg-[#1a1f2b] px-4 font-display text-xs sm:text-sm font-bold text-zinc-100 hover:bg-[#222838] whitespace-nowrap cursor-pointer"
+            className="ug-cut ug-btn-metal flex min-h-[48px] items-center justify-center gap-1.5 px-4 font-display italic text-xs sm:text-sm font-bold uppercase tracking-wide whitespace-nowrap cursor-pointer"
           >
-            <PlayCircle className="h-4 w-4 text-amber-400 shrink-0" />
+            <PlayCircle className="h-4 w-4 text-orange-400 shrink-0" />
             <span>Kirala</span>
           </button>
           {canAffordActive ? (
             <button
               type="button"
               onClick={() => onUnlockCar(activeModel.id)}
-              className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-2xl bg-[#f59e0b] px-4 font-display text-[15px] font-black text-zinc-950 shadow-[0_6px_22px_rgba(245,158,11,0.28)] transition-all hover:bg-[#fbbf24] active:scale-[0.99] cursor-pointer"
+              className="ug-cut ug-btn-fire flex min-h-[48px] flex-1 items-center justify-center gap-2 px-4 font-display italic text-[15px] font-extrabold uppercase tracking-wider active:scale-[0.99] cursor-pointer"
             >
               <span>
                 Satın Al · {activeModel.priceGold.toLocaleString('tr-TR')} Altın
@@ -1495,7 +1501,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
             <button
               type="button"
               onClick={() => onWatchAdTopUpGold(topUp, activeModel.name)}
-              className="flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[#f59e0b] px-4 font-display text-sm font-black text-zinc-950 shadow-[0_6px_22px_rgba(245,158,11,0.25)] transition-all hover:bg-[#fbbf24] active:scale-[0.99] cursor-pointer"
+              className="ug-cut ug-btn-fire flex min-h-[48px] flex-1 items-center justify-center gap-1.5 px-4 font-display italic text-sm font-extrabold uppercase tracking-wider active:scale-[0.99] cursor-pointer"
             >
               <PlayCircle className="h-4 w-4 shrink-0" />
               <span>+{topUp} Altın İzle</span>
@@ -1509,24 +1515,24 @@ export const GarageView: React.FC<GarageViewProps> = ({
       <button
         type="button"
         onClick={onStart}
-        className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-[#f59e0b] px-4 font-display text-[15px] font-black text-zinc-950 shadow-[0_6px_22px_rgba(245,158,11,0.28)] transition-all hover:bg-[#fbbf24] active:scale-[0.99] cursor-pointer"
+        className="ug-cut ug-btn-fire flex min-h-[48px] w-full items-center justify-center gap-2 px-4 font-display italic text-[15px] font-extrabold uppercase tracking-wider active:scale-[0.99] cursor-pointer"
       >
         <Play className="h-4 w-4 fill-current" />
-        <span>Bu Araçla Sür</span>
+        <span>Sokağa Çık · Sür</span>
       </button>
     );
   };
 
   const renderCockpitBanner = (hintText: string) => (
-    <div className="mb-2.5 flex items-center justify-between gap-2 rounded-xl border border-white/[0.08] bg-[#161a24] px-3 py-2">
+    <div className="ug-cut-sm mb-2.5 flex items-center justify-between gap-2 border border-white/[0.09] bg-[#141824] px-3 py-2">
       <div className="flex items-center gap-2 min-w-0">
-        <Camera className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+        <Camera className="h-3.5 w-3.5 text-orange-400 shrink-0" />
         <span className="truncate text-[11px] font-medium text-zinc-300">
           {hintText}
         </span>
       </div>
       {cameraMode === 'cockpit' ? (
-        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 whitespace-nowrap shrink-0">
+        <span className="inline-flex items-center gap-1 font-display text-[11px] font-bold uppercase text-emerald-400 whitespace-nowrap shrink-0">
           <CheckCircle2 className="h-3.5 w-3.5" />
           <span>Kokpit Aktif</span>
         </span>
@@ -1534,7 +1540,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
         <button
           type="button"
           onClick={() => onSelectCamera('cockpit')}
-          className="inline-flex min-h-[30px] items-center rounded-lg bg-[#f59e0b]/20 border border-[#f59e0b]/45 px-2.5 text-[11px] font-bold text-amber-200 hover:bg-[#f59e0b]/30 whitespace-nowrap shrink-0 cursor-pointer"
+          className="ug-skew inline-flex min-h-[30px] items-center bg-orange-500/20 border border-orange-400/50 px-2.5 font-display text-[11px] font-bold uppercase text-orange-200 hover:bg-orange-500/30 whitespace-nowrap shrink-0 cursor-pointer"
         >
           Kokpiti Seç
         </button>
@@ -1548,31 +1554,38 @@ export const GarageView: React.FC<GarageViewProps> = ({
 
   return (
     <div className="pointer-events-none fixed inset-0 z-20 flex flex-col justify-between">
-      {/* TOP FLOATING SHOWROOM BAR */}
+      {/* TOP FLOATING UNDERGROUND WORKSHOP BAR */}
       <div
         className="relative flex items-start justify-between px-4"
         style={{ paddingTop: 'max(0.85rem, env(safe-area-inset-top))' }}
       >
-        {/* Top-Left: Clean Rounded-Square Back Button */}
-        <button
-          type="button"
-          onClick={onReturnMenu}
-          onPointerDown={(e) => e.stopPropagation()}
-          aria-label="Ana Menüye Dön"
-          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-white/[0.09] bg-[#141720]/88 text-white shadow-lg transition-colors hover:bg-[#1e2330] active:scale-95 cursor-pointer"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
+        {/* Top-Left: Chamfered Back Button + Underground Tag */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onReturnMenu}
+            onPointerDown={(e) => e.stopPropagation()}
+            aria-label="Ana Menüye Dön"
+            className="ug-cut-sm ug-btn-metal pointer-events-auto flex h-11 w-11 items-center justify-center active:scale-95 cursor-pointer"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <div className="ug-skew hidden sm:flex items-center border border-orange-500/35 bg-[#0b0d14]/88 px-3 py-1.5">
+            <span className="font-display italic text-xs font-extrabold tracking-widest uppercase text-orange-300">
+              UNDERGROUND ATÖLYE
+            </span>
+          </div>
+        </div>
 
         {/* Top-Right: Diamond + Gold Capsules & Right Vertical Showroom Controls */}
-        <div className="flex flex-col items-end gap-3">
+        <div className="flex flex-col items-end gap-2.5">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => onOpenStore('gold')}
               onPointerDown={(e) => e.stopPropagation()}
               title="Elmas ile Altın Al"
-              className="pointer-events-auto flex h-11 items-center gap-1.5 rounded-2xl border border-cyan-400/30 bg-[#0d1822]/90 px-3 shadow-lg transition-colors hover:border-cyan-400/60 cursor-pointer"
+              className="ug-cut-sm pointer-events-auto flex h-11 items-center gap-1.5 border border-cyan-400/40 bg-[#0a1420]/92 px-3 shadow-lg transition-colors hover:border-cyan-300 cursor-pointer"
             >
               <Gem className="h-4 w-4 text-cyan-400 shrink-0" />
               <span className="font-mono-num text-sm font-extrabold tracking-tight text-cyan-200">
@@ -1585,12 +1598,12 @@ export const GarageView: React.FC<GarageViewProps> = ({
               onClick={() => onOpenStore('gold')}
               onPointerDown={(e) => e.stopPropagation()}
               title="Altın Marketini Aç"
-              className="pointer-events-auto group flex h-11 items-center gap-2.5 rounded-2xl border border-white/[0.09] bg-[#141720]/90 pl-3.5 pr-1.5 shadow-lg transition-colors hover:border-amber-400/40 cursor-pointer"
+              className="ug-cut-sm pointer-events-auto group flex h-11 items-center gap-2.5 border border-amber-400/35 bg-[#0c0f18]/92 pl-3.5 pr-1.5 shadow-lg transition-colors hover:border-orange-400/75 cursor-pointer"
             >
-              <span className="font-mono-num text-sm font-extrabold tracking-tight text-[#f59e0b]">
+              <span className="font-mono-num text-sm font-extrabold tracking-tight text-amber-300">
                 {goldCoins.toLocaleString('tr-TR')}
               </span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f59e0b] text-zinc-950 transition-colors group-hover:bg-[#fbbf24]">
+              <span className="ug-cut-sm ug-btn-fire flex h-8 w-8 items-center justify-center text-white">
                 <Plus className="h-4 w-4 stroke-[3]" />
               </span>
             </button>
@@ -1604,10 +1617,10 @@ export const GarageView: React.FC<GarageViewProps> = ({
               onPointerDown={(e) => e.stopPropagation()}
               aria-label={garageMenuCollapsed ? 'Paneli Göster' : 'Paneli Gizle'}
               title={garageMenuCollapsed ? 'Paneli Göster' : 'Paneli Gizle'}
-              className={`flex h-11 w-11 items-center justify-center rounded-2xl border shadow-lg transition-colors active:scale-95 cursor-pointer ${
+              className={`ug-cut-sm flex h-11 w-11 items-center justify-center border shadow-lg transition-colors active:scale-95 cursor-pointer ${
                 garageMenuCollapsed
-                  ? 'border-[#f59e0b]/60 bg-[#f59e0b]/20 text-amber-300'
-                  : 'border-white/[0.09] bg-[#141720]/84 text-zinc-100 hover:bg-[#1e2330]'
+                  ? 'border-orange-400/70 bg-orange-500/20 text-orange-300'
+                  : 'ug-btn-metal'
               }`}
             >
               {garageMenuCollapsed ? (
@@ -1620,29 +1633,29 @@ export const GarageView: React.FC<GarageViewProps> = ({
         </div>
       </div>
 
-      {/* LOWER STAGE: Floating Car Switcher Strip + Bottom Drawer */}
+      {/* LOWER STAGE: Floating Car Switcher Strip + Bottom Underground Mod Drawer */}
       <div className="flex w-full flex-col items-center">
-        {/* FLOATING CAR NAME & RARITY SELECTOR (< Apex F1 Monoposto / EFSANEVİ >) */}
+        {/* FLOATING CAR NAME & RARITY SELECTOR */}
         <div
           onPointerDown={(e) => e.stopPropagation()}
-          className="pointer-events-auto flex w-full max-w-[540px] items-center justify-between gap-3 px-4 pb-3"
+          className="pointer-events-auto flex w-full max-w-[548px] items-center justify-between gap-3 px-4 pb-2.5"
         >
           <button
             type="button"
             onClick={() => cycleCar(-1)}
             aria-label="Önceki Araç"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/[0.09] bg-[#141720]/80 text-zinc-200 shadow-lg transition-colors hover:bg-[#1f2432] active:scale-95 cursor-pointer"
+            className="ug-cut-sm ug-btn-metal flex h-10 w-10 shrink-0 items-center justify-center active:scale-95 cursor-pointer"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5 text-orange-300" />
           </button>
 
           <div className="flex min-w-0 flex-1 flex-col items-center text-center">
-            <h2 className="w-full truncate font-display text-lg sm:text-xl font-black tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+            <h2 className="w-full truncate font-display italic text-lg sm:text-xl font-black uppercase tracking-wide text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">
               {activeModel.name}
             </h2>
             <div className="mt-1 flex items-center justify-center gap-1.5">
               <span
-                className="rounded-md px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.14em]"
+                className="ug-skew px-2.5 py-0.5 font-display text-[10px] font-extrabold uppercase tracking-[0.14em]"
                 style={{
                   backgroundColor: modelRarity.pillBg,
                   color: modelRarity.pillText,
@@ -1650,8 +1663,13 @@ export const GarageView: React.FC<GarageViewProps> = ({
               >
                 {modelRarity.label}
               </span>
+              <span
+                className={`ug-skew border border-white/12 bg-[#0c0f18]/90 px-2 py-0.5 font-display text-[10px] font-extrabold uppercase tracking-wider ${activeTuningClass.textClass}`}
+              >
+                {activeTuningClass.label}
+              </span>
               {!isActiveUnlocked && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/20 px-2 py-0.5 font-mono-num text-[10px] font-extrabold text-amber-300">
+                <span className="ug-skew inline-flex items-center gap-1 bg-orange-500/25 px-2 py-0.5 font-mono-num text-[10px] font-extrabold text-orange-200">
                   <Lock className="h-2.5 w-2.5" />
                   <span>{activeModel.priceGold.toLocaleString('tr-TR')}</span>
                 </span>
@@ -1663,9 +1681,9 @@ export const GarageView: React.FC<GarageViewProps> = ({
             type="button"
             onClick={() => cycleCar(1)}
             aria-label="Sonraki Araç"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/[0.09] bg-[#141720]/80 text-zinc-200 shadow-lg transition-colors hover:bg-[#1f2432] active:scale-95 cursor-pointer"
+            className="ug-cut-sm ug-btn-metal flex h-10 w-10 shrink-0 items-center justify-center active:scale-95 cursor-pointer"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5 text-orange-300" />
           </button>
         </div>
 
@@ -1681,10 +1699,10 @@ export const GarageView: React.FC<GarageViewProps> = ({
             {renderPrimaryCta()}
           </div>
         ) : (
-          /* EXPANDED BOTTOM SHEET DRAWER (Exact Dark Slate Reference Design) */
+          /* EXPANDED UNDERGROUND MOD SHOP DRAWER */
           <div
             onPointerDown={(e) => e.stopPropagation()}
-            className="pointer-events-auto animate-sheet-up flex h-[54dvh] max-h-[54dvh] w-full max-w-[540px] flex-col overflow-hidden rounded-t-[26px] border-t border-x border-white/[0.07] bg-[#11141c] shadow-[0_-16px_42px_rgba(0,0,0,0.8)]"
+            className="pointer-events-auto animate-sheet-up ug-sheet flex h-[54dvh] max-h-[54dvh] w-full max-w-[548px] flex-col overflow-hidden rounded-t-2xl border-t border-x"
           >
             {/* Drag Handle Indicator */}
             <button
@@ -1693,19 +1711,19 @@ export const GarageView: React.FC<GarageViewProps> = ({
               aria-label="Paneli Daralt"
               className="flex w-full shrink-0 items-center justify-center pt-2.5 pb-2 cursor-pointer"
             >
-              <span className="h-1 w-10 rounded-full bg-white/20 transition-colors hover:bg-white/35" />
+              <span className="h-1 w-11 rounded-full bg-orange-400/45 transition-colors hover:bg-orange-400/75" />
             </button>
 
             {/* SUB-CATEGORY PILLS ROW (Style tab) */}
             {mainTab === 'style' && (
               <div className="relative shrink-0 pb-2.5">
                 {pillScrollState.left && (
-                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center bg-gradient-to-r from-[#11141c] via-[#11141c]/90 to-transparent pb-2.5 pl-2 pr-4">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center bg-gradient-to-r from-[#0b0d14] via-[#0b0d14]/90 to-transparent pb-2.5 pl-2 pr-4">
                     <button
                       type="button"
                       onClick={() => scrollStylePillsBy(-160)}
                       aria-label="Sola Kaydır"
-                      className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full border border-white/12 bg-[#1a1f2c] text-zinc-100 shadow-md transition-colors hover:bg-[#252b3d] active:scale-95 cursor-pointer"
+                      className="ug-cut-sm ug-btn-metal pointer-events-auto flex h-7 w-7 items-center justify-center active:scale-95 cursor-pointer"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -1746,7 +1764,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                   onPointerCancel={() => {
                     styleDragRef.current.active = false;
                   }}
-                  className="flex items-center gap-2 overflow-x-auto no-scrollbar touch-pan-x px-4 select-none"
+                  className="flex items-center gap-1.5 overflow-x-auto no-scrollbar touch-pan-x px-4 select-none"
                 >
                   {(
                     [
@@ -1782,10 +1800,10 @@ export const GarageView: React.FC<GarageViewProps> = ({
                             block: 'nearest',
                           });
                         }}
-                        className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                        className={`ug-skew shrink-0 px-3.5 py-1.5 font-display italic text-xs font-bold uppercase tracking-wide transition-all whitespace-nowrap cursor-pointer ${
                           active
-                            ? 'bg-white text-zinc-950 shadow-sm'
-                            : 'border border-white/[0.08] bg-[#1a1e28] text-zinc-300 hover:bg-[#232836] hover:text-white'
+                            ? 'ug-tab-active'
+                            : 'border border-white/[0.09] bg-[#151926] text-zinc-300 hover:border-orange-500/40 hover:text-white'
                         }`}
                       >
                         {st.label}
@@ -1795,12 +1813,12 @@ export const GarageView: React.FC<GarageViewProps> = ({
                 </div>
 
                 {pillScrollState.right && (
-                  <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center bg-gradient-to-l from-[#11141c] via-[#11141c]/90 to-transparent pb-2.5 pl-4 pr-2">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center bg-gradient-to-l from-[#0b0d14] via-[#0b0d14]/90 to-transparent pb-2.5 pl-4 pr-2">
                     <button
                       type="button"
                       onClick={() => scrollStylePillsBy(160)}
                       aria-label="Sağa Kaydır"
-                      className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full border border-white/12 bg-[#1a1f2c] text-zinc-100 shadow-md transition-colors hover:bg-[#252b3d] active:scale-95 cursor-pointer"
+                      className="ug-cut-sm ug-btn-metal pointer-events-auto flex h-7 w-7 items-center justify-center active:scale-95 cursor-pointer"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -2595,9 +2613,9 @@ export const GarageView: React.FC<GarageViewProps> = ({
               {mainTab === 'upgrades' && (
                 <div className="flex flex-col gap-2.5">
                   {/* Live Vehicle 4-Metric Strip */}
-                  <div className="grid grid-cols-4 gap-2 rounded-2xl border border-white/[0.06] bg-[#161a24] p-2.5">
+                  <div className="ug-cut-sm ug-card grid grid-cols-4 gap-2 p-2.5">
                     <div className="flex flex-col gap-1">
-                      <div className="flex justify-between text-[10px] font-semibold text-zinc-400">
+                      <div className="flex justify-between font-display text-[10px] font-bold uppercase text-zinc-400">
                         <span>Hız</span>
                         <span className="font-mono-num text-zinc-100">
                           {Math.min(
@@ -2614,9 +2632,9 @@ export const GarageView: React.FC<GarageViewProps> = ({
                           )}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div className="ug-skew h-1.5 overflow-hidden bg-white/10">
                         <div
-                          className="h-full bg-amber-400"
+                          className="h-full bg-gradient-to-r from-rose-500 to-orange-400"
                           style={{
                             width: `${Math.min(100, (activeModel.speedRating + activeUpgrades.engine * 0.5 + inspectedWheelSpec.speedRatingBonus + inspectedKitSpec.speedRatingBonus + inspectedSpoilerSpec.speedRatingBonus) * 10)}%`,
                           }}
@@ -2624,7 +2642,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <div className="flex justify-between text-[10px] font-semibold text-zinc-400">
+                      <div className="flex justify-between font-display text-[10px] font-bold uppercase text-zinc-400">
                         <span>Tutuş</span>
                         <span className="font-mono-num text-zinc-100">
                           {Math.min(
@@ -2641,7 +2659,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                           )}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div className="ug-skew h-1.5 overflow-hidden bg-white/10">
                         <div
                           className="h-full bg-sky-400"
                           style={{
@@ -2651,13 +2669,13 @@ export const GarageView: React.FC<GarageViewProps> = ({
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <div className="flex justify-between text-[10px] font-semibold text-zinc-400">
+                      <div className="flex justify-between font-display text-[10px] font-bold uppercase text-zinc-400">
                         <span>Nitro</span>
                         <span className="font-mono-num text-cyan-300">
                           {activeNitroDurationSec}s
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div className="ug-skew h-1.5 overflow-hidden bg-white/10">
                         <div
                           className="h-full bg-cyan-400"
                           style={{
@@ -2667,13 +2685,13 @@ export const GarageView: React.FC<GarageViewProps> = ({
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <div className="flex justify-between text-[10px] font-semibold text-zinc-400">
-                        <span>Gövde</span>
+                      <div className="flex justify-between font-display text-[10px] font-bold uppercase text-zinc-400">
+                        <span>Zırh</span>
                         <span className="font-mono-num text-zinc-100">
                           {activeModel.maxIntegrity}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div className="ug-skew h-1.5 overflow-hidden bg-white/10">
                         <div
                           className="h-full bg-emerald-400"
                           style={{
@@ -2685,16 +2703,16 @@ export const GarageView: React.FC<GarageViewProps> = ({
                   </div>
 
                   {/* Modifiye Sınıfı Bar */}
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.06] bg-[#161a24] px-3 py-2">
-                    <span className="text-xs font-semibold text-zinc-300">
+                  <div className="ug-cut-sm ug-card flex items-center justify-between gap-2 px-3 py-2">
+                    <span className="font-display text-xs font-bold uppercase tracking-wide text-zinc-300">
                       Modifiye Sınıfı:{' '}
                       <span
-                        className={`font-display font-extrabold ${activeTuningClass.textClass}`}
+                        className={`font-display italic font-extrabold ${activeTuningClass.textClass}`}
                       >
                         {activeTuningClass.label}
                       </span>
                     </span>
-                    <span className="font-mono-num text-xs font-bold text-zinc-200">
+                    <span className="font-mono-num text-xs font-bold text-orange-300">
                       {activeTuningClass.total}/{activeTuningClass.max}
                     </span>
                   </div>
@@ -2708,22 +2726,22 @@ export const GarageView: React.FC<GarageViewProps> = ({
                       const canAfford = !isMax && goldCoins >= cost;
                       const icon =
                         spec.key === 'engine' ? (
-                          <Gauge className="h-4 w-4 text-amber-400 shrink-0" />
+                          <Gauge className="h-4 w-4 text-orange-400 shrink-0" />
                         ) : spec.key === 'tires' ? (
                           <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
                         ) : spec.key === 'nitroTank' ? (
                           <Fuel className="h-4 w-4 text-cyan-400 shrink-0" />
                         ) : (
-                          <Flame className="h-4 w-4 text-violet-400 shrink-0" />
+                          <Flame className="h-4 w-4 text-rose-400 shrink-0" />
                         );
 
                       return (
                         <div
                           key={spec.key}
-                          className="flex flex-col gap-2 rounded-2xl border border-white/[0.06] bg-[#161a24] p-3"
+                          className="ug-cut-sm ug-card flex flex-col gap-2 p-3"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="inline-flex items-center gap-1.5 font-display text-xs sm:text-sm font-bold text-white">
+                            <span className="inline-flex items-center gap-1.5 font-display italic text-xs sm:text-sm font-bold uppercase tracking-wide text-white">
                               {icon}
                               <span>{spec.label}</span>
                             </span>
@@ -2733,13 +2751,13 @@ export const GarageView: React.FC<GarageViewProps> = ({
                           </div>
                           <UpgradeLevelMeter part={spec.key} level={level} />
                           {!isActiveUnlocked ? (
-                            <div className="flex min-h-[38px] items-center justify-center rounded-xl bg-[#0e1118] text-xs font-semibold text-zinc-500">
+                            <div className="ug-cut-sm flex min-h-[38px] items-center justify-center bg-[#0b0d14] font-display text-xs font-bold uppercase text-zinc-500">
                               Önce aracı aç
                             </div>
                           ) : isMax ? (
-                            <div className="flex min-h-[38px] items-center justify-center gap-1.5 rounded-xl bg-emerald-500/12 text-xs font-bold text-emerald-300">
+                            <div className="ug-cut-sm flex min-h-[38px] items-center justify-center gap-1.5 bg-emerald-500/12 font-display text-xs font-bold uppercase text-emerald-300">
                               <CheckCircle2 className="h-4 w-4" />
-                              <span>Maksimum</span>
+                              <span>Maksimum Seviye</span>
                             </div>
                           ) : canAfford ? (
                             <button
@@ -2747,7 +2765,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                               onClick={() =>
                                 onUpgradePart(activeModel.id, spec.key)
                               }
-                              className="flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl bg-[#f59e0b] px-3 text-xs font-extrabold text-zinc-950 hover:bg-[#fbbf24] cursor-pointer"
+                              className="ug-cut-sm ug-btn-fire flex min-h-[40px] items-center justify-center gap-1.5 px-3 font-display italic text-xs font-extrabold uppercase tracking-wider cursor-pointer"
                             >
                               <Coins className="h-3.5 w-3.5 shrink-0" />
                               <span className="font-mono-num">
@@ -2767,7 +2785,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                                       `${activeModel.name} · ${spec.label}`,
                                     )
                                   }
-                                  className="flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-sky-400/35 bg-sky-500/15 px-3 text-xs font-bold text-sky-200 hover:bg-sky-500/25 cursor-pointer"
+                                  className="ug-cut-sm flex min-h-[40px] items-center justify-center gap-1.5 border border-sky-400/40 bg-sky-500/15 px-3 font-display text-xs font-bold uppercase text-sky-200 hover:bg-sky-500/25 cursor-pointer"
                                 >
                                   <PlayCircle className="h-4 w-4 text-sky-400 shrink-0" />
                                   <span className="font-mono-num">
@@ -2787,13 +2805,13 @@ export const GarageView: React.FC<GarageViewProps> = ({
               {/* ====== TAB: GÜÇLER ====== */}
               {mainTab === 'powerups' && (
                 <div className="flex flex-col gap-2.5">
-                  <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-[#161a24] px-3 py-2 text-xs">
-                    <span className="inline-flex items-center gap-1.5 font-bold text-zinc-200">
-                      <Zap className="h-3.5 w-3.5 text-[#f59e0b]" />
-                      <span>Otoyol Güçleri</span>
+                  <div className="ug-cut-sm ug-card flex items-center justify-between px-3 py-2 text-xs">
+                    <span className="inline-flex items-center gap-1.5 font-display italic font-bold uppercase tracking-wide text-zinc-200">
+                      <Zap className="h-3.5 w-3.5 text-orange-400" />
+                      <span>Sokak Güçleri</span>
                     </span>
-                    <span className="font-mono-num font-bold text-amber-300">
-                      Seviye {playerLevel.level}
+                    <span className="font-mono-num font-bold text-orange-300">
+                      SV. {playerLevel.level}
                     </span>
                   </div>
 
@@ -2820,13 +2838,13 @@ export const GarageView: React.FC<GarageViewProps> = ({
                     return (
                       <div
                         key={spec.id}
-                        className="flex flex-col gap-2 rounded-2xl border border-white/[0.06] bg-[#161a24] p-3"
+                        className="ug-cut-sm ug-card flex flex-col gap-2 p-3"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
                             {icon}
                             <div className="min-w-0">
-                              <div className="truncate font-display text-sm font-bold text-white">
+                              <div className="truncate font-display italic text-sm font-bold uppercase tracking-wide text-white">
                                 {spec.name}
                               </div>
                               <div className="text-[11px] leading-snug text-zinc-400 line-clamp-2">
@@ -2835,21 +2853,21 @@ export const GarageView: React.FC<GarageViewProps> = ({
                             </div>
                           </div>
                           <span
-                            className={`shrink-0 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold font-mono-num ${
+                            className={`ug-skew shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold font-mono-num ${
                               unlocked
-                                ? 'bg-emerald-500/15 text-emerald-300'
-                                : 'bg-[#0e1118] text-amber-300'
+                                ? 'bg-emerald-500/18 text-emerald-300'
+                                : 'bg-[#0b0d14] text-orange-300'
                             }`}
                           >
                             {unlocked ? (
                               <>
                                 <Unlock className="h-3 w-3" />
-                                <span>Açık</span>
+                                <span>AÇIK</span>
                               </>
                             ) : (
                               <>
                                 <Lock className="h-3 w-3" />
-                                <span>Sv.{spec.unlockLevel}</span>
+                                <span>SV.{spec.unlockLevel}</span>
                               </>
                             )}
                           </span>
@@ -2859,9 +2877,9 @@ export const GarageView: React.FC<GarageViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onOpenLevelRoad(spec.unlockLevel)}
-                            className="flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-xl border border-amber-400/35 bg-amber-500/12 px-3 text-xs font-bold text-amber-200 hover:bg-amber-500/20 cursor-pointer"
+                            className="ug-cut-sm flex min-h-[36px] w-full items-center justify-center gap-1.5 border border-orange-400/40 bg-orange-500/14 px-3 font-display text-xs font-bold uppercase text-orange-200 hover:bg-orange-500/22 cursor-pointer"
                           >
-                            <Gift className="h-3.5 w-3.5 text-amber-400" />
+                            <Gift className="h-3.5 w-3.5 text-orange-400" />
                             <span>Seviye {spec.unlockLevel} Yolunu Gör</span>
                           </button>
                         ) : (
@@ -2878,10 +2896,10 @@ export const GarageView: React.FC<GarageViewProps> = ({
                               return (
                                 <div
                                   key={trackSpec.key}
-                                  className="flex flex-col gap-1.5 rounded-xl bg-[#0e1118] p-2.5"
+                                  className="ug-cut-sm flex flex-col gap-1.5 bg-[#0b0d14] p-2.5 border border-white/[0.06]"
                                 >
                                   <div className="flex items-center justify-between gap-2 text-xs">
-                                    <span className="font-semibold text-zinc-200 truncate">
+                                    <span className="font-display font-bold uppercase text-zinc-200 truncate">
                                       {trackSpec.label}
                                     </span>
                                     <span className="font-mono-num font-bold whitespace-nowrap">
@@ -2904,7 +2922,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                                     }).map((_, segIdx) => (
                                       <div
                                         key={segIdx}
-                                        className={`h-1.5 rounded-full ${
+                                        className={`ug-skew h-1.5 ${
                                           segIdx < lvl
                                             ? spec.accentBgClass
                                             : 'bg-white/10'
@@ -2913,7 +2931,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                                     ))}
                                   </div>
                                   {isMax ? (
-                                    <div className="flex min-h-[34px] items-center justify-center gap-1 text-xs font-bold text-emerald-300">
+                                    <div className="flex min-h-[34px] items-center justify-center gap-1 font-display text-xs font-bold uppercase text-emerald-300">
                                       <CheckCircle2 className="h-3.5 w-3.5" />
                                       <span>Maksimum</span>
                                     </div>
@@ -2923,7 +2941,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                                       onClick={() =>
                                         onUpgradePowerUp(spec.id, trackSpec.key)
                                       }
-                                      className="flex min-h-[36px] items-center justify-center gap-1.5 rounded-xl bg-[#f59e0b] px-3 text-xs font-extrabold text-zinc-950 hover:bg-[#fbbf24] cursor-pointer"
+                                      className="ug-cut-sm ug-btn-fire flex min-h-[36px] items-center justify-center gap-1.5 px-3 font-display italic text-xs font-extrabold uppercase tracking-wider cursor-pointer"
                                     >
                                       <Coins className="h-3.5 w-3.5" />
                                       <span className="font-mono-num">
@@ -2947,7 +2965,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                                               `${spec.shortName} · ${trackSpec.label}`,
                                             )
                                           }
-                                          className="flex min-h-[36px] items-center justify-center gap-1.5 rounded-xl border border-sky-400/35 bg-sky-500/15 px-3 text-xs font-bold text-sky-200 hover:bg-sky-500/25 cursor-pointer"
+                                          className="ug-cut-sm flex min-h-[36px] items-center justify-center gap-1.5 border border-sky-400/35 bg-sky-500/15 px-3 font-display text-xs font-bold uppercase text-sky-200 hover:bg-sky-500/25 cursor-pointer"
                                         >
                                           <PlayCircle className="h-3.5 w-3.5 text-sky-400" />
                                           <span className="font-mono-num">
@@ -2969,24 +2987,24 @@ export const GarageView: React.FC<GarageViewProps> = ({
               )}
             </div>
 
-            {/* PINNED PRIMARY AMBER CTA BUTTON */}
-            <div className="shrink-0 bg-[#11141c] px-4 pt-2 pb-2.5">
+            {/* PINNED PRIMARY UNDERGROUND CTA BUTTON */}
+            <div className="shrink-0 bg-[#0b0d14] px-4 pt-2 pb-2.5 border-t border-white/[0.06]">
               {renderPrimaryCta()}
             </div>
 
-            {/* PINNED BOTTOM 4-TAB NAVIGATION BAR (Araç · Yükselt · Stil · Güçler) */}
+            {/* PINNED BOTTOM 4-TAB UNDERGROUND NAVIGATION BAR */}
             <nav
               aria-label="Garaj Kategorileri"
-              className="grid shrink-0 grid-cols-4 border-t border-white/[0.07] bg-[#0c0f16] pt-2"
+              className="grid shrink-0 grid-cols-4 border-t border-white/10 bg-[#080a10] pt-1.5"
               style={{
                 paddingBottom: 'max(0.55rem, env(safe-area-inset-bottom))',
               }}
             >
               {(
                 [
-                  { id: 'car', label: 'Araç', icon: CarFront },
-                  { id: 'upgrades', label: 'Yükselt', icon: ArrowUp },
-                  { id: 'style', label: 'Stil', icon: Palette },
+                  { id: 'car', label: 'Araçlar', icon: CarFront },
+                  { id: 'upgrades', label: 'Performans', icon: ArrowUp },
+                  { id: 'style', label: 'Modifiye', icon: Palette },
                   { id: 'powerups', label: 'Güçler', icon: Zap },
                 ] as const
               ).map((tab) => {
@@ -3000,14 +3018,20 @@ export const GarageView: React.FC<GarageViewProps> = ({
                       resetAllPreviews();
                       setMainTab(tab.id);
                     }}
-                    className={`flex flex-col items-center justify-center gap-1 py-1 transition-colors cursor-pointer ${
+                    className={`relative flex flex-col items-center justify-center gap-1 py-1.5 transition-colors cursor-pointer ${
                       active
-                        ? 'text-[#f59e0b]'
+                        ? 'text-orange-400'
                         : 'text-zinc-400 hover:text-zinc-200'
                     }`}
                   >
+                    {active && (
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-4 -top-1.5 h-[2px] bg-gradient-to-r from-rose-500 to-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.8)]"
+                      />
+                    )}
                     <Icon className="h-5 w-5" />
-                    <span className="text-[11px] font-bold leading-none">
+                    <span className="font-display italic text-[11px] font-bold uppercase tracking-wide leading-none">
                       {tab.label}
                     </span>
                   </button>

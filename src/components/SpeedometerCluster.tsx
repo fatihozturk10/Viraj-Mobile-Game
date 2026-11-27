@@ -252,37 +252,59 @@ export const SpeedometerCluster: React.FC<SpeedometerClusterProps> = React.memo(
 
   const inRedline = rpmRatio >= RPM_REDLINE_START;
   const accentColor = nitroActive
-    ? '#38bdf8'
+    ? '#22d3ee'
     : inRedline
-      ? '#fb7185'
-      : '#fbbf24';
+      ? '#f43f5e'
+      : '#f97316';
 
   return (
-    <div className="pointer-events-none relative w-[164px] select-none rounded-xl border border-white/12 bg-zinc-950/90 px-2.5 pt-2 pb-2.5 shadow-xl sm:w-[192px] sm:px-3 sm:pt-2.5 sm:pb-3">
-      {/* Top status line (unboxed typography, zero-pill) */}
-      <div className="mb-0.5 flex items-center justify-between text-[10px] font-bold tracking-wider">
-        <div className="flex items-center gap-1.5">
+    <div className="ug-cut pointer-events-none relative w-[138px] select-none border border-white/15 bg-[#090b12]/84 px-2 pt-1.5 pb-2 shadow-[0_10px_28px_rgba(0,0,0,0.75)] sm:w-[172px] sm:px-3 sm:pt-2 sm:pb-2.5">
+      {/* Top crimson-orange street accent hairline */}
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-x-0 top-0 h-[2px] ${
+          nitroActive
+            ? 'bg-gradient-to-r from-cyan-400 via-sky-300 to-transparent'
+            : 'bg-gradient-to-r from-rose-600 via-orange-500 to-transparent'
+        }`}
+      />
+
+      {/* Top status line */}
+      <div className="mb-0.5 flex items-center justify-between text-[9.5px] sm:text-[10px] font-bold tracking-wider uppercase">
+        <div className="flex items-center gap-1">
           {drifting && (
-            <span className="font-display text-amber-400">DRİFT</span>
+            <span className="font-display italic font-bold text-orange-400">
+              DRİFT
+            </span>
           )}
           {drifting && nitroActive && (
             <span className="text-zinc-600" aria-hidden="true">
-              ·
+              /
             </span>
           )}
           {nitroActive && (
-            <span className="font-display text-sky-400">TURBO</span>
+            <span className="font-display italic font-bold text-cyan-300">
+              NOS
+            </span>
           )}
           {!drifting && !nitroActive && (
             <span className="font-mono-num text-zinc-400">
-              RPM{' '}
               <span ref={rpmPercentRef} className="text-zinc-200">
                 1.0k
-              </span>
+              </span>{' '}
+              RPM
             </span>
           )}
         </div>
-        <span className="font-display text-xs font-extrabold text-amber-400 font-mono-num">
+        <span
+          className={`ug-skew px-1.5 py-0.5 font-display italic text-[10px] sm:text-[11px] font-extrabold font-mono-num leading-none ${
+            nitroActive
+              ? 'bg-cyan-500/25 text-cyan-200'
+              : inRedline
+                ? 'bg-rose-500/30 text-rose-200'
+                : 'bg-orange-500/25 text-orange-300'
+          }`}
+        >
           V{gear}
         </span>
       </div>
@@ -296,9 +318,9 @@ export const SpeedometerCluster: React.FC<SpeedometerClusterProps> = React.memo(
         >
           <defs>
             <linearGradient id="virajSpeedGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#f59e0b" />
-              <stop offset="70%" stopColor={nitroActive ? '#38bdf8' : '#fbbf24'} />
-              <stop offset="100%" stopColor={nitroActive ? '#67e8f9' : '#fb7185'} />
+              <stop offset="0%" stopColor={nitroActive ? '#0284c7' : '#ea580c'} />
+              <stop offset="65%" stopColor={nitroActive ? '#22d3ee' : '#f97316'} />
+              <stop offset="100%" stopColor={nitroActive ? '#ffffff' : '#e11d48'} />
             </linearGradient>
           </defs>
 
@@ -444,8 +466,8 @@ export const SpeedometerCluster: React.FC<SpeedometerClusterProps> = React.memo(
               y1={CY - 12}
               x2={CX}
               y2={CY - 64}
-              stroke={nitroActive ? '#38bdf8' : '#fbbf24'}
-              strokeWidth="1.2"
+              stroke={nitroActive ? '#22d3ee' : '#f97316'}
+              strokeWidth="1.35"
               strokeLinecap="round"
             />
           </g>
@@ -455,8 +477,8 @@ export const SpeedometerCluster: React.FC<SpeedometerClusterProps> = React.memo(
             cx={CX}
             cy={CY}
             r="7"
-            fill="#18181b"
-            stroke="rgba(255,255,255,0.28)"
+            fill="#0b0d14"
+            stroke="rgba(255,255,255,0.32)"
             strokeWidth="1.5"
           />
           <circle cx={CX} cy={CY} r="2.8" fill={accentColor} />
@@ -467,14 +489,14 @@ export const SpeedometerCluster: React.FC<SpeedometerClusterProps> = React.memo(
           <div className="flex items-baseline gap-1">
             <span
               ref={speedTextRef}
-              className={`font-display text-[26px] font-extrabold tracking-tight font-mono-num sm:text-[30px] ${
-                nitroActive ? 'text-sky-300' : 'text-white'
+              className={`font-display italic text-[24px] font-extrabold tracking-tight font-mono-num sm:text-[28px] ${
+                nitroActive ? 'text-cyan-300' : 'text-white'
               }`}
             >
               {speedKmh}
             </span>
-            <span className="text-[10px] font-semibold text-zinc-400">
-              km/h
+            <span className="font-display text-[9px] font-bold tracking-wider text-orange-400 uppercase">
+              KM/S
             </span>
           </div>
         </div>

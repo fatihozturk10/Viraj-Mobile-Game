@@ -59,11 +59,11 @@ function renderRewardArtwork(reward: LevelRoadReward): React.ReactNode {
       ) : reward.powerUpId === 'magnet' ? (
         <Magnet className="h-7 w-7 text-rose-200 drop-shadow-[0_0_12px_rgba(251,113,133,0.85)]" />
       ) : (
-        <Zap className="h-7 w-7 fill-amber-300 text-amber-100 drop-shadow-[0_0_12px_rgba(251,191,36,0.9)]" />
+        <Zap className="h-7 w-7 fill-orange-300 text-orange-100 drop-shadow-[0_0_12px_rgba(249,115,22,0.9)]" />
       );
     return (
       <div
-        className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-white/30 shadow-lg"
+        className="ug-cut-sm relative flex h-14 w-14 items-center justify-center border border-white/30 shadow-lg"
         style={{ background: reward.swatch }}
       >
         {icon}
@@ -73,12 +73,14 @@ function renderRewardArtwork(reward: LevelRoadReward): React.ReactNode {
 
   if (reward.kind === 'car_color') {
     return (
-      <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-white/25 bg-zinc-950 p-1.5 shadow-inner">
-        <div
-          className="h-full w-full rounded-xl border border-white/35 shadow-md"
-          style={{ background: reward.swatch }}
-        />
-        <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-md border border-amber-300/60 bg-zinc-950 text-amber-300">
+      <div className="relative h-14 w-14">
+        <div className="ug-cut-sm flex h-full w-full items-center justify-center border border-white/25 bg-[#090b12] p-1.5 shadow-inner">
+          <div
+            className="ug-cut-sm h-full w-full border border-white/35 shadow-md"
+            style={{ background: reward.swatch }}
+          />
+        </div>
+        <span className="ug-cut-sm absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center border border-orange-400/70 bg-[#090b12] text-orange-300">
           <Palette className="h-3 w-3" />
         </span>
       </div>
@@ -89,10 +91,10 @@ function renderRewardArtwork(reward: LevelRoadReward): React.ReactNode {
     const isTopMilestone = reward.level === 100 || reward.level === 50 || reward.level === 95;
     return (
       <div
-        className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-white/30 shadow-lg"
+        className="ug-cut-sm relative flex h-14 w-14 items-center justify-center border border-white/30 shadow-lg"
         style={{ background: reward.swatch }}
       >
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black/40 border border-white/20">
+        <div className="ug-cut-sm flex h-9 w-9 items-center justify-center bg-black/45 border border-white/20">
           {isTopMilestone ? (
             <Crown className="h-5 w-5 text-amber-300" />
           ) : (
@@ -106,7 +108,7 @@ function renderRewardArtwork(reward: LevelRoadReward): React.ReactNode {
   if (reward.kind === 'crate') {
     return (
       <div
-        className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-white/30 shadow-lg"
+        className="ug-cut-sm relative flex h-14 w-14 items-center justify-center border border-white/30 shadow-lg"
         style={{ background: reward.swatch }}
       >
         <Package className="h-7 w-7 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]" />
@@ -115,7 +117,7 @@ function renderRewardArtwork(reward: LevelRoadReward): React.ReactNode {
   }
 
   return (
-    <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/40 bg-amber-500/15 shadow-inner">
+    <div className="ug-cut-sm relative flex h-14 w-14 items-center justify-center border border-orange-400/40 bg-gradient-to-br from-orange-500/20 to-amber-500/10 shadow-inner">
       <Coins className="h-7 w-7 text-amber-400" />
     </div>
   );
@@ -255,30 +257,30 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
-      className="pointer-events-auto fixed inset-0 z-40 flex items-end justify-center bg-black/84 p-0 sm:items-center sm:p-4"
+      className="pointer-events-auto fixed inset-0 z-40 flex items-end justify-center bg-black/86 p-0 sm:items-center sm:p-4"
     >
       <div
-        className="animate-sheet-up flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-3xl border-t border-white/15 bg-zinc-950 shadow-2xl sm:max-h-[90vh] sm:w-[min(96vw,1040px)] sm:rounded-2xl sm:border"
+        className="animate-sheet-up ug-sheet flex max-h-[94dvh] w-full flex-col overflow-hidden rounded-t-2xl border-t sm:ug-cut sm:max-h-[90vh] sm:w-[min(96vw,1040px)] sm:rounded-none sm:border"
         style={{
           paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
         }}
       >
         {/* Top Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-zinc-950 px-4 py-3.5 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-[#0b0d14]/90 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-3 min-w-0">
             <DriverLevelEmblem level={playerLevel.level} size="lg" />
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
-                <span>Seviye Ödül Yolu · 1 → 100</span>
+              <div className="flex items-center gap-2 font-display text-[11px] font-bold tracking-wider text-orange-400 uppercase">
+                <span>SOKAK ŞÖHRET YOLU · 1 → 100</span>
                 <span className="text-zinc-600">·</span>
                 <span className="font-mono-num text-zinc-200">
                   {playerLevel.totalXp.toLocaleString('tr-TR')} XP
                 </span>
               </div>
               <h2
-                className={`truncate font-display text-lg font-extrabold sm:text-xl ${currentRankTier.textClass}`}
+                className={`truncate font-display italic text-lg font-extrabold uppercase sm:text-xl ${currentRankTier.textClass}`}
               >
-                Sv. {playerLevel.level} · {playerLevel.rankTitle}
+                SV. {playerLevel.level} · {playerLevel.rankTitle}
               </h2>
             </div>
           </div>
@@ -288,7 +290,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
               <button
                 type="button"
                 onClick={handleClaimAllClick}
-                className="flex h-10 items-center gap-1.5 rounded-xl bg-amber-400 px-3.5 font-display text-xs font-extrabold text-zinc-950 shadow-[0_0_20px_rgba(251,191,36,0.35)] transition-transform hover:bg-amber-300 active:scale-95 cursor-pointer"
+                className="ug-cut-sm ug-btn-fire flex h-10 items-center gap-1.5 px-3.5 font-display italic text-xs font-extrabold uppercase tracking-wider active:scale-95 cursor-pointer"
               >
                 <Gift className="h-4 w-4" />
                 <span>Tümünü Topla ({unclaimedCount})</span>
@@ -298,7 +300,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Kapat"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/14 bg-zinc-900 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
+              className="ug-cut-sm ug-btn-metal flex h-10 w-10 items-center justify-center cursor-pointer"
             >
               <X className="h-5 w-5" />
             </button>
@@ -306,14 +308,14 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
         </div>
 
         {/* XP Progress & Quick Jump Controls */}
-        <div className="flex flex-col gap-2.5 border-b border-white/10 bg-zinc-900/60 px-4 py-3 sm:px-6">
+        <div className="flex flex-col gap-2.5 border-b border-white/10 bg-[#0f131d] px-4 py-3 sm:px-6">
           {/* Active Level XP Meter */}
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-zinc-300">
+              <span className="font-display font-bold uppercase tracking-wide text-zinc-300">
                 Seviye {playerLevel.level + 1} Hedefi
               </span>
-              <span className="font-mono-num font-bold text-amber-300">
+              <span className="font-mono-num font-bold text-orange-300">
                 {playerLevel.currentLevelXp.toLocaleString('tr-TR')} /{' '}
                 {playerLevel.nextLevelXpRequired.toLocaleString('tr-TR')} XP
               </span>
@@ -334,17 +336,17 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                   key={range.label}
                   type="button"
                   onClick={() => scrollToLevel(range.start + 1)}
-                  className="rounded-lg border border-white/10 bg-zinc-950/90 px-2.5 py-1 font-mono-num text-[11px] font-bold text-zinc-300 transition-colors hover:border-amber-400/50 hover:text-amber-300 cursor-pointer"
+                  className="ug-skew border border-white/12 bg-[#090b12] px-2.5 py-1 font-mono-num text-[11px] font-bold text-zinc-300 transition-colors hover:border-orange-500/60 hover:text-orange-300 cursor-pointer"
                 >
-                  Sv.{range.label}
+                  SV.{range.label}
                 </button>
               ))}
               <button
                 type="button"
                 onClick={() => scrollToLevel(clampedProgressLevel)}
-                className="rounded-lg border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/25 cursor-pointer"
+                className="ug-skew border border-orange-500/45 bg-orange-500/18 px-3 py-1 font-display text-[11px] font-bold uppercase text-orange-200 hover:bg-orange-500/28 cursor-pointer"
               >
-                Konumum (Sv.{playerLevel.level})
+                Konumum (SV.{playerLevel.level})
               </button>
             </div>
 
@@ -358,7 +360,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                   });
                 }}
                 aria-label="Sola Kaydır"
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/12 bg-zinc-950 text-zinc-300 hover:border-white/30 hover:text-white cursor-pointer"
+                className="ug-cut-sm ug-btn-metal flex h-7 w-7 items-center justify-center cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -371,7 +373,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                   });
                 }}
                 aria-label="Sağa Kaydır"
-                className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/12 bg-zinc-950 text-zinc-300 hover:border-white/30 hover:text-white cursor-pointer"
+                className="ug-cut-sm ug-btn-metal flex h-7 w-7 items-center justify-center cursor-pointer"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -380,7 +382,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
         </div>
 
         {/* MAIN CONTENT AREA */}
-        <div className="relative flex min-h-0 flex-1 flex-col bg-zinc-950">
+        <div className="ug-carbon relative flex min-h-0 flex-1 flex-col bg-[#080a10]">
             <div className="custom-scroll flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
               {/* Horizontal Left -> Right Track */}
               <div
@@ -396,10 +398,10 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                   className="relative flex items-start pt-3 pb-8"
                   style={{ width: `${totalTrackPx}px` }}
                 >
-                  {/* Continuous Horizontal Highway Progress Rail centered behind Level Number Nodes */}
+                  {/* Continuous Horizontal Street Progress Rail centered behind Level Number Nodes */}
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute top-[52px] h-3 rounded-full border border-white/10 bg-zinc-900"
+                    className="pointer-events-none absolute top-[52px] h-3.5 border-y border-white/15 bg-[#0c0f18] shadow-inner"
                     style={{
                       left: `${railStartPx}px`,
                       width: `${railTotalSpanPx}px`,
@@ -413,9 +415,9 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                           'repeating-linear-gradient(90deg, #ffffff 0px, #ffffff 12px, transparent 12px, transparent 26px)',
                       }}
                     />
-                    {/* Active illuminated highway fill from 1 -> current level */}
+                    {/* Active illuminated Underground street fill from 1 -> current level */}
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-orange-400 shadow-[0_0_16px_rgba(251,191,36,0.55)] transition-[width] duration-500"
+                      className="h-full bg-gradient-to-r from-rose-600 via-orange-500 to-amber-400 shadow-[0_0_18px_rgba(234,88,12,0.65)] transition-[width] duration-500"
                       style={{ width: `${railFillPx}px` }}
                     />
                   </div>
@@ -442,39 +444,43 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                         {/* Top Current-Level Marker (fixed height on every column) */}
                         <div className="mb-1 flex h-5 w-full shrink-0 items-center justify-center">
                           {isCurrent ? (
-                            <span className="rounded-md border border-amber-300/60 bg-amber-400 px-2 py-0.5 font-display text-[10px] font-black tracking-wider text-zinc-950 uppercase shadow-[0_0_14px_rgba(251,191,36,0.5)]">
+                            <span className="ug-skew ug-btn-fire px-2.5 py-0.5 font-display italic text-[10px] font-black tracking-wider text-white uppercase">
                               BURADASIN
                             </span>
                           ) : reward.kind === 'powerup_unlock' ? (
-                            <span className="rounded-md border border-cyan-400/50 bg-cyan-500/20 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-cyan-200 uppercase">
+                            <span className="ug-skew border border-cyan-400/50 bg-cyan-500/20 px-2 py-0.5 font-display italic text-[9px] font-extrabold tracking-wider text-cyan-200 uppercase">
                               GÜÇ AÇILIŞI
                             </span>
                           ) : reward.level === 100 ? (
-                            <span className="rounded-md border border-rose-400/60 bg-rose-500/25 px-2 py-0.5 font-display text-[9px] font-black tracking-wider text-rose-200 uppercase">
+                            <span className="ug-skew border border-rose-400/60 bg-rose-500/25 px-2 py-0.5 font-display italic text-[9px] font-black tracking-wider text-rose-200 uppercase">
                               BÜYÜK FİNAL
                             </span>
                           ) : reward.exclusive ? (
-                            <span className="rounded-md border border-amber-400/40 bg-amber-500/15 px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider text-amber-300 uppercase">
+                            <span className="ug-skew border border-orange-400/45 bg-orange-500/18 px-2 py-0.5 font-display italic text-[9px] font-extrabold tracking-wider text-orange-200 uppercase">
                               SEVİYE ÖZEL
                             </span>
                           ) : null}
                         </div>
 
-                        {/* Numbered Level Node sitting squarely on the horizontal rail */}
+                        {/* Level Prestige Emblem Node sitting squarely on the horizontal rail */}
                         <div
-                          className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 font-mono-num text-base font-black transition-transform ${
+                          className={`relative z-10 flex h-12 w-12 shrink-0 items-center justify-center transition-transform ${
                             isClaimable
-                              ? 'scale-110 border-amber-300 bg-amber-400 text-zinc-950 shadow-[0_0_24px_rgba(251,191,36,0.7)]'
-                              : isClaimed
-                                ? 'border-emerald-400 bg-emerald-950 text-emerald-300'
-                                : isCurrent
-                                  ? 'scale-105 border-amber-400 bg-zinc-900 text-amber-300'
-                                  : 'border-white/15 bg-zinc-900 text-zinc-400'
+                              ? 'scale-112 drop-shadow-[0_0_14px_rgba(249,115,22,0.85)]'
+                              : isCurrent
+                                ? 'scale-108 drop-shadow-[0_0_12px_rgba(249,115,22,0.55)]'
+                                : isUnlocked
+                                  ? ''
+                                  : 'opacity-60 saturate-50'
                           }`}
                         >
-                          {reward.level}
+                          <DriverLevelEmblem
+                            level={reward.level}
+                            size="md"
+                            className="!h-12 !w-12"
+                          />
                           {isClaimed && (
-                            <span className="absolute -right-1.5 -bottom-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-zinc-950 bg-emerald-400 text-zinc-950">
+                            <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border border-zinc-950 bg-emerald-400 text-zinc-950 shadow-sm">
                               <CheckCircle2 className="h-3.5 w-3.5" />
                             </span>
                           )}
@@ -484,24 +490,26 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                         <div
                           aria-hidden="true"
                           className={`h-3 w-0.5 shrink-0 ${
-                            isUnlocked ? 'bg-amber-400/70' : 'bg-white/12'
+                            isUnlocked
+                              ? 'bg-gradient-to-b from-orange-400 to-rose-500'
+                              : 'bg-white/12'
                           }`}
                         />
 
-                        {/* Uniform Fixed-Size Reward Card */}
+                        {/* Uniform Fixed-Size Underground Reward Card */}
                         <div
-                          className={`relative flex h-[232px] w-full shrink-0 flex-col items-center overflow-hidden rounded-2xl border p-2.5 text-center transition-colors ${
+                          className={`ug-cut relative flex h-[234px] w-full shrink-0 flex-col items-center overflow-hidden border p-2.5 text-center transition-all ${
                             isJustClaimed
-                              ? 'border-emerald-400 bg-emerald-950/60 shadow-[0_0_26px_rgba(52,211,153,0.45)]'
+                              ? 'border-emerald-400 bg-emerald-950/65 shadow-[0_0_26px_rgba(52,211,153,0.45)]'
                               : isClaimable
-                                ? 'border-amber-400/80 bg-zinc-900 shadow-[0_0_22px_rgba(251,191,36,0.22)]'
+                                ? 'border-orange-400/85 bg-gradient-to-b from-[#1e1622] to-[#111420] shadow-[0_0_24px_rgba(234,88,12,0.28)]'
                                 : isFocused
-                                  ? 'border-sky-400/80 bg-zinc-900 shadow-[0_0_20px_rgba(56,189,248,0.25)]'
+                                  ? 'border-cyan-400/80 bg-[#131926] shadow-[0_0_20px_rgba(56,189,248,0.25)]'
                                   : isClaimed
-                                    ? 'border-emerald-500/30 bg-zinc-900/65'
+                                    ? 'border-emerald-500/30 bg-[#0e151a]/85'
                                     : reward.exclusive || reward.kind === 'powerup_unlock'
-                                      ? `${rMeta.borderClass} bg-zinc-900/85`
-                                      : 'border-white/10 bg-zinc-900/55'
+                                      ? `${rMeta.borderClass} bg-gradient-to-b from-[#171c2b] to-[#0f121c]`
+                                      : 'border-white/10 bg-[#111520]/85'
                           }`}
                         >
                           {/* Top rarity bar */}
@@ -511,13 +519,13 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                           />
 
                           {/* Slot 1: Fixed-height Badge Label */}
-                          <div className="flex h-5 w-full shrink-0 items-center justify-center">
+                          <div className="mt-0.5 flex h-5 w-full shrink-0 items-center justify-center">
                             <span
-                              className={`max-w-full truncate rounded px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider uppercase ${
+                              className={`ug-skew max-w-full truncate px-2 py-0.5 font-display text-[9px] font-extrabold tracking-wider uppercase ${
                                 reward.kind === 'powerup_unlock'
                                   ? 'bg-cyan-500/20 text-cyan-200'
                                   : reward.exclusive
-                                    ? 'bg-amber-500/20 text-amber-200'
+                                    ? 'bg-orange-500/22 text-orange-200'
                                     : 'bg-white/8 text-zinc-400'
                               }`}
                             >
@@ -533,7 +541,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                           {/* Slot 3: Fixed-slot Title, Subtitle & Optional Bonus Gold */}
                           <div className="flex w-full flex-1 flex-col items-center justify-start overflow-hidden">
                             <div className="flex h-[28px] w-full shrink-0 items-center justify-center">
-                              <span className="line-clamp-2 font-display text-xs font-extrabold leading-[1.18] text-white">
+                              <span className="line-clamp-2 font-display italic text-xs font-extrabold uppercase leading-[1.16] text-white">
                                 {reward.title}
                               </span>
                             </div>
@@ -560,7 +568,7 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleClaimNode(reward)}
-                                className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-amber-400 font-display text-xs font-black text-zinc-950 shadow-md transition-transform hover:bg-amber-300 active:scale-95 cursor-pointer"
+                                className="ug-cut-sm ug-btn-fire flex h-9 w-full items-center justify-center gap-1.5 font-display italic text-xs font-extrabold uppercase tracking-wider active:scale-95 cursor-pointer"
                               >
                                 {reward.kind === 'crate' ? (
                                   <>
@@ -575,14 +583,14 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
                                 )}
                               </button>
                             ) : isClaimed ? (
-                              <div className="flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-emerald-500/35 bg-emerald-500/12 font-display text-[11px] font-extrabold text-emerald-300">
+                              <div className="ug-cut-sm flex h-9 w-full items-center justify-center gap-1 border border-emerald-500/35 bg-emerald-500/12 font-display italic text-[11px] font-extrabold uppercase tracking-wider text-emerald-300">
                                 <CheckCircle2 className="h-3.5 w-3.5" />
                                 <span>TOPLANDI</span>
                               </div>
                             ) : (
-                              <div className="flex h-9 w-full items-center justify-center gap-1 rounded-xl border border-white/10 bg-zinc-950/80 font-mono-num text-[11px] font-bold text-zinc-500">
+                              <div className="ug-cut-sm flex h-9 w-full items-center justify-center gap-1 border border-white/10 bg-[#090b12]/90 font-mono-num text-[11px] font-bold text-zinc-500">
                                 <Lock className="h-3.5 w-3.5" />
-                                <span>Sv.{reward.level}</span>
+                                <span>SV.{reward.level}</span>
                               </div>
                             )}
                           </div>
@@ -595,12 +603,12 @@ export const LevelRoadModal: React.FC<LevelRoadModalProps> = ({
             </div>
 
             {/* Bottom Legend */}
-            <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-zinc-900/70 px-4 py-2 text-[11px] text-zinc-400 sm:px-6">
+            <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-[#0a0c13] px-4 py-2 text-[11px] text-zinc-400 sm:px-6">
               <span>
-                Sola/sağa kaydırarak 1&apos;den 100&apos;e kadar tüm seviye ödüllerini incele.
+                Sola/sağa kaydırarak 1&apos;den 100&apos;e kadar tüm sokak şöhret ödüllerini incele.
               </span>
-              <span className="font-semibold text-amber-300">
-                Özel boyalar, aksesuarlar ve otoyol güçleri sadece bu yoldan açılır!
+              <span className="font-display font-bold uppercase tracking-wide text-orange-300">
+                Özel boyalar, aksesuarlar ve sokak güçleri sadece bu yoldan açılır!
               </span>
             </div>
           </div>

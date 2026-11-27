@@ -55,18 +55,18 @@ const ToggleSwitch: React.FC<{
     aria-label={ariaLabel}
     disabled={disabled}
     onClick={onChange}
-    className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+    className={`ug-cut-sm relative inline-flex h-7 w-12 shrink-0 items-center border transition-colors ${
       disabled
         ? 'cursor-not-allowed opacity-45'
         : 'cursor-pointer'
     } ${
       checked
-        ? 'border-amber-400/70 bg-amber-500'
-        : 'border-white/15 bg-zinc-800'
+        ? 'border-orange-400/80 bg-gradient-to-r from-rose-600 to-orange-500'
+        : 'border-white/15 bg-[#090b12]'
     }`}
   >
     <span
-      className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform ${
+      className={`inline-block h-5 w-5 rounded-[3px] bg-white shadow-md transition-transform ${
         checked ? 'translate-x-5.5' : 'translate-x-0.5'
       }`}
     />
@@ -249,66 +249,66 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/84 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/86 p-0 sm:items-center sm:p-4"
       onPointerDown={(e) => e.stopPropagation()}
       onClick={onClose}
     >
       <div
-        className="animate-sheet-up flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-3xl border-t border-white/15 bg-zinc-950/96 text-zinc-100 shadow-2xl sm:max-h-[90vh] sm:max-w-[460px] sm:rounded-2xl sm:border"
+        className="animate-sheet-up ug-sheet flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-2xl border-t text-zinc-100 sm:ug-cut sm:max-h-[90vh] sm:max-w-[468px] sm:rounded-none sm:border"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile grab handle */}
         <div className="flex justify-center pt-2.5 pb-1 sm:hidden">
-          <span className="h-1 w-10 rounded-full bg-white/20" />
+          <span className="h-1 w-10 rounded-full bg-orange-400/45" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 sm:py-4">
+        <div className="flex items-center justify-between border-b border-white/10 bg-[#0b0d14]/90 px-5 py-3.5 sm:py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/15 text-amber-400">
+            <div className="ug-cut-sm flex h-10 w-10 items-center justify-center border border-orange-500/40 bg-orange-500/18 text-orange-400">
               <Settings className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="font-display text-xl font-extrabold tracking-tight text-white">
+              <div className="font-display text-[10px] font-bold tracking-[0.18em] text-orange-400 uppercase">
+                SİSTEM // KOKPİT
+              </div>
+              <h2 className="font-display italic text-xl font-extrabold uppercase tracking-wide text-white">
                 Ayarlar
               </h2>
-              <p className="text-xs text-zinc-400">
-                Ses, müzik ve mobil bildirim tercihleri
-              </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Ayarları Kapat"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-zinc-900 text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
+            className="ug-cut-sm ug-btn-metal flex h-11 w-11 items-center justify-center cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+        <div className="flex-1 space-y-5 overflow-y-auto custom-scroll px-5 py-4">
           {/* Driving Controls Section (Drag vs Tilt/Gyro) */}
-          <section className="space-y-3">
+          <section className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
+              <h3 className="font-display text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
                 Sürüş Kontrolleri
               </h3>
-              <span className="text-[11px] font-semibold text-amber-300">
+              <span className="font-display text-[11px] font-bold uppercase text-orange-300">
                 {steeringSettings.mode === 'tilt' ? 'Eğme (Jiroskop)' : 'Dokunmatik'}
               </span>
             </div>
 
-            <div className="space-y-3 rounded-xl border border-white/10 bg-zinc-900/70 p-3.5">
+            <div className="ug-cut-sm ug-card space-y-3 p-3.5">
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => void handleSelectSteeringMode('drag')}
-                  className={`flex min-h-[48px] items-center justify-center gap-2 rounded-xl border px-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                  className={`ug-cut-sm flex min-h-[48px] items-center justify-center gap-2 border px-3 font-display italic text-xs sm:text-sm font-extrabold uppercase tracking-wide transition-all cursor-pointer ${
                     steeringSettings.mode === 'drag'
-                      ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
-                      : 'border-white/10 bg-zinc-950/75 text-zinc-300 hover:bg-zinc-800'
+                      ? 'ug-tab-active border-orange-400/80'
+                      : 'border-white/10 bg-[#090b12] text-zinc-300 hover:border-orange-500/40 hover:text-white'
                   }`}
                 >
                   <MoveHorizontal className="h-4 w-4 shrink-0" />
@@ -317,10 +317,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => void handleSelectSteeringMode('tilt')}
-                  className={`flex min-h-[48px] items-center justify-center gap-2 rounded-xl border px-3 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+                  className={`ug-cut-sm flex min-h-[48px] items-center justify-center gap-2 border px-3 font-display italic text-xs sm:text-sm font-extrabold uppercase tracking-wide transition-all cursor-pointer ${
                     steeringSettings.mode === 'tilt'
-                      ? 'border-amber-400/70 bg-amber-500/20 text-amber-200'
-                      : 'border-white/10 bg-zinc-950/75 text-zinc-300 hover:bg-zinc-800'
+                      ? 'ug-tab-active border-orange-400/80'
+                      : 'border-white/10 bg-[#090b12] text-zinc-300 hover:border-orange-500/40 hover:text-white'
                   }`}
                 >
                   <Smartphone className="h-4 w-4 shrink-0" />
@@ -333,7 +333,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs font-semibold text-zinc-200">
                       <span>Eğme Hassasiyeti</span>
-                      <span className="font-mono-num font-bold text-amber-300">
+                      <span className="font-mono-num font-bold text-orange-300">
                         %{tiltSensPct}
                       </span>
                     </div>
@@ -350,7 +350,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         })
                       }
                       aria-label="Eğme Hassasiyeti"
-                      className="h-2.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-amber-400"
+                      className="h-2.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-orange-500"
                     />
                   </div>
 
@@ -363,9 +363,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         text: 'Mevcut tutuş açısı merkez olarak kaydedildi.',
                       });
                     }}
-                    className="flex min-h-[42px] w-full items-center justify-center gap-2 rounded-xl border border-white/12 bg-zinc-950/90 px-3 text-xs font-semibold text-zinc-200 transition-colors hover:border-amber-400/40 hover:bg-zinc-800 hover:text-amber-300 cursor-pointer"
+                    className="ug-cut-sm ug-btn-metal flex min-h-[42px] w-full items-center justify-center gap-2 px-3 font-display text-xs font-bold uppercase tracking-wide cursor-pointer"
                   >
-                    <RotateCcw className="h-3.5 w-3.5 text-amber-400" />
+                    <RotateCcw className="h-3.5 w-3.5 text-orange-400" />
                     <span>Merkez Açıyı Kalibre Et</span>
                   </button>
                 </div>
@@ -387,19 +387,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </section>
 
           {/* Audio & Music Section */}
-          <section className="space-y-3.5">
+          <section className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
-                Ses & Müzik
+              <h3 className="font-display text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
+                Ses &amp; Müzik
               </h3>
               {audioSettings.muted && (
-                <span className="text-[11px] font-semibold text-rose-300">
+                <span className="font-display text-[11px] font-bold uppercase text-rose-300">
                   Sessiz Mod Aktif
                 </span>
               )}
             </div>
 
-            <div className="space-y-3 rounded-xl border border-white/10 bg-zinc-900/70 p-3.5">
+            <div className="ug-cut-sm ug-card space-y-3 p-3.5">
               {/* Music Volume */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
@@ -416,13 +416,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           ? 'Müziği Kıs'
                           : 'Müziği Aç'
                       }
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-950/80 text-amber-400 transition-colors hover:bg-zinc-800 cursor-pointer"
+                      className="ug-cut-sm flex h-9 w-9 items-center justify-center border border-white/10 bg-[#090b12] text-orange-400 transition-colors hover:border-orange-500/50 cursor-pointer"
                     >
                       <Music className="h-4 w-4" />
                     </button>
                     <span>Müzik Sesi</span>
                   </div>
-                  <span className="font-mono-num text-sm font-bold text-amber-300">
+                  <span className="font-mono-num text-sm font-bold text-orange-300">
                     %{musicPct}
                   </span>
                 </div>
@@ -436,7 +436,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onChangeMusicVolume(Number(e.target.value) / 100)
                   }
                   aria-label="Müzik Sesi Seviyesi"
-                  className="h-2.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-amber-400"
+                  className="h-2.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-orange-500"
                 />
               </div>
 
@@ -458,7 +458,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           ? 'Ses Efektlerini Kıs'
                           : 'Ses Efektlerini Aç'
                       }
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-zinc-950/80 text-sky-400 transition-colors hover:bg-zinc-800 cursor-pointer"
+                      className="ug-cut-sm flex h-9 w-9 items-center justify-center border border-white/10 bg-[#090b12] text-cyan-400 transition-colors hover:border-cyan-400/50 cursor-pointer"
                     >
                       {audioSettings.sfxVolume > 0.01 ? (
                         <Volume2 className="h-4 w-4" />
@@ -466,9 +466,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <VolumeX className="h-4 w-4 text-zinc-500" />
                       )}
                     </button>
-                    <span>Motor & Ses Efektleri</span>
+                    <span>Motor &amp; Ses Efektleri</span>
                   </div>
-                  <span className="font-mono-num text-sm font-bold text-sky-300">
+                  <span className="font-mono-num text-sm font-bold text-cyan-300">
                     %{sfxPct}
                   </span>
                 </div>
@@ -484,7 +484,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onPointerUp={onPreviewSfxVolume}
                   onKeyUp={onPreviewSfxVolume}
                   aria-label="Ses Efektleri Seviyesi"
-                  className="h-2.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-sky-400"
+                  className="h-2.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-cyan-400"
                 />
               </div>
 
@@ -535,25 +535,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </section>
 
           {/* Mobile App Notifications Section */}
-          <section className="space-y-3">
+          <section className="space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <Smartphone className="h-3.5 w-3.5 text-amber-400" />
-                <h3 className="text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
+                <Smartphone className="h-3.5 w-3.5 text-orange-400" />
+                <h3 className="font-display text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
                   Mobil Uygulama Bildirimleri
                 </h3>
               </div>
-              <span className={`text-[11px] font-semibold ${permTone}`}>
+              <span className={`font-display text-[11px] font-bold uppercase ${permTone}`}>
                 {permLabel}
               </span>
             </div>
 
-            <div className="space-y-3 rounded-xl border border-white/10 bg-zinc-900/70 p-3.5">
+            <div className="ug-cut-sm ug-card space-y-3 p-3.5">
               {/* Master Notifications Toggle */}
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   {notificationSettings.enabled ? (
-                    <Bell className="h-4.5 w-4.5 text-amber-400" />
+                    <Bell className="h-4.5 w-4.5 text-orange-400" />
                   ) : (
                     <BellOff className="h-4.5 w-4.5 text-zinc-500" />
                   )}
@@ -617,7 +617,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-xs font-semibold text-zinc-200">
-                      Görev & Rekor Hatırlatıcı
+                      Görev &amp; Rekor Hatırlatıcı
                     </div>
                     <div className="text-[11px] text-zinc-400">
                       Yeni sürüş ve görev bildirimleri
@@ -638,9 +638,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   type="button"
                   disabled={busyNotif}
                   onClick={() => void handleSendTest()}
-                  className="flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl border border-white/12 bg-zinc-950/90 px-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-amber-400/40 hover:bg-zinc-800 hover:text-amber-300 disabled:opacity-50 cursor-pointer"
+                  className="ug-cut-sm ug-btn-metal flex min-h-[46px] w-full items-center justify-center gap-2 px-3 font-display text-xs font-bold uppercase tracking-wide disabled:opacity-50 cursor-pointer"
                 >
-                  <Send className="h-4 w-4 text-amber-400" />
+                  <Send className="h-4 w-4 text-orange-400" />
                   <span>Test Bildirimi Gönder</span>
                 </button>
                 {notifFeedback && (
@@ -662,15 +662,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Footer */}
         <div
-          className="border-t border-white/10 px-5 pt-3.5"
+          className="border-t border-white/10 bg-[#090b12]/90 px-5 pt-3.5"
           style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
         >
           <button
             type="button"
             onClick={onClose}
-            className="flex min-h-[50px] w-full items-center justify-center rounded-xl bg-amber-500 font-display text-base font-extrabold text-zinc-950 transition-colors hover:bg-amber-400 cursor-pointer"
+            className="ug-cut ug-btn-fire flex min-h-[50px] w-full items-center justify-center font-display italic text-base font-extrabold uppercase tracking-wider cursor-pointer"
           >
-            Tamam
+            Kaydet &amp; Kapat
           </button>
         </div>
       </div>

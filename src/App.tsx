@@ -2416,10 +2416,10 @@ export default function App() {
       {engineError && (
         <div
           onPointerDown={(e) => e.stopPropagation()}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/96 p-5 text-center"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#090a0f]/96 p-5 text-center"
         >
-          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-zinc-900 p-5 shadow-2xl">
-            <h2 className="font-display text-lg font-extrabold text-amber-400">
+          <div className="ug-cut ug-sheet w-full max-w-sm border p-5">
+            <h2 className="font-display italic text-lg font-extrabold uppercase text-orange-400">
               3D Sahne Başlatılamadı
             </h2>
             <p className="mt-2 text-xs leading-relaxed text-zinc-300">
@@ -2428,7 +2428,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-4 min-h-11 w-full cursor-pointer rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-bold text-zinc-950 active:scale-95"
+              className="ug-cut ug-btn-fire mt-4 min-h-11 w-full cursor-pointer px-4 py-2.5 font-display italic text-sm font-extrabold uppercase tracking-wider active:scale-95"
             >
               Yeniden Dene
             </button>

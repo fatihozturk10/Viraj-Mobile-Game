@@ -25,342 +25,400 @@ export const DriverLevelEmblem: React.FC<DriverLevelEmblemProps> = ({
   showNumber = true,
   className = '',
 }) => {
+  const uid = React.useId().replace(/:/g, '');
   const tier = getDriverRankTier(level);
   const safeLevel = Math.max(1, Math.floor(level));
   const numText = showNumber ? String(safeLevel) : '';
   const numFontSize =
     safeLevel >= 1000
-      ? 9
+      ? 10.5
       : safeLevel >= 100
-        ? 11.5
+        ? 13.5
         : safeLevel >= 10
-          ? 15
-          : 17.5;
+          ? 16.5
+          : 19;
+
+  const rimGradId = `ug-rim-${uid}`;
+  const coreGradId = `ug-core-${uid}`;
+  const wingGradId = `ug-wing-${uid}`;
+
+  // Tier-tailored dark metallic core stops
+  const coreStops: [string, string] =
+    tier.id === 'rookie'
+      ? ['#232938', '#090b11']
+      : tier.id === 'wolf'
+        ? ['#361b0e', '#0d0806']
+        : tier.id === 'master'
+          ? ['#0c2f24', '#06110e']
+          : tier.id === 'legend'
+            ? ['#0b2842', '#060e18']
+            : tier.id === 'super'
+              ? ['#3b2507', '#110b04']
+              : tier.id === 'apex'
+                ? ['#470a1c', '#12050a']
+                : tier.id === 'titan'
+                  ? ['#33125e', '#0e061c']
+                  : tier.id === 'immortal'
+                    ? ['#08374a', '#04121a']
+                    : ['#4a0b13', '#140407'];
+
+  const numberY =
+    tier.id === 'super' ||
+    tier.id === 'apex' ||
+    tier.id === 'titan' ||
+    tier.id === 'immortal' ||
+    tier.id === 'god'
+      ? 31.2
+      : 29.8;
 
   return (
     <svg
-      viewBox="0 0 48 48"
-      className={`${SIZE_MAP[size]} shrink-0 ${className}`}
+      viewBox="0 0 56 56"
+      className={`${SIZE_MAP[size]} shrink-0 overflow-visible ${className}`}
       aria-hidden="true"
     >
-      {/* Tier 1: Rookie — Brushed Steel Shield + Single Chevron */}
+      <defs>
+        <linearGradient id={rimGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.92" />
+          <stop offset="32%" stopColor={tier.accentHex} />
+          <stop offset="78%" stopColor={tier.secondaryHex} />
+          <stop offset="100%" stopColor={tier.accentHex} />
+        </linearGradient>
+        <linearGradient id={coreGradId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={coreStops[0]} />
+          <stop offset="100%" stopColor={coreStops[1]} />
+        </linearGradient>
+        <linearGradient id={wingGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={tier.accentHex} />
+          <stop offset="100%" stopColor={tier.secondaryHex} />
+        </linearGradient>
+      </defs>
+
+      {/* TIER 1: ROOKIE (Lv. 1–4) — Forged Gunmetal Street Piston Hex-Plate */}
       {tier.id === 'rookie' && (
         <>
-          <path
-            d="M24 4 L40 10 V24 C40 34 32.5 41 24 44 C15.5 41 8 34 8 24 V10 Z"
-            fill="#18181b"
-            stroke={tier.accentHex}
-            strokeWidth="2.4"
-            strokeLinejoin="round"
+          <polygon
+            points="17,5 39,5 49,17 47,36 28,50 9,36 7,17"
+            fill={`url(#${rimGradId})`}
           />
-          <path
-            d="M24 8 L36 12.6 V23.5 C36 31.2 30.2 37 24 39.6 C17.8 37 12 31.2 12 23.5 V12.6 Z"
-            fill="#27272a"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.2"
+          <polygon
+            points="18.6,8 37.4,8 45.8,18.2 44.1,34.5 28,46.4 11.9,34.5 10.2,18.2"
+            fill={`url(#${coreGradId})`}
+            stroke="rgba(255,255,255,0.18)"
+            strokeWidth="1"
           />
+          {/* Top tachometer arc + side bolts */}
           <path
-            d="M17 33.5 L24 37.5 L31 33.5"
-            fill="none"
+            d="M18 12.5 H38"
             stroke={tier.accentHex}
             strokeWidth="2"
+            strokeLinecap="round"
+            opacity="0.85"
+          />
+          <circle cx="14.5" cy="20" r="1.4" fill={tier.accentHex} />
+          <circle cx="41.5" cy="20" r="1.4" fill={tier.accentHex} />
+          {/* Single sharp street chevron */}
+          <path
+            d="M20 38.5 L28 43.2 L36 38.5"
+            fill="none"
+            stroke={tier.accentHex}
+            strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </>
       )}
 
-      {/* Tier 2: Wolf — Angular Bronze Octagon + Twin Side Notches */}
+      {/* TIER 2: WOLF (Lv. 5–9) — Forged Copper-Ember Intake Crest + Twin Fangs */}
       {tier.id === 'wolf' && (
         <>
-          <polygon
-            points="16,4 32,4 44,16 44,32 32,44 16,44 4,32 4,16"
-            fill="#1c1410"
-            stroke={tier.accentHex}
-            strokeWidth="2.4"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="18,8.5 30,8.5 39.5,18 39.5,30 30,39.5 18,39.5 8.5,30 8.5,18"
-            fill="#2a1b12"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.3"
-          />
+          {/* Side intake fins */}
           <path
-            d="M16.5 33 L24 37.2 L31.5 33 M19 36.2 L24 39 L29 36.2"
+            d="M3 19 L10 15 L11 33 L5 29 Z M53 19 L46 15 L45 33 L51 29 Z"
+            fill={`url(#${wingGradId})`}
+          />
+          <polygon
+            points="16,5 40,5 48,15 46,37 28,51 10,37 8,15"
+            fill={`url(#${rimGradId})`}
+          />
+          <polygon
+            points="17.8,8.2 38.2,8.2 44.8,16.4 43.1,35.4 28,47.2 12.9,35.4 11.2,16.4"
+            fill={`url(#${coreGradId})`}
+            stroke={tier.accentHex}
+            strokeOpacity="0.45"
+            strokeWidth="1"
+          />
+          {/* Top fang notch + twin chevrons */}
+          <polygon points="23,8.2 28,13 33,8.2" fill={tier.accentHex} />
+          <path
+            d="M19 37.5 L28 42.5 L37 37.5 M22 41.2 L28 44.8 L34 41.2"
             fill="none"
             stroke={tier.accentHex}
-            strokeWidth="1.8"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </>
       )}
 
-      {/* Tier 3: Master — Emerald Winged Hex Crest */}
+      {/* TIER 3: MASTER (Lv. 10–24) — Venom Emerald Aero-Canard Hex Shield */}
       {tier.id === 'master' && (
         <>
+          {/* Swept twin aero canards */}
           <path
-            d="M4 17 L11 14 V34 L4 31 Z M44 17 L37 14 V34 L44 31 Z"
-            fill={tier.secondaryHex}
-            stroke={tier.accentHex}
-            strokeWidth="1.4"
-            strokeLinejoin="round"
+            d="M2 15 L12 13 L11 24 L4 22 Z M54 15 L44 13 L45 24 L52 22 Z M4 27 L11 26 L13 36 L6 33 Z M52 27 L45 26 L43 36 L50 33 Z"
+            fill={`url(#${wingGradId})`}
           />
           <polygon
-            points="24,4 39,12.5 39,35.5 24,44 9,35.5 9,12.5"
-            fill="#0a1f1a"
-            stroke={tier.accentHex}
-            strokeWidth="2.4"
-            strokeLinejoin="round"
+            points="28,4 46,13 45,36 28,51 11,36 10,13"
+            fill={`url(#${rimGradId})`}
           />
           <polygon
-            points="24,8.5 35,14.8 35,33.2 24,39.5 13,33.2 13,14.8"
-            fill="#0f2e26"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.2"
+            points="28,7.6 42.8,15 41.9,34.5 28,47.2 14.1,34.5 13.2,15"
+            fill={`url(#${coreGradId})`}
+            stroke={tier.accentHex}
+            strokeOpacity="0.55"
+            strokeWidth="1.1"
           />
           <path
-            d="M18 11.5 L24 8.5 L30 11.5"
+            d="M20 14 L28 9.8 L36 14"
+            fill="none"
+            stroke="#ffffff"
+            strokeOpacity="0.8"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M19.5 37.8 L28 43.2 L36.5 37.8"
             fill="none"
             stroke={tier.accentHex}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+        </>
+      )}
+
+      {/* TIER 4: LEGEND (Lv. 25–49) — Cobalt NOS Reactor Diamond + Swept Blades */}
+      {tier.id === 'legend' && (
+        <>
+          {/* High-speed swept NOS blades */}
+          <path
+            d="M1 18 L14 11 L15 26 L4 26 Z M55 18 L42 11 L41 26 L52 26 Z M5 30 L15 28 L17 40 L8 36 Z M51 30 L41 28 L39 40 L48 36 Z"
+            fill={`url(#${wingGradId})`}
+          />
+          <polygon
+            points="28,3 47,25 28,52 9,25"
+            fill={`url(#${rimGradId})`}
+          />
+          <polygon
+            points="28,7.4 43.2,25 28,47.5 12.8,25"
+            fill={`url(#${coreGradId})`}
+            stroke={tier.accentHex}
+            strokeOpacity="0.65"
+            strokeWidth="1.2"
+          />
+          {/* Top & bottom plasma nodes */}
+          <polygon points="28,8.5 31.5,13 28,16 24.5,13" fill="#e0f2fe" />
+          <polygon points="28,39.5 31.5,43 28,46.2 24.5,43" fill={tier.accentHex} />
+        </>
+      )}
+
+      {/* TIER 5: SUPER PILOT (Lv. 50–99) — Championship 24K Gold Twin-Wing Star Crest */}
+      {tier.id === 'super' && (
+        <>
+          {/* 3-tier golden championship wings */}
+          <path
+            d="M1 13 L14 10 L13 20 L3 19 Z M55 13 L42 10 L43 20 L53 19 Z M2 23 L13 21 L14 30 L4 28 Z M54 23 L43 21 L42 30 L52 28 Z M6 32 L14 31 L16 40 L9 37 Z M50 32 L42 31 L40 40 L47 37 Z"
+            fill={`url(#${wingGradId})`}
+          />
+          {/* Main gold-rimmed crest */}
+          <polygon
+            points="16,8 40,8 46,19 43,38 28,52 13,38 10,19"
+            fill={`url(#${rimGradId})`}
+          />
+          <polygon
+            points="18.2,11.2 37.8,11.2 42.8,20 40.2,36.4 28,48.2 15.8,36.4 13.2,20"
+            fill={`url(#${coreGradId})`}
+            stroke="#fde68a"
+            strokeOpacity="0.65"
+            strokeWidth="1.2"
+          />
+          {/* Top Championship Star */}
+          <polygon
+            points="28,2 30.2,6.8 35.4,7.3 31.5,10.7 32.7,15.8 28,13 23.3,15.8 24.5,10.7 20.6,7.3 25.8,6.8"
+            fill="#fef08a"
+            stroke="#b45309"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+          {/* Bottom golden laurel V */}
+          <path
+            d="M19 39.5 L28 45 L37 39.5"
+            fill="none"
+            stroke="#fde047"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+        </>
+      )}
+
+      {/* TIER 6: APEX CHAMPION (Lv. 100–249) — Blackridge King Crimson-Gold Crowned Crest */}
+      {tier.id === 'apex' && (
+        <>
+          {/* Aggressive Crimson-Gold Razor Wings */}
+          <path
+            d="M0 12 L14 15 L12 25 L2 21 Z M56 12 L42 15 L44 25 L54 21 Z M2 25 L13 26 L14 36 L4 33 Z M54 25 L43 26 L42 36 L52 33 Z M7 37 L15 36 L18 45 L10 42 Z M49 37 L41 36 L38 45 L46 42 Z"
+            fill={`url(#${wingGradId})`}
+          />
+          {/* 3-Point Street King Crown */}
+          <polygon
+            points="16,12 19,3.5 24.5,9 28,1.5 31.5,9 37,3.5 40,12"
+            fill="#fbbf24"
+            stroke="#f43f5e"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+          {/* Main Apex Shield */}
+          <polygon
+            points="28,9 46,16 43,38 28,53 13,38 10,16"
+            fill={`url(#${rimGradId})`}
+          />
+          <polygon
+            points="28,12.5 42.6,18 40,36.5 28,49 16,36.5 13.4,18"
+            fill={`url(#${coreGradId})`}
+            stroke="#fbbf24"
+            strokeOpacity="0.7"
+            strokeWidth="1.25"
+          />
+          {/* Lower molten diamond + twin spears */}
+          <polygon points="28,40.5 31.5,44 28,47.5 24.5,44" fill="#fbbf24" />
+          <path
+            d="M19 38.5 L24 42.5 M37 38.5 L32 42.5"
+            stroke="#fb7185"
             strokeWidth="2"
             strokeLinecap="round"
           />
         </>
       )}
 
-      {/* Tier 4: Legend — Sapphire Diamond Crest + Top Speed Fins */}
-      {tier.id === 'legend' && (
-        <>
-          <path
-            d="M5 24 L13 13 L15 35 Z M43 24 L35 13 L33 35 Z"
-            fill={tier.secondaryHex}
-            stroke={tier.accentHex}
-            strokeWidth="1.4"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="24,3 41,24 24,45 7,24"
-            fill="#091926"
-            stroke={tier.accentHex}
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="24,8.5 36,24 24,39.5 12,24"
-            fill="#0c263b"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.3"
-          />
-          <circle cx="24" cy="9.5" r="2" fill={tier.accentHex} />
-          <circle cx="24" cy="38.5" r="2" fill={tier.accentHex} />
-        </>
-      )}
-
-      {/* Tier 5: Super Pilot — Championship Gold Winged Star Shield */}
-      {tier.id === 'super' && (
-        <>
-          <path
-            d="M3 16 L12 12 L11 22 L4 23 Z M45 16 L36 12 L37 22 L44 23 Z M5 26 L12 24 L13 33 L7 31 Z M43 26 L36 24 L35 33 L41 31 Z"
-            fill={tier.secondaryHex}
-            stroke={tier.accentHex}
-            strokeWidth="1.3"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M24 5 L38 11 V25 C38 35 31.5 41.2 24 44.5 C16.5 41.2 10 35 10 25 V11 Z"
-            fill="#241808"
-            stroke={tier.accentHex}
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="24,7.5 25.6,11.2 29.5,11.5 26.4,13.9 27.4,17.5 24,15.5 20.6,17.5 21.6,13.9 18.5,11.5 22.4,11.2"
-            fill={tier.accentHex}
-            transform="translate(0 -4) scale(0.75) translate(8 3)"
-          />
-          <path
-            d="M16 34.5 L24 39 L32 34.5"
-            fill="none"
-            stroke={tier.accentHex}
-            strokeWidth="2.1"
-            strokeLinecap="round"
-          />
-        </>
-      )}
-
-      {/* Tier 6: Apex Champion — Crimson-Gold Crowned Crest with Twin Laurels */}
-      {tier.id === 'apex' && (
-        <>
-          <path
-            d="M4 15 L12 19 L10 33 L4 28 Z M44 15 L36 19 L38 33 L44 28 Z"
-            fill="#4c0519"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M14 11 L18 5 L24 9 L30 5 L34 11"
-            fill={tier.secondaryHex}
-            stroke={tier.accentHex}
-            strokeWidth="1.6"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="24,9 39,15 37,34 24,44.5 11,34 9,15"
-            fill="#250914"
-            stroke={tier.accentHex}
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="24,13 35,17.8 33.4,32 24,39.8 14.6,32 13,17.8"
-            fill="#3b0c1f"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.2"
-          />
-        </>
-      )}
-
-      {/* Tier 7: Highway Titan (250) — Amethyst-Cyan Plasma Winged Armor Crest */}
+      {/* TIER 7: HIGHWAY TITAN (Lv. 250–499) — Hyper-Plasma Amethyst & Cyan Quad-Wing Crest */}
       {tier.id === 'titan' && (
         <>
           <path
-            d="M2 14 L11 10 L10 21 L3 21 Z M46 14 L37 10 L38 21 L45 21 Z M4 24 L11 23 L12 34 L6 31 Z M44 24 L37 23 L36 34 L42 31 Z"
-            fill="#2e1065"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.4"
-            strokeLinejoin="round"
+            d="M0 10 L14 14 L12 24 L1 19 Z M56 10 L42 14 L44 24 L55 19 Z M1 24 L13 25 L14 35 L3 32 Z M55 24 L43 25 L42 35 L53 32 Z M6 36 L15 35 L18 45 L9 42 Z M50 36 L41 35 L38 45 L47 42 Z"
+            fill={`url(#${wingGradId})`}
           />
-          <path
-            d="M15 10 L19 3.5 L24 7.5 L29 3.5 L33 10"
+          <polygon
+            points="15,12 18,3 24,8.5 28,1 32,8.5 38,3 41,12"
             fill={tier.secondaryHex}
             stroke={tier.accentHex}
-            strokeWidth="1.5"
+            strokeWidth="1.2"
             strokeLinejoin="round"
           />
           <polygon
-            points="24,8 39,14 38,31 24,45 10,31 9,14"
-            fill="#1e1038"
-            stroke={tier.accentHex}
-            strokeWidth="2.5"
-            strokeLinejoin="round"
+            points="28,8.5 46,15.5 43.5,38 28,53.5 12.5,38 10,15.5"
+            fill={`url(#${rimGradId})`}
           />
           <polygon
-            points="24,12 34.8,16.8 34,29.5 24,40 14,29.5 13.2,16.8"
-            fill="#2e1754"
+            points="28,12.2 42.5,17.8 40.4,36.4 28,49.4 15.6,36.4 13.5,17.8"
+            fill={`url(#${coreGradId})`}
             stroke={tier.secondaryHex}
-            strokeWidth="1.25"
+            strokeOpacity="0.75"
+            strokeWidth="1.3"
           />
           <path
-            d="M17 35 L24 39.5 L31 35"
-            fill="none"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </>
-      )}
-
-      {/* Tier 8: Immortal Legend (500) — Crystalline Cyan-Gold Halo Prism & Double Wings */}
-      {tier.id === 'immortal' && (
-        <>
-          <path
-            d="M2 12 L13 15 L10 24 L3 20 Z M46 12 L35 15 L38 24 L45 20 Z M3 25 L12 25 L13 35 L5 33 Z M45 25 L36 25 L35 35 L43 33 Z"
-            fill="#083344"
-            stroke={tier.accentHex}
-            strokeWidth="1.4"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M13 10 Q24 1 35 10"
+            d="M19 39.5 L28 45.5 L37 39.5"
             fill="none"
             stroke={tier.secondaryHex}
             strokeWidth="2.2"
             strokeLinecap="round"
           />
-          <polygon
-            points="24,4.5 26.2,8.5 24,11.5 21.8,8.5"
-            fill={tier.secondaryHex}
-          />
-          <polygon
-            points="16,10 32,10 40,20 36,35 24,45 12,35 8,20"
-            fill="#062230"
-            stroke={tier.accentHex}
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="18,14 30,14 35.8,21.2 32.8,33 24,40.4 15.2,33 12.2,21.2"
-            fill="#0b3446"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.3"
-          />
-          <circle cx="24" cy="39.5" r="2.1" fill={tier.secondaryHex} />
         </>
       )}
 
-      {/* Tier 9: Asphalt Emperor (1000+) — Imperial Solar Gold & Ruby Radiant Sunburst Crown */}
+      {/* TIER 8: IMMORTAL LEGEND (Lv. 500–999) — Cryo-Diamond & Solar Gold Halo Crest */}
+      {tier.id === 'immortal' && (
+        <>
+          <path
+            d="M0 10 L15 14 L12 24 L1 19 Z M56 10 L41 14 L44 24 L55 19 Z M1 23 L13 24 L14 35 L2 32 Z M55 23 L43 24 L42 35 L54 32 Z M5 35 L15 35 L18 46 L8 43 Z M51 35 L41 35 L38 46 L48 43 Z"
+            fill={`url(#${wingGradId})`}
+          />
+          {/* Floating Golden Halo Arc + Ice Prism */}
+          <path
+            d="M14 10 Q28 0 42 10"
+            fill="none"
+            stroke="#fde047"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+          />
+          <polygon points="28,2 31.2,7.8 28,12 24.8,7.8" fill="#ffffff" />
+          <polygon
+            points="17,10 39,10 47,21 43,39 28,53.5 13,39 9,21"
+            fill={`url(#${rimGradId})`}
+          />
+          <polygon
+            points="19.2,13.5 36.8,13.5 43.4,22.2 40,37.2 28,49.4 16,37.2 12.6,22.2"
+            fill={`url(#${coreGradId})`}
+            stroke="#fde047"
+            strokeOpacity="0.75"
+            strokeWidth="1.3"
+          />
+          <polygon points="28,40.5 31.8,44.2 28,47.8 24.2,44.2" fill="#67e8f9" />
+        </>
+      )}
+
+      {/* TIER 9: ASPHALT EMPEROR (Lv. 1000+) — Imperial 5-Point Solar Crown & Ruby Wings */}
       {tier.id === 'god' && (
         <>
           <path
-            d="M2 11 L12 16 L9 24 L2 21 Z M46 11 L36 16 L39 24 L46 21 Z M3 27 L11 26 L12 36 L4 35 Z M45 27 L37 26 L36 36 L44 35 Z"
-            fill="#450a0a"
-            stroke={tier.accentHex}
+            d="M0 9 L15 14 L12 24 L0 19 Z M56 9 L41 14 L44 24 L56 19 Z M1 23 L13 24 L14 35 L2 32 Z M55 23 L43 24 L42 35 L54 32 Z M5 36 L15 35 L19 47 L8 44 Z M51 36 L41 35 L37 47 L48 44 Z"
+            fill={`url(#${wingGradId})`}
+          />
+          {/* 5-Point Radiant Emperor Crown */}
+          <polygon
+            points="13,12 15,3.5 21,9 24.5,2.5 28,8 31.5,2.5 35,9 41,3.5 43,12"
+            fill="#fde047"
+            stroke="#f43f5e"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+          <polygon
+            points="28,9 47,16 44,39 28,54 12,39 9,16"
+            fill={`url(#${rimGradId})`}
+          />
+          <polygon
+            points="28,12.6 43.4,18.4 40.8,37.2 28,49.8 15.2,37.2 12.6,18.4"
+            fill={`url(#${coreGradId})`}
+            stroke="#fde047"
             strokeWidth="1.4"
-            strokeLinejoin="round"
           />
-          <path
-            d="M12 12 L15 4 L20.5 8.5 L24 2.5 L27.5 8.5 L33 4 L36 12 Z"
-            fill={tier.accentHex}
-            stroke={tier.secondaryHex}
-            strokeWidth="1.3"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="24,10 40,16 37.5,34.5 24,45.5 10.5,34.5 8,16"
-            fill="#24090e"
-            stroke={tier.accentHex}
-            strokeWidth="2.6"
-            strokeLinejoin="round"
-          />
-          <polygon
-            points="24,14 35.8,18.8 33.8,32.5 24,40.8 14.2,32.5 12.2,18.8"
-            fill="#3d0f18"
-            stroke={tier.secondaryHex}
-            strokeWidth="1.5"
-          />
-          <polygon
-            points="24,36.8 27,39.5 24,42.2 21,39.5"
-            fill={tier.accentHex}
-          />
+          <polygon points="28,40.2 32,44.2 28,48.2 24,44.2" fill="#fde047" />
         </>
       )}
 
       {showNumber ? (
         <text
-          x="24"
-          y={
-            tier.id === 'apex' ||
-            tier.id === 'titan' ||
-            tier.id === 'immortal' ||
-            tier.id === 'god'
-              ? 30.2
-              : 28.5
-          }
+          x="28"
+          y={numberY}
           textAnchor="middle"
           fill="#ffffff"
+          stroke="#05070c"
+          strokeWidth="3.2"
+          strokeLinejoin="round"
+          paintOrder="stroke"
           fontSize={numFontSize}
           fontWeight="800"
-          fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          fontStyle="italic"
+          fontFamily="'Chakra Petch', 'Rajdhani', sans-serif"
         >
           {numText}
         </text>
       ) : (
         <polygon
-          points="24,17 29.5,24 24,31 18.5,24"
+          points="28,18.5 34.5,26.5 28,34.5 21.5,26.5"
           fill={tier.accentHex}
+          stroke="#ffffff"
+          strokeWidth="1"
         />
       )}
     </svg>

@@ -259,17 +259,17 @@ export const LevelUpCelebrationOverlay: React.FC<LevelUpCelebrationOverlayProps>
     return (
       <div className="pointer-events-none fixed inset-x-0 top-20 z-30 flex justify-center px-3">
         <div
-          className="animate-banner-pop flex max-w-[min(94vw,380px)] items-center gap-2.5 rounded-2xl border-2 border-amber-400/80 bg-zinc-950/95 px-3.5 py-2 shadow-[0_0_28px_rgba(251,191,36,0.42)] sm:gap-3 sm:px-4 sm:py-2.5"
+          className="animate-banner-pop ug-cut flex max-w-[min(94vw,388px)] items-center gap-2.5 border-2 border-orange-500/85 bg-[#090b12]/96 px-3.5 py-2 shadow-[0_0_28px_rgba(234,88,12,0.48)] sm:gap-3 sm:px-4 sm:py-2.5"
         >
           <div className="shrink-0">
             <DriverLevelEmblem level={event.toLevel} size="md" />
           </div>
           <div className="flex min-w-0 flex-col">
-            <span className="font-display text-[10px] font-black tracking-[0.2em] text-amber-300 uppercase">
+            <span className="font-display italic text-[10px] font-black tracking-[0.2em] text-orange-400 uppercase">
               SEVİYE ATLADIN!
             </span>
-            <span className="font-display text-sm font-black leading-tight text-white break-words sm:text-base">
-              Sv.{event.fromLevel} → Sv.{event.toLevel} · {event.rankTitle}
+            <span className="font-display italic text-sm font-black uppercase leading-tight text-white break-words sm:text-base">
+              SV.{event.fromLevel} → SV.{event.toLevel} · {event.rankTitle}
             </span>
             {highlight && (
               <span className="text-[11px] font-bold leading-snug text-emerald-300 break-words">
@@ -288,7 +288,7 @@ export const LevelUpCelebrationOverlay: React.FC<LevelUpCelebrationOverlayProps>
   return (
     <div
       onPointerDown={(e) => e.stopPropagation()}
-      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/86 p-4"
+      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/88 p-4"
     >
       <canvas
         ref={canvasRef}
@@ -296,10 +296,10 @@ export const LevelUpCelebrationOverlay: React.FC<LevelUpCelebrationOverlayProps>
         className="pointer-events-none fixed inset-0 h-full w-full"
       />
 
-      <div className="relative z-10 flex w-full max-w-md flex-col items-center rounded-3xl border border-amber-400/50 bg-zinc-950/96 px-6 py-7 text-center shadow-[0_0_60px_rgba(251,191,36,0.28)]">
+      <div className="ug-cut ug-sheet relative z-10 flex w-full max-w-md flex-col items-center border px-6 py-7 text-center">
         {/* Top Kicker */}
-        <div className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/45 bg-amber-500/15 px-3 py-1 font-display text-[11px] font-black tracking-[0.24em] text-amber-300 uppercase">
-          <Sparkles className="h-3.5 w-3.5" />
+        <div className="ug-skew inline-flex items-center gap-1.5 border border-orange-400/50 bg-orange-500/20 px-3.5 py-1 font-display italic text-[11px] font-black tracking-[0.22em] text-orange-200 uppercase">
+          <Sparkles className="h-3.5 w-3.5 text-orange-400" />
           <span>SEVİYE ATLADIN</span>
         </div>
 
@@ -317,22 +317,22 @@ export const LevelUpCelebrationOverlay: React.FC<LevelUpCelebrationOverlayProps>
             <DriverLevelEmblem
               level={event.toLevel}
               size="lg"
-              className="!h-24 !w-24 drop-shadow-[0_0_24px_rgba(251,191,36,0.65)]"
+              className="!h-24 !w-24 drop-shadow-[0_0_24px_rgba(249,115,22,0.65)]"
             />
           </div>
         </div>
 
         {/* Level Jump Counter */}
         <div className="flex items-center justify-center gap-2 font-mono-num text-sm font-bold text-zinc-400">
-          <span>Sv.{event.fromLevel}</span>
-          <ChevronRight className="h-4 w-4 text-amber-400" />
-          <span className="text-lg font-black text-amber-300">
-            Sv.{event.toLevel}
+          <span>SV.{event.fromLevel}</span>
+          <ChevronRight className="h-4 w-4 text-orange-400" />
+          <span className="text-lg font-black text-orange-300">
+            SV.{event.toLevel}
           </span>
         </div>
 
         <h2
-          className={`mt-1 font-display text-2xl font-black tracking-tight ${tier.textClass}`}
+          className={`mt-1 font-display italic text-2xl font-black uppercase tracking-wide ${tier.textClass}`}
         >
           {event.rankTitle}
         </h2>
@@ -340,30 +340,30 @@ export const LevelUpCelebrationOverlay: React.FC<LevelUpCelebrationOverlayProps>
         {/* Newly Unlocked Level Road Reward Preview(s) */}
         {featuredRewards.length > 0 && (
           <div className="mt-5 flex w-full flex-col gap-2">
-            <div className="text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
+            <div className="font-display text-[11px] font-bold tracking-wider text-zinc-400 uppercase">
               Seviye Yolunda Açılan Ödül{featuredRewards.length > 1 ? 'ler' : ''}
             </div>
             {featuredRewards.map((r) => (
               <div
                 key={r.level}
-                className="flex items-center gap-3 rounded-2xl border border-white/14 bg-zinc-900/90 px-3.5 py-2.5 text-left"
+                className="ug-cut-sm ug-card flex items-center gap-3 px-3.5 py-2.5 text-left"
               >
                 <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25"
+                  className="ug-cut-sm flex h-11 w-11 shrink-0 items-center justify-center border border-white/25"
                   style={{ background: r.swatch }}
                 >
                   {renderMiniRewardIcon(r)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-mono-num text-[10px] font-black text-amber-300">
+                    <span className="font-mono-num text-[10px] font-black text-orange-300">
                       SV.{r.level}
                     </span>
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                    <span className="font-display text-[10px] font-bold text-zinc-400 uppercase">
                       {r.badgeLabel}
                     </span>
                   </div>
-                  <div className="truncate font-display text-sm font-extrabold text-white">
+                  <div className="truncate font-display italic text-sm font-extrabold uppercase text-white">
                     {r.title}
                   </div>
                   <div className="truncate text-[11px] text-zinc-400">
@@ -380,15 +380,15 @@ export const LevelUpCelebrationOverlay: React.FC<LevelUpCelebrationOverlayProps>
           <button
             type="button"
             onClick={() => onOpenLevelRoad(event.toLevel)}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 font-display text-sm font-black text-zinc-950 shadow-[0_0_24px_rgba(251,191,36,0.4)] transition-transform hover:bg-amber-300 active:scale-95 cursor-pointer"
+            className="ug-cut ug-btn-fire flex h-12 flex-1 items-center justify-center gap-2 px-4 font-display italic text-sm font-extrabold uppercase tracking-wider active:scale-95 cursor-pointer"
           >
             <Gift className="h-4.5 w-4.5" />
-            <span>Ödülü Al (Seviye Yolu)</span>
+            <span>Ödülü Al · Seviye Yolu</span>
           </button>
           <button
             type="button"
             onClick={onDismiss}
-            className="flex h-12 items-center justify-center rounded-xl border border-white/15 bg-zinc-900 px-5 font-display text-sm font-bold text-zinc-200 transition-colors hover:bg-zinc-800 hover:text-white cursor-pointer"
+            className="ug-cut-sm ug-btn-metal flex h-12 items-center justify-center px-5 font-display italic text-sm font-bold uppercase tracking-wide cursor-pointer"
           >
             Devam Et
           </button>
