@@ -42,7 +42,6 @@ import {
   Smartphone,
   Snowflake,
   Star,
-  Target,
   Timer,
   Trophy,
   Unlock,
@@ -54,7 +53,6 @@ import {
 } from 'lucide-react';
 import { StoreTabId } from './StoreModal';
 import { MusicPlayerState } from '../game/audioEngine';
-import { BIOME_SPAN_METERS, BIOMES } from '../game/biomes';
 import {
   CAREER_CHAPTERS,
   CAREER_STAR_CHESTS,
@@ -211,12 +209,14 @@ interface GameHudProps {
   freeWheelAvailable: boolean;
   streakDay: number;
   revivedThisRun: boolean;
+  diamondReviveCost: number;
   runGoldDoubled: boolean;
   onOpenLeaderboard: () => void;
   onOpenDailyWheel: () => void;
   onOpenStore: (tab?: StoreTabId) => void;
   onOpenSettings: () => void;
   onWatchAdRevive: () => void;
+  onDiamondRevive: () => void;
   onWatchAdDoubleGold: () => void;
   onWatchAdTopUpGold: (amount: number, targetLabel: string) => void;
   onRentCar: (carId: CarModelId, carName: string) => void;
@@ -325,12 +325,14 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
   freeWheelAvailable,
   streakDay,
   revivedThisRun,
+  diamondReviveCost,
   runGoldDoubled,
   onOpenLeaderboard,
   onOpenDailyWheel,
   onOpenStore,
   onOpenSettings,
   onWatchAdRevive,
+  onDiamondRevive,
   onWatchAdDoubleGold,
   onWatchAdTopUpGold,
   onRentCar,
@@ -1509,16 +1511,46 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                 </div>
               </div>
 
-              {/* Revive CTA on Crash */}
-              {!lastCareerOutcome.won && !revivedThisRun && (
-                <button
-                  type="button"
-                  onClick={onWatchAdRevive}
-                  className="ug-cut mt-3.5 flex min-h-[50px] w-full items-center justify-center gap-2 border border-emerald-400/55 bg-emerald-500/20 px-4 font-display italic text-sm font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-500/30 active:scale-[0.99] cursor-pointer"
-                >
-                  <HeartPulse className="h-5 w-5 text-emerald-400 shrink-0" />
-                  <span>Reklam İzle · Devam Et</span>
-                </button>
+              {/* Revive CTAs on Career Crash */}
+              {!lastCareerOutcome.won && (
+                <div className="mt-3.5 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    disabled={diamonds < diamondReviveCost}
+                    onClick={onDiamondRevive}
+                    className={`ug-cut flex min-h-[50px] w-full items-center justify-between gap-2 border px-4 font-display italic text-sm font-extrabold uppercase tracking-wider transition-all ${
+                      diamonds >= diamondReviveCost
+                        ? 'border-cyan-300/75 bg-gradient-to-r from-cyan-500/28 via-sky-500/22 to-cyan-500/28 text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.24)] hover:border-cyan-200 hover:from-cyan-500/38 hover:to-cyan-500/38 active:scale-[0.99] cursor-pointer'
+                        : 'border-cyan-400/25 bg-[#0a131f] text-zinc-400 opacity-65 cursor-not-allowed'
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-2 min-w-0">
+                      <Gem className="h-4.5 w-4.5 text-cyan-400 shrink-0" />
+                      <span className="truncate">
+                        Elmasla Tamir &amp; Devam
+                      </span>
+                    </span>
+                    <span className="ug-skew inline-flex items-center gap-1 bg-cyan-400/20 border border-cyan-300/45 px-2.5 py-0.5 font-mono-num text-xs font-extrabold text-cyan-200 shrink-0">
+                      <Gem className="h-3 w-3 text-cyan-300" />
+                      <span>
+                        {diamonds >= diamondReviveCost
+                          ? `${diamondReviveCost} Elmas`
+                          : `${diamonds}/${diamondReviveCost}`}
+                      </span>
+                    </span>
+                  </button>
+
+                  {!revivedThisRun && (
+                    <button
+                      type="button"
+                      onClick={onWatchAdRevive}
+                      className="ug-cut flex min-h-[50px] w-full items-center justify-center gap-2 border border-emerald-400/55 bg-emerald-500/20 px-4 font-display italic text-sm font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-500/30 active:scale-[0.99] cursor-pointer"
+                    >
+                      <HeartPulse className="h-5 w-5 text-emerald-400 shrink-0" />
+                      <span>Reklam İzle · Devam Et</span>
+                    </button>
+                  )}
+                </div>
               )}
 
               {/* Primary + Secondary Actions */}
@@ -1599,70 +1631,6 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
           const rentedSpec = stats.rentedCarModel
             ? CAR_MODELS.find((m) => m.id === stats.rentedCarModel) || null
             : null;
-          const totalCycle = BIOME_SPAN_METERS * BIOMES.length;
-          const cyclePos = stats.distanceMeters % totalCycle;
-          const curBiomeIdx =
-            Math.floor(cyclePos / BIOME_SPAN_METERS) % BIOMES.length;
-          const nextBiome = BIOMES[(curBiomeIdx + 1) % BIOMES.length];
-          const distToNextBiome = Math.max(
-            1,
-            BIOME_SPAN_METERS - (cyclePos % BIOME_SPAN_METERS),
-          );
-
-          const isNewBest =
-            stats.previousBestScore > 0 &&
-            stats.score > stats.previousBestScore;
-          const scoreDeltaToBest =
-            stats.previousBestScore > 0
-              ? stats.previousBestScore - stats.score
-              : 0;
-          const nextLockedCar = [...CAR_MODELS]
-            .filter(
-              (m) => !unlockedCars.includes(m.id) && m.priceGold > goldCoins,
-            )
-            .sort((a, b) => a.priceGold - b.priceGold)[0];
-          const topMission =
-            missions.activeMissions.find((m) => !m.completed && !m.claimed) ||
-            missions.activeMissions[0];
-
-          let nearGoalTone: 'emerald' | 'amber' | 'sky' = 'sky';
-          let nearGoalTitle = 'Sıradaki Hedef';
-          let nearGoalDetail = `Sıradaki bölgeye (${nextBiome.label}) ${distToNextBiome} m kaldı.`;
-
-          if (missions.totalClaimableCount > 0) {
-            nearGoalTone = 'emerald';
-            nearGoalTitle = 'Ödül Toplanmaya Hazır!';
-            nearGoalDetail = `${missions.totalClaimableCount} görev/başarım ödülü seni bekliyor. Görev sekmesinden topla.`;
-          } else if (isNewBest) {
-            nearGoalTone = 'emerald';
-            nearGoalTitle = 'Yeni Sokak Rekoru!';
-            nearGoalDetail = `Önceki rekorunu +${(stats.score - stats.previousBestScore).toLocaleString('tr-TR')} puanla geçtin.`;
-          } else if (
-            scoreDeltaToBest > 0 &&
-            scoreDeltaToBest <=
-              Math.max(1500, Math.round(stats.previousBestScore * 0.3))
-          ) {
-            nearGoalTone = 'amber';
-            nearGoalTitle = 'Kıl Payı Kaçırdın!';
-            nearGoalDetail = `Rekoruna yalnızca ${scoreDeltaToBest.toLocaleString('tr-TR')} puan kalmıştı.`;
-          } else if (distToNextBiome <= 300) {
-            nearGoalTone = 'sky';
-            nearGoalTitle = 'Bölge Sınırındasın!';
-            nearGoalDetail = `${nextBiome.label} bölgesine sadece ${distToNextBiome} m kalmıştı.`;
-          } else if (
-            nextLockedCar &&
-            nextLockedCar.priceGold - goldCoins <=
-              Math.max(250, Math.round(nextLockedCar.priceGold * 0.25))
-          ) {
-            nearGoalTone = 'amber';
-            nearGoalTitle = 'Hedefe Çok Yakınsın!';
-            nearGoalDetail = `${nextLockedCar.name} için ${(nextLockedCar.priceGold - goldCoins).toLocaleString('tr-TR')} Altın kaldı.`;
-          } else if (topMission && !topMission.completed && !topMission.claimed) {
-            const rem = Math.max(0, topMission.target - topMission.progress);
-            nearGoalTone = 'sky';
-            nearGoalTitle = 'Günlük Görev';
-            nearGoalDetail = `${topMission.title} · ${rem.toLocaleString('tr-TR')} kaldı (+${topMission.rewardGold} Altın)`;
-          }
 
           const runModeSpec =
             GAME_MODES.find((m) => m.id === stats.gameMode) || GAME_MODES[0];
@@ -1713,37 +1681,6 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                     </div>
                     <div className="font-display text-base font-extrabold text-orange-300 font-mono-num">
                       {stats.bestScore.toLocaleString('tr-TR')}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Kıl Payı Hedef Callout */}
-                <div
-                  className={`ug-cut-sm mt-3.5 flex items-start gap-2.5 border px-3.5 py-2.5 ${
-                    nearGoalTone === 'emerald'
-                      ? 'border-emerald-400/40 bg-emerald-500/12 text-emerald-200'
-                      : nearGoalTone === 'amber'
-                        ? 'border-orange-400/45 bg-orange-500/12 text-orange-200'
-                        : 'border-sky-400/35 bg-sky-500/10 text-sky-200'
-                  }`}
-                >
-                  {nearGoalTone === 'emerald' ? (
-                    <Flag className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                  ) : (
-                    <Target
-                      className={`mt-0.5 h-4 w-4 shrink-0 ${
-                        nearGoalTone === 'amber'
-                          ? 'text-orange-400'
-                          : 'text-sky-400'
-                      }`}
-                    />
-                  )}
-                  <div className="min-w-0">
-                    <div className="font-display italic text-xs font-extrabold uppercase tracking-wide">
-                      {nearGoalTitle}
-                    </div>
-                    <div className="mt-0.5 text-xs leading-snug opacity-90">
-                      {nearGoalDetail}
                     </div>
                   </div>
                 </div>
@@ -1837,33 +1774,58 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                   );
                 })()}
 
-                {(!revivedThisRun ||
-                  stats.runGold > 0 ||
-                  (rentedSpec && !unlockedCars.includes(rentedSpec.id))) && (
-                  <div className="mt-3.5 flex flex-col gap-2">
-                    {!revivedThisRun && (
-                      <button
-                        type="button"
-                        onClick={onWatchAdRevive}
-                        className="ug-cut flex min-h-[50px] w-full items-center justify-center gap-2 border border-emerald-400/55 bg-emerald-500/20 px-4 font-display italic text-sm font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-500/30 active:scale-[0.99] cursor-pointer"
-                      >
-                        <HeartPulse className="h-5 w-5 text-emerald-400 shrink-0" />
-                        <span>Reklam İzle · Devam Et</span>
-                      </button>
-                    )}
+                <div className="mt-3.5 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    disabled={diamonds < diamondReviveCost}
+                    onClick={onDiamondRevive}
+                    className={`ug-cut flex min-h-[50px] w-full items-center justify-between gap-2 border px-4 font-display italic text-sm font-extrabold uppercase tracking-wider transition-all ${
+                      diamonds >= diamondReviveCost
+                        ? 'border-cyan-300/75 bg-gradient-to-r from-cyan-500/28 via-sky-500/22 to-cyan-500/28 text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.24)] hover:border-cyan-200 hover:from-cyan-500/38 hover:to-cyan-500/38 active:scale-[0.99] cursor-pointer'
+                        : 'border-cyan-400/25 bg-[#0a131f] text-zinc-400 opacity-65 cursor-not-allowed'
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-2 min-w-0">
+                      <Gem className="h-4.5 w-4.5 text-cyan-400 shrink-0" />
+                      <span className="truncate">
+                        Elmasla Tamir &amp; Devam
+                      </span>
+                    </span>
+                    <span className="ug-skew inline-flex items-center gap-1 bg-cyan-400/20 border border-cyan-300/45 px-2.5 py-0.5 font-mono-num text-xs font-extrabold text-cyan-200 shrink-0">
+                      <Gem className="h-3 w-3 text-cyan-300" />
+                      <span>
+                        {diamonds >= diamondReviveCost
+                          ? `${diamondReviveCost} Elmas`
+                          : `${diamonds}/${diamondReviveCost}`}
+                      </span>
+                    </span>
+                  </button>
 
-                    {stats.runGold > 0 && !runGoldDoubled && (
-                      <button
-                        type="button"
-                        onClick={onWatchAdDoubleGold}
-                        className="ug-cut-sm flex min-h-[48px] w-full items-center justify-center gap-2 border border-sky-400/45 bg-sky-500/15 px-4 font-display italic text-sm font-bold uppercase tracking-wide text-sky-200 hover:bg-sky-500/25 active:scale-[0.99] cursor-pointer"
-                      >
-                        <PlayCircle className="h-5 w-5 text-sky-400 shrink-0" />
-                        <span>Altını 2× Katla (+{stats.runGold} Altın)</span>
-                      </button>
-                    )}
+                  {!revivedThisRun && (
+                    <button
+                      type="button"
+                      onClick={onWatchAdRevive}
+                      className="ug-cut flex min-h-[50px] w-full items-center justify-center gap-2 border border-emerald-400/55 bg-emerald-500/20 px-4 font-display italic text-sm font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-500/30 active:scale-[0.99] cursor-pointer"
+                    >
+                      <HeartPulse className="h-5 w-5 text-emerald-400 shrink-0" />
+                      <span>Reklam İzle · Devam Et</span>
+                    </button>
+                  )}
 
-                    {rentedSpec && !unlockedCars.includes(rentedSpec.id) && (
+                  {stats.runGold > 0 && !runGoldDoubled && (
+                    <button
+                      type="button"
+                      onClick={onWatchAdDoubleGold}
+                      className="ug-cut-sm flex min-h-[48px] w-full items-center justify-center gap-2 border border-sky-400/45 bg-sky-500/15 px-4 font-display italic text-sm font-bold uppercase tracking-wide text-sky-200 hover:bg-sky-500/25 active:scale-[0.99] cursor-pointer"
+                    >
+                      <PlayCircle className="h-5 w-5 text-sky-400 shrink-0" />
+                      <span>Altını 2× Katla (+{stats.runGold} Altın)</span>
+                    </button>
+                  )}
+
+                  {rentedSpec &&
+                    !rentedSpec.priceDiamonds &&
+                    !unlockedCars.includes(rentedSpec.id) && (
                       <button
                         type="button"
                         onClick={() =>
@@ -1876,14 +1838,13 @@ export const GameHud: React.FC<GameHudProps> = React.memo(({
                       </button>
                     )}
 
-                    {stats.runGold > 0 && runGoldDoubled && (
-                      <div className="flex min-h-[34px] items-center justify-center gap-1.5 text-xs font-bold text-emerald-300">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span>Bu Koşunun Altını 2× Yapıldı</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  {stats.runGold > 0 && runGoldDoubled && (
+                    <div className="flex min-h-[34px] items-center justify-center gap-1.5 text-xs font-bold text-emerald-300">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Bu Koşunun Altını 2× Yapıldı</span>
+                    </div>
+                  )}
+                </div>
 
                 <div className="mt-4 flex flex-col gap-2.5">
                   <button

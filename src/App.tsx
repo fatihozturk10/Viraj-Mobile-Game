@@ -97,6 +97,7 @@ import {
   getDefaultUnlockedCarColors,
   getDefaultVisualUnlocks,
   getDefaultWheelForCar,
+  getDiamondReviveCost,
   HudStats,
   LevelUpEvent,
   LIVERIES,
@@ -236,6 +237,8 @@ const INITIAL_UPGRADES_MAP: Record<CarModelId, CarUpgrades> = {
   pagani: { ...EMPTY_UPGRADES },
   bolide: { ...EMPTY_UPGRADES },
   solaris: { ...EMPTY_UPGRADES },
+  phantom: { ...EMPTY_UPGRADES },
+  nemesis: { ...EMPTY_UPGRADES },
 };
 const INITIAL_WHEELS_MAP: Record<CarModelId, CarWheelConfig> = {
   dogan: getDefaultWheelForCar('dogan'),
@@ -258,6 +261,8 @@ const INITIAL_WHEELS_MAP: Record<CarModelId, CarWheelConfig> = {
   pagani: getDefaultWheelForCar('pagani'),
   bolide: getDefaultWheelForCar('bolide'),
   solaris: getDefaultWheelForCar('solaris'),
+  phantom: getDefaultWheelForCar('phantom'),
+  nemesis: getDefaultWheelForCar('nemesis'),
 };
 const INITIAL_CUSTOM_MAP: Record<CarModelId, CarCustomConfig> = {
   dogan: getDefaultCustomForCar(),
@@ -280,6 +285,8 @@ const INITIAL_CUSTOM_MAP: Record<CarModelId, CarCustomConfig> = {
   pagani: getDefaultCustomForCar(),
   bolide: getDefaultCustomForCar(),
   solaris: getDefaultCustomForCar(),
+  phantom: getDefaultCustomForCar(),
+  nemesis: getDefaultCustomForCar(),
 };
 const INITIAL_MISSIONS: MissionsSnapshot = {
   dailyDateKey: '',
@@ -419,6 +426,8 @@ export default function App() {
     adManager.getSnapshot(),
   );
   const [revivedThisRun, setRevivedThisRun] = useState(false);
+  const [diamondReviveCount, setDiamondReviveCount] = useState(0);
+  const diamondReviveCost = getDiamondReviveCost(diamondReviveCount);
   const [runGoldDoubled, setRunGoldDoubled] = useState(false);
   const [gameMode, setGameMode] = useState<GameModeId>('endless');
   const [careerMapOpen, setCareerMapOpen] = useState(false);
@@ -979,6 +988,7 @@ export default function App() {
           const outcome = lastCareerOutcomeRef.current;
           const proceed = () => {
             setRevivedThisRun(false);
+            setDiamondReviveCount(0);
             setRunGoldDoubled(false);
             setLastCareerOutcome(null);
             if (outcome) {
@@ -1011,6 +1021,7 @@ export default function App() {
           proceed();
         } else if (phase === 'menu' || phase === 'garage') {
           setRevivedThisRun(false);
+          setDiamondReviveCount(0);
           setRunGoldDoubled(false);
           setLastCareerOutcome(null);
           engineRef.current?.exitCareerMode();
@@ -1277,6 +1288,7 @@ export default function App() {
 
   const launchNewRun = useCallback(() => {
     setRevivedThisRun(false);
+    setDiamondReviveCount(0);
     setRunGoldDoubled(false);
     setLastCareerOutcome(null);
     setShowSteerHint(true);
@@ -1291,6 +1303,7 @@ export default function App() {
   const launchCareerLevel = useCallback((levelId: number) => {
     setCareerMapOpen(false);
     setRevivedThisRun(false);
+    setDiamondReviveCount(0);
     setRunGoldDoubled(false);
     setLastCareerOutcome(null);
     setShowSteerHint(true);
@@ -1422,6 +1435,7 @@ export default function App() {
         case 'crash_revive':
           setRevivedThisRun(true);
           setShowGameOverModal(false);
+          setLastCareerOutcome(null);
           engineRef.current?.reviveFromCrash();
           break;
         case 'daily_wheel_extra':
@@ -1445,6 +1459,7 @@ export default function App() {
         }
         case 'rent_car':
           setRevivedThisRun(false);
+          setDiamondReviveCount(0);
           setRunGoldDoubled(false);
           setShowGameOverModal(false);
           setCarModel(placement.carId);
@@ -2336,6 +2351,107 @@ export default function App() {
     openRewardedAd({ kind: 'crash_revive' });
   }, [openRewardedAd]);
 
+  const handleDiamondRevive = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine || phaseRef.current !== 'gameover') return;
+    const cost = getDiamondReviveCost(diamondReviveCount);
+    if (!engine.spendDiamonds(cost)) {
+      showAdNotice(`Elmasla devam için ${cost} Elmas gerekli.`);
+      return;
+    }
+    triggerNativeHaptic('reward');
+    setDiamondReviveCount((c) => c + 1);
+    setShowGameOverModal(false);
+    setLastCareerOutcome(null);
+    engine.reviveFromCrash(true);
+  }, [diamondReviveCount, showAdNotice]);
+
+  const handleOpenCrateWithDiamonds = useCallback(
+    (
+      tierId: CrateTierId,
+    ): { success: boolean; error?: string; outcome?: StoreFulfillmentOutcome } => {
+      const engine = engineRef.current;
+      if (!engine) return { success: false, error: 'Oyun motoru hazır değil.' };
+      const crateSpec = getCrateByTier(tierId);
+      if (!engine.spendDiamonds(crateSpec.diamondSinglePrice)) {
+        return { success: false, error: 'Yeterli Elmas yok.' };
+      }
+      triggerNativeHaptic('reward');
+
+      const lootItems: RolledLootItem[] = [];
+      const unlockedCarNames: string[] = [];
+      let creditedGoldTotal = 0;
+      const progNow = engine.getProgressionState();
+      const rolled = rollCrateRewards(tierId, 1, {
+        unlockedCars: progNow.unlockedCars,
+        unlockedWheelStyles: progNow.unlockedWheelStyles,
+        unlockedBodyKits: progNow.unlockedBodyKits,
+        unlockedSpoilers: progNow.unlockedSpoilers,
+        unlockedLiveries: progNow.unlockedLiveries,
+      });
+      for (const entry of rolled) {
+        if (entry.kind === 'gold' && entry.amount) {
+          engine.grantRewardGold(entry.amount, 'Elmas Kasası Altını');
+          creditedGoldTotal += entry.amount;
+          lootItems.push(entry);
+        } else if (entry.kind === 'xp' && entry.amount) {
+          engine.grantRewardXp(entry.amount);
+          lootItems.push(entry);
+        } else {
+          let res: { newlyUnlocked: boolean; duplicateGold: number } | null =
+            null;
+          if (entry.kind === 'car' && entry.carId) {
+            res = engine.grantCarUnlocked(entry.carId, false);
+            if (res.newlyUnlocked) unlockedCarNames.push(entry.title);
+          } else if (entry.kind === 'wheel' && entry.wheelStyleId) {
+            res = engine.grantWheelStyleUnlocked(entry.wheelStyleId);
+          } else if (entry.kind === 'bodyKit' && entry.bodyKitId) {
+            res = engine.grantBodyKitUnlocked(entry.bodyKitId);
+          } else if (entry.kind === 'spoiler' && entry.spoilerId) {
+            res = engine.grantSpoilerUnlocked(entry.spoilerId);
+          } else if (entry.kind === 'livery' && entry.liveryId) {
+            res = engine.grantLiveryUnlocked(entry.liveryId);
+          }
+          if (res) {
+            if (!res.newlyUnlocked) creditedGoldTotal += res.duplicateGold;
+            lootItems.push({
+              ...entry,
+              duplicateConvertedGold: res.newlyUnlocked
+                ? undefined
+                : res.duplicateGold,
+            });
+          }
+        }
+      }
+
+      const summaryParts: string[] = [];
+      if (creditedGoldTotal > 0) {
+        summaryParts.push(`+${creditedGoldTotal.toLocaleString('tr-TR')} Altın`);
+      }
+      if (unlockedCarNames.length > 0) {
+        summaryParts.push(unlockedCarNames.join(', '));
+      }
+
+      return {
+        success: true,
+        outcome: {
+          orderId: `diamond_${tierId}_${Date.now()}`,
+          title: `1× ${crateSpec.title}`,
+          rewardSummary:
+            summaryParts.join(' · ') ||
+            `${crateSpec.diamondSinglePrice} Elmas ile açıldı`,
+          crateTierId: tierId,
+          crateImageUrl: crateSpec.imageUrl,
+          crateTitle: crateSpec.title,
+          lootItems,
+          creditedGoldTotal,
+          unlockedCarNames,
+        },
+      };
+    },
+    [],
+  );
+
   const handleWatchAdDoubleGold = useCallback(() => {
     openRewardedAd({
       kind: 'double_run_gold',
@@ -2352,6 +2468,7 @@ export default function App() {
 
   const handleRentCar = useCallback(
     (carId: CarModelId, carName: string) => {
+      if (CAR_MODELS.find((m) => m.id === carId)?.priceDiamonds) return;
       openRewardedAd({ kind: 'rent_car', carId, carName });
     },
     [openRewardedAd],
@@ -2530,6 +2647,8 @@ export default function App() {
         freeWheelAvailable={dailyRewardAvailable}
         streakDay={streakStatus.activeStreakCount}
         revivedThisRun={revivedThisRun}
+        diamondReviveCost={diamondReviveCost}
+        onDiamondRevive={handleDiamondRevive}
         runGoldDoubled={runGoldDoubled}
         onOpenLeaderboard={handleOpenLeaderboard}
         onOpenDailyWheel={handleOpenDailyWheel}
@@ -2659,6 +2778,7 @@ export default function App() {
             return { ok: false, diamonds, goldCoins };
           }}
           onRedeemPromoCode={handleRedeemPromoCode}
+          onOpenCrateWithDiamonds={handleOpenCrateWithDiamonds}
           onRestorePurchases={handleRestorePurchases}
           onOpenGarageFromStore={launchGarage}
           onClose={handleCloseStore}

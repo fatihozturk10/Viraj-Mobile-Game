@@ -128,6 +128,7 @@ export interface CrateProductSpec {
   subtitle: string;
   priceSingleTry: number;
   priceTripleTry: number;
+  diamondSinglePrice: number;
   tripleSaveLabel: string;
   imageUrl: string;
   accentClass: string;
@@ -302,6 +303,7 @@ export const CRATE_PRODUCTS: CrateProductSpec[] = [
     subtitle: 'Cadde modifiyesi, altın ve spor araç şansı',
     priceSingleTry: 2.99,
     priceTripleTry: 6.99,
+    diamondSinglePrice: 4,
     tripleSaveLabel: '%22 Tasarruf',
     imageUrl: streetCrateArt,
     accentClass: 'text-amber-300',
@@ -326,6 +328,7 @@ export const CRATE_PRODUCTS: CrateProductSpec[] = [
     subtitle: 'Yüksek altın, karbon aero ve süper spor araçlar',
     priceSingleTry: 6.99,
     priceTripleTry: 16.99,
+    diamondSinglePrice: 10,
     tripleSaveLabel: '%19 Tasarruf',
     imageUrl: proCrateArt,
     accentClass: 'text-sky-300',
@@ -350,6 +353,7 @@ export const CRATE_PRODUCTS: CrateProductSpec[] = [
     subtitle: 'Garanti hiper otomobil, dev altın kasası ve elit aero',
     priceSingleTry: 14.99,
     priceTripleTry: 34.99,
+    diamondSinglePrice: 22,
     tripleSaveLabel: '%22 Tasarruf',
     imageUrl: legendaryCrateArt,
     accentClass: 'text-rose-300',

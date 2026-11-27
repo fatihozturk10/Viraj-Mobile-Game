@@ -907,6 +907,8 @@ export class HighwayEngine {
     pagani: DEFAULT_CAR_UPGRADES(),
     bolide: DEFAULT_CAR_UPGRADES(),
     solaris: DEFAULT_CAR_UPGRADES(),
+    phantom: DEFAULT_CAR_UPGRADES(),
+    nemesis: DEFAULT_CAR_UPGRADES(),
   };
   private unlockedWheelStyles: Set<WheelStyleId> = new Set(['twin5']);
   private carWheels: Record<CarModelId, CarWheelConfig> = {
@@ -930,6 +932,8 @@ export class HighwayEngine {
     pagani: getDefaultWheelForCar('pagani'),
     bolide: getDefaultWheelForCar('bolide'),
     solaris: getDefaultWheelForCar('solaris'),
+    phantom: getDefaultWheelForCar('phantom'),
+    nemesis: getDefaultWheelForCar('nemesis'),
   };
   private unlockedBodyKits: Set<BodyKitId> = new Set(['stock']);
   private unlockedSpoilers: Set<SpoilerId> = new Set(['none']);
@@ -972,6 +976,8 @@ export class HighwayEngine {
     pagani: getDefaultCustomForCar(),
     bolide: getDefaultCustomForCar(),
     solaris: getDefaultCustomForCar(),
+    phantom: getDefaultCustomForCar(),
+    nemesis: getDefaultCustomForCar(),
   };
   private readonly missions = new MissionManager();
   private missionDistAccum = 0;
@@ -2988,6 +2994,27 @@ export class HighwayEngine {
       this.setCarModel(id);
       return true;
     }
+
+    if (spec.priceDiamonds && spec.priceDiamonds > 0) {
+      if (this.totalDiamonds < spec.priceDiamonds) {
+        return false;
+      }
+      this.audio.init();
+      this.totalDiamonds -= spec.priceDiamonds;
+      this.unlockedCars.add(id);
+      this.equippedCarModel = id;
+      this.saveProgression();
+      this.setCarModel(id);
+      this.audio.playDiamondPickup();
+      this.audio.playCarUnlock();
+      this.handleMissionRewards(
+        this.missions.recordPeak('carsUnlocked', this.unlockedCars.size),
+      );
+      this.notifyProgression();
+      this.pushHud(true);
+      return true;
+    }
+
     if (this.totalGold < spec.priceGold) {
       return false;
     }
@@ -3279,7 +3306,7 @@ export class HighwayEngine {
     return bonus;
   }
 
-  public reviveFromCrash(): boolean {
+  public reviveFromCrash(fullNitroBoost = false): boolean {
     if (this.phase !== 'gameover') return false;
     this.audio.init();
     this.audio.setCarProfile(this.carModelId);
@@ -3289,8 +3316,10 @@ export class HighwayEngine {
     this.integrity = this.carSpec.maxIntegrity;
     this.guardrailHitCooldown = 0;
     this.damageRegenDelay = 0;
-    this.nitro = Math.max(this.nitro, Math.round(this.getActiveNitroMax() * 0.45));
-    this.reviveInvulnTimer = 2.6;
+    this.nitro = fullNitroBoost
+      ? this.getActiveNitroMax()
+      : Math.max(this.nitro, Math.round(this.getActiveNitroMax() * 0.45));
+    this.reviveInvulnTimer = fullNitroBoost ? 3.2 : 2.6;
     this.carRelYaw = 0;
     this.driftSlip = 0;
     this.chassisRoll = 0;
@@ -3333,9 +3362,25 @@ export class HighwayEngine {
       this.cameraMode === 'chase' || this.cameraMode === 'cine';
     this.startResumeCountdown(1.95);
     this.syncPlayerAndCamera(0.016, true);
-    this.emitCallout('DEVAM EDİYORUZ!', 'Kısa Koruma Kalkanı', 'emerald');
+    if (fullNitroBoost) {
+      this.emitCallout('ELMAS TAMİR + TAM NOS!', 'Koruma Kalkanı Aktif', 'cyan');
+    } else {
+      this.emitCallout('DEVAM EDİYORUZ!', 'Kısa Koruma Kalkanı', 'emerald');
+    }
     this.callbacks.onPhaseChange('playing');
     this.callbacks.onMusicChange?.(this.audio.getMusicState());
+    this.pushHud(true);
+    return true;
+  }
+
+  public spendDiamonds(amount: number): boolean {
+    const cost = Math.max(1, Math.floor(amount));
+    if (this.totalDiamonds < cost) return false;
+    this.audio.init();
+    this.totalDiamonds -= cost;
+    this.audio.playDiamondPickup();
+    this.saveProgression();
+    this.notifyProgression();
     this.pushHud(true);
     return true;
   }

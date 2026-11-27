@@ -446,7 +446,11 @@ export function createPlayerCar(
               ? 0x2563eb
               : modelId === 'solaris'
                 ? 0x06b6d4
-                : 0xe11d48,
+                : modelId === 'phantom'
+                  ? 0x22d3ee
+                  : modelId === 'nemesis'
+                    ? 0xf43f5e
+                    : 0xe11d48,
       metalness: 0.76,
       roughness: 0.2,
       emissive:
@@ -456,8 +460,15 @@ export function createPlayerCar(
             ? 0x1d4ed8
             : modelId === 'solaris'
               ? 0x0891b2
-              : 0x2a1a05,
-      emissiveIntensity: modelId === 'solaris' ? 0.95 : 0.42,
+              : modelId === 'phantom'
+                ? 0x06b6d4
+                : modelId === 'nemesis'
+                  ? 0xe11d48
+                  : 0x2a1a05,
+      emissiveIntensity:
+        modelId === 'solaris' || modelId === 'phantom' || modelId === 'nemesis'
+          ? 1.05
+          : 0.42,
     }),
   );
 
@@ -3380,6 +3391,10 @@ export function createPlayerCar(
         return { x: 0.69, y: 0.44, z: fZ + 0.06, enabled: true };
       case 'solaris':
         return { x: 0.72, y: 0.43, z: fZ + 0.02, enabled: true };
+      case 'phantom':
+        return { x: 0.72, y: 0.41, z: fZ + 0.03, enabled: true };
+      case 'nemesis':
+        return { x: 0.74, y: 0.41, z: fZ + 0.03, enabled: true };
       default:
         return {
           x: fSt.beltHalfW * 0.72,

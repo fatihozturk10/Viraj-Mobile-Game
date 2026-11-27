@@ -1047,6 +1047,104 @@ export function getCarBlueprint(modelId: CarModelId): CarBlueprint {
         plateCoords: { rearY: 0.36, rearZ: 2.47, frontY: 0.28, frontZ: -2.555 },
         exhaustLayout: { xList: [-0.26, 0.26], y: 0.49, z: 2.41, radius: 0.064, rectangular: true, titanium: true },
       };
+
+    case 'phantom':
+      // Nyx Phantom Stealth — Diamond-exclusive stealth cyber-wedge hypercar with twin canted dorsal fins & cyan laser fangs
+      return {
+        bodyWidth: 2.12,
+        cabinWidth: 1.22,
+        wheelBaseHalf: 1.47,
+        wheelRadius: 0.355,
+        rearWheelRadius: 0.385,
+        tireWidth: 0.34,
+        rearTireWidth: 0.41,
+        trackHalf: 0.97,
+        beltlineY: 0.69,
+        roofY: 1.02,
+        mirrorY: 0.79,
+        mirrorZ: -0.84,
+        wingY: 1.05,
+        wingZ: 2.28,
+        greenhouse: 'wedge',
+        caliperColor: 0x22d3ee,
+        carbonRoof: true,
+        visorCanopy: true,
+        sculpt: {
+          subdivisions: 3,
+          wheelBaseHalf: 1.47,
+          frontWheelRadius: 0.355,
+          rearWheelRadius: 0.385,
+          waistPinch: 0.13,
+          fenderFlare: 0.066,
+          hoodRidge: 0.022,
+          creaseAngleDeg: 24,
+        },
+        stations: [
+          { z: -2.5, bottomY: 0.13, bottomHalfW: 0.82, rockerY: 0.23, rockerHalfW: 0.96, beltY: 0.38, beltHalfW: 0.95, shoulderY: 0.44, shoulderHalfW: 0.8, crownY: 0.46 },
+          { z: -1.86, bottomY: 0.13, bottomHalfW: 0.95, rockerY: 0.27, rockerHalfW: 1.07, beltY: 0.6, beltHalfW: 1.05, shoulderY: 0.68, shoulderHalfW: 0.92, crownY: 0.67 },
+          { z: -0.76, bottomY: 0.135, bottomHalfW: 0.84, rockerY: 0.3, rockerHalfW: 0.95, beltY: 0.66, beltHalfW: 0.93, shoulderY: 0.72, shoulderHalfW: 0.82, crownY: 0.73 },
+          { z: 0.98, bottomY: 0.14, bottomHalfW: 0.99, rockerY: 0.35, rockerHalfW: 1.09, beltY: 0.75, beltHalfW: 1.08, shoulderY: 0.81, shoulderHalfW: 0.96, crownY: 0.81 },
+          { z: 2.12, bottomY: 0.185, bottomHalfW: 0.95, rockerY: 0.38, rockerHalfW: 1.04, beltY: 0.75, beltHalfW: 1.02, shoulderY: 0.8, shoulderHalfW: 0.9, crownY: 0.8 },
+          { z: 2.42, bottomY: 0.24, bottomHalfW: 0.85, rockerY: 0.4, rockerHalfW: 0.95, beltY: 0.7, beltHalfW: 0.92, shoulderY: 0.76, shoulderHalfW: 0.82, crownY: 0.77 },
+        ],
+        cabin: [
+          { z: -1.14, baseY: 0.63, baseHalfW: 0.64, roofY: 0.69, roofHalfW: 0.56, crownY: 0.71 },
+          { z: -0.38, baseY: 0.65, baseHalfW: 0.6, roofY: 1.0, roofHalfW: 0.44, crownY: 1.04 },
+          { z: 0.5, baseY: 0.67, baseHalfW: 0.58, roofY: 0.99, roofHalfW: 0.41, crownY: 1.03 },
+          { z: 1.58, baseY: 0.72, baseHalfW: 0.56, roofY: 0.78, roofHalfW: 0.44, crownY: 0.8 },
+        ],
+        plateCoords: { rearY: 0.35, rearZ: 2.49, frontY: 0.27, frontZ: -2.575 },
+        exhaustLayout: { xList: [-0.21, -0.07, 0.07, 0.21], y: 0.5, z: 2.43, radius: 0.048, titanium: true },
+      };
+
+    case 'nemesis':
+      // Valkyrie Nemesis R — Ultimate Diamond-exclusive hyper-prototype with central dorsal shark-fin & ruby plasma core
+      return {
+        bodyWidth: 2.18,
+        cabinWidth: 1.18,
+        wheelBaseHalf: 1.5,
+        wheelRadius: 0.36,
+        rearWheelRadius: 0.395,
+        tireWidth: 0.35,
+        rearTireWidth: 0.42,
+        trackHalf: 0.99,
+        beltlineY: 0.68,
+        roofY: 1.01,
+        mirrorY: 0.78,
+        mirrorZ: -0.86,
+        wingY: 1.1,
+        wingZ: 2.32,
+        greenhouse: 'teardrop',
+        caliperColor: 0xf43f5e,
+        carbonRoof: true,
+        visorCanopy: true,
+        sculpt: {
+          subdivisions: 3,
+          wheelBaseHalf: 1.5,
+          frontWheelRadius: 0.36,
+          rearWheelRadius: 0.395,
+          waistPinch: 0.145,
+          fenderFlare: 0.072,
+          hoodRidge: 0.02,
+          creaseAngleDeg: 26,
+        },
+        stations: [
+          { z: -2.52, bottomY: 0.13, bottomHalfW: 0.84, rockerY: 0.23, rockerHalfW: 0.98, beltY: 0.37, beltHalfW: 0.96, shoulderY: 0.43, shoulderHalfW: 0.82, crownY: 0.45 },
+          { z: -1.86, bottomY: 0.13, bottomHalfW: 0.98, rockerY: 0.27, rockerHalfW: 1.1, beltY: 0.61, beltHalfW: 1.08, shoulderY: 0.69, shoulderHalfW: 0.95, crownY: 0.68 },
+          { z: -0.78, bottomY: 0.135, bottomHalfW: 0.82, rockerY: 0.29, rockerHalfW: 0.94, beltY: 0.65, beltHalfW: 0.92, shoulderY: 0.71, shoulderHalfW: 0.8, crownY: 0.72 },
+          { z: 0.98, bottomY: 0.14, bottomHalfW: 1.02, rockerY: 0.35, rockerHalfW: 1.12, beltY: 0.76, beltHalfW: 1.11, shoulderY: 0.82, shoulderHalfW: 0.99, crownY: 0.82 },
+          { z: 2.14, bottomY: 0.19, bottomHalfW: 0.98, rockerY: 0.39, rockerHalfW: 1.07, beltY: 0.76, beltHalfW: 1.05, shoulderY: 0.81, shoulderHalfW: 0.93, crownY: 0.81 },
+          { z: 2.44, bottomY: 0.25, bottomHalfW: 0.88, rockerY: 0.41, rockerHalfW: 0.98, beltY: 0.71, beltHalfW: 0.95, shoulderY: 0.77, shoulderHalfW: 0.85, crownY: 0.78 },
+        ],
+        cabin: [
+          { z: -1.16, baseY: 0.62, baseHalfW: 0.61, roofY: 0.68, roofHalfW: 0.53, crownY: 0.7 },
+          { z: -0.38, baseY: 0.64, baseHalfW: 0.58, roofY: 0.99, roofHalfW: 0.42, crownY: 1.03 },
+          { z: 0.5, baseY: 0.66, baseHalfW: 0.56, roofY: 0.98, roofHalfW: 0.39, crownY: 1.02 },
+          { z: 1.64, baseY: 0.72, baseHalfW: 0.54, roofY: 0.78, roofHalfW: 0.4, crownY: 0.8 },
+        ],
+        plateCoords: { rearY: 0.36, rearZ: 2.51, frontY: 0.27, frontZ: -2.595 },
+        exhaustLayout: { xList: [-0.24, 0.24], y: 0.56, z: 2.44, radius: 0.062, titanium: true },
+      };
   }
 }
 
@@ -1798,6 +1896,109 @@ export function buildModelBodyFeatures(ctx: FeatureBuildContext): void {
       louver.rotation.x = -0.18;
       chassisGroup.add(louver);
     }
+  } else if (modelId === 'phantom') {
+    // Nyx Phantom Stealth: Twin canted F-22 stealth dorsal fins + cyan crystal reactor core + front stealth canards
+    const dorsalFinGeo = trackGeo(
+      createExtrudedShapeGeo(
+        [
+          [-0.64, 0.0],
+          [0.58, 0.0],
+          [0.48, 0.24],
+          [-0.36, 0.16],
+        ],
+        0.042,
+        0.008,
+      ),
+    );
+    const canardGeo = trackGeo(new THREE.BoxGeometry(0.18, 0.022, 0.36));
+    for (const side of [-1, 1]) {
+      const fin = new THREE.Mesh(dorsalFinGeo, mats.carbon);
+      fin.position.set(side * 0.44, 0.78, 1.38);
+      fin.rotation.y = Math.PI * 0.5;
+      fin.rotation.z = side * -0.24;
+      fin.castShadow = true;
+      chassisGroup.add(fin);
+
+      const finGlow = new THREE.Mesh(
+        trackGeo(new THREE.BoxGeometry(0.024, 0.026, 1.05)),
+        mats.engineAccent,
+      );
+      finGlow.position.set(side * 0.49, 0.96, 1.44);
+      finGlow.rotation.x = 0.07;
+      chassisGroup.add(finGlow);
+
+      const sideBlade = new THREE.Mesh(
+        trackGeo(new THREE.BoxGeometry(0.035, 0.028, 1.78)),
+        mats.engineAccent,
+      );
+      sideBlade.position.set(side * (bodyWidth * 0.508), 0.29, 0.05);
+      chassisGroup.add(sideBlade);
+
+      const canard = new THREE.Mesh(canardGeo, mats.carbon);
+      canard.position.set(side * (bodyWidth * 0.48), 0.31, -2.08);
+      canard.rotation.x = 0.22;
+      canard.rotation.z = side * -0.18;
+      chassisGroup.add(canard);
+    }
+
+    const stealthCore = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(0.18, 0.05, 1.18)),
+      mats.engineAccent,
+    );
+    stealthCore.position.set(0, 0.81, 1.28);
+    chassisGroup.add(stealthCore);
+  } else if (modelId === 'nemesis') {
+    // Valkyrie Nemesis R: Central LMP1 shark-fin spine + ruby plasma edge + sculpted venturi side pods
+    const sharkFin = new THREE.Mesh(
+      trackGeo(
+        createExtrudedShapeGeo(
+          [
+            [-0.78, 0.0],
+            [0.82, 0.0],
+            [0.76, 0.3],
+            [-0.62, 0.25],
+          ],
+          0.044,
+          0.008,
+        ),
+      ),
+      mats.carbon,
+    );
+    sharkFin.position.set(0, 0.79, 1.36);
+    sharkFin.rotation.y = Math.PI * 0.5;
+    sharkFin.castShadow = true;
+    chassisGroup.add(sharkFin);
+
+    const rubySpine = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(0.03, 0.032, 1.56)),
+      mats.engineAccent,
+    );
+    rubySpine.position.set(0, 1.06, 1.38);
+    rubySpine.rotation.x = 0.032;
+    chassisGroup.add(rubySpine);
+
+    const roofScoop = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(0.28, 0.11, 0.44)),
+      mats.carbon,
+    );
+    roofScoop.position.set(0, roofY + 0.035, 0.38);
+    chassisGroup.add(roofScoop);
+
+    const divePlaneGeo = trackGeo(new THREE.BoxGeometry(0.2, 0.024, 0.4));
+    for (const side of [-1, 1]) {
+      const rubyTrim = new THREE.Mesh(
+        trackGeo(new THREE.BoxGeometry(0.036, 0.03, 1.84)),
+        mats.engineAccent,
+      );
+      rubyTrim.position.set(side * (bodyWidth * 0.512), 0.28, 0.06);
+      chassisGroup.add(rubyTrim);
+
+      const divePlane = new THREE.Mesh(divePlaneGeo, mats.carbon);
+      divePlane.position.set(side * (bodyWidth * 0.49), 0.32, -2.1);
+      divePlane.rotation.x = 0.26;
+      divePlane.rotation.z = side * -0.22;
+      chassisGroup.add(divePlane);
+    }
   }
 }
 
@@ -2173,6 +2374,69 @@ export function buildModelFrontFascia(ctx: FeatureBuildContext): void {
     return;
   }
 
+  if (modelId === 'phantom') {
+    // Nyx Phantom Stealth: Slanted V-Chevron Cyan Laser DRL Blades + Stealth Twin Splitter Intakes
+    const intake = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(1.58, 0.13, 0.08)),
+      mats.grille,
+    );
+    intake.position.set(0, 0.24, frontZ - 0.004);
+    chassisGroup.add(intake);
+
+    const chevronOuterGeo = trackGeo(new THREE.BoxGeometry(0.42, 0.032, 0.085));
+    const chevronInnerGeo = trackGeo(new THREE.BoxGeometry(0.28, 0.028, 0.085));
+    for (const side of [-1, 1]) {
+      const fx = side * 0.68;
+      const outer = new THREE.Mesh(chevronOuterGeo, mats.headLight);
+      outer.position.set(fx, 0.41, frontZ + 0.045);
+      outer.rotation.z = side * -0.22;
+      outer.rotation.y = side * -0.2;
+      chassisGroup.add(outer);
+
+      const inner = new THREE.Mesh(chevronInnerGeo, mats.engineAccent);
+      inner.position.set(fx - side * 0.06, 0.36, frontZ + 0.04);
+      inner.rotation.z = side * 0.24;
+      inner.rotation.y = side * -0.18;
+      chassisGroup.add(inner);
+    }
+    return;
+  }
+
+  if (modelId === 'nemesis') {
+    // Valkyrie Nemesis R: Aggressive Triple-Claw Laser Headlights + Ruby Nose Splitter Blade
+    const intake = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(1.66, 0.14, 0.08)),
+      mats.grille,
+    );
+    intake.position.set(0, 0.24, frontZ - 0.004);
+    chassisGroup.add(intake);
+
+    const splitterTrim = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(1.68, 0.024, 0.075)),
+      mats.engineAccent,
+    );
+    splitterTrim.position.set(0, 0.18, frontZ - 0.02);
+    chassisGroup.add(splitterTrim);
+
+    const clawGeo = trackGeo(new THREE.BoxGeometry(0.03, 0.15, 0.09));
+    const mainBeamGeo = trackGeo(new THREE.BoxGeometry(0.32, 0.044, 0.095));
+    for (const side of [-1, 1]) {
+      const fx = side * 0.72;
+      const beam = new THREE.Mesh(mainBeamGeo, mats.headLight);
+      beam.position.set(fx, 0.42, frontZ + 0.05);
+      beam.rotation.y = side * -0.24;
+      chassisGroup.add(beam);
+
+      for (let c = -1; c <= 1; c++) {
+        const claw = new THREE.Mesh(clawGeo, c === 0 ? mats.engineAccent : mats.drl);
+        claw.position.set(fx + c * 0.055, 0.37, frontZ + 0.042);
+        claw.rotation.z = side * -0.28;
+        chassisGroup.add(claw);
+      }
+    }
+    return;
+  }
+
   if (modelId === 'amggt') {
     // Massive Panamericana vertical-slat grille + sharp swept AMG headlights
     const grille = new THREE.Mesh(
@@ -2515,6 +2779,57 @@ export function buildModelRearFascia(ctx: FeatureBuildContext): void {
     );
     f1Blade.position.set(0, tailY - 0.1, rearZ + 0.028);
     chassisGroup.add(f1Blade);
+  } else if (modelId === 'phantom') {
+    // Nyx Phantom Stealth: Twin Stealth Afterburner Chevron Taillight Blades + Cyan Reactor Vent Accent
+    const ventBay = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(bp.bodyWidth * 0.88, 0.26, 0.06)),
+      mats.grille,
+    );
+    ventBay.position.set(0, tailY - 0.02, rearZ - 0.005);
+    chassisGroup.add(ventBay);
+
+    const centerCyanBar = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(bp.bodyWidth * 0.42, 0.024, 0.052)),
+      mats.engineAccent,
+    );
+    centerCyanBar.position.set(0, tailY + 0.085, rearZ + 0.025);
+    chassisGroup.add(centerCyanBar);
+
+    const bladeGeo = trackGeo(new THREE.BoxGeometry(0.48, 0.032, 0.058));
+    const lowerSlashGeo = trackGeo(new THREE.BoxGeometry(0.36, 0.026, 0.055));
+    for (const side of [-1, 1]) {
+      const upper = new THREE.Mesh(bladeGeo, mats.tailLight);
+      upper.position.set(side * (bp.bodyWidth * 0.28), tailY + 0.05, rearZ + 0.028);
+      upper.rotation.z = side * 0.16;
+      chassisGroup.add(upper);
+
+      const lower = new THREE.Mesh(lowerSlashGeo, mats.tailLight);
+      lower.position.set(side * (bp.bodyWidth * 0.31), tailY - 0.045, rearZ + 0.028);
+      lower.rotation.z = side * -0.18;
+      chassisGroup.add(lower);
+    }
+  } else if (modelId === 'nemesis') {
+    // Valkyrie Nemesis R: Full-Width Crimson Trident Diffuser Lightbar + Dual Vertical Rain-Light Blades
+    const ventBay = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(bp.bodyWidth * 0.92, 0.3, 0.06)),
+      mats.grille,
+    );
+    ventBay.position.set(0, tailY - 0.02, rearZ - 0.005);
+    chassisGroup.add(ventBay);
+
+    const horizonTail = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(bp.bodyWidth * 0.9, 0.036, 0.058)),
+      mats.tailLight,
+    );
+    horizonTail.position.set(0, tailY + 0.075, rearZ + 0.028);
+    chassisGroup.add(horizonTail);
+
+    const clawFinGeo = trackGeo(new THREE.BoxGeometry(0.034, 0.16, 0.058));
+    for (const xNorm of [-0.43, -0.28, 0, 0.28, 0.43]) {
+      const fin = new THREE.Mesh(clawFinGeo, mats.tailLight);
+      fin.position.set(bp.bodyWidth * xNorm, tailY - 0.02, rearZ + 0.028);
+      chassisGroup.add(fin);
+    }
   } else {
     // Sleek sculpted dual LED taillight clusters (Golf GTI, M3 GTR, AMG GT, GT, Rally, Pickup, Hyper, Jesko)
     const clusterW = modelId === 'pickup' ? 0.24 : 0.48;
@@ -2876,6 +3191,106 @@ export function buildModelStockAero(ctx: FeatureBuildContext): void {
         0.18,
         mats.paint,
         [Math.sign(sx), 0, 0],
+        0.02,
+      );
+    }
+  } else if (modelId === 'phantom') {
+    // Nyx Phantom Stealth: Swept Stealth Delta Wing with Cyan Plasma Trailing Edge
+    const wingSpan = bodyWidth * 0.98;
+    const deltaBlade = new THREE.Mesh(
+      trackGeo(
+        createExtrudedShapeGeo(
+          [
+            [-0.18, 0],
+            [0.2, 0.045],
+            [0.18, 0.08],
+            [-0.16, 0.03],
+          ],
+          wingSpan,
+          0.012,
+        ),
+      ),
+      mats.carbon,
+    );
+    deltaBlade.position.set(0, wingY, wingZ);
+    deltaBlade.castShadow = true;
+    stockWingGroup.add(deltaBlade);
+
+    const cyanEdge = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(wingSpan * 0.95, 0.022, 0.028)),
+      mats.engineAccent,
+    );
+    cyanEdge.position.set(0, wingY + 0.068, wingZ + 0.19);
+    stockWingGroup.add(cyanEdge);
+
+    const endplateGeo = trackGeo(new THREE.BoxGeometry(0.028, 0.17, 0.36));
+    for (const sx of [-1, 1]) {
+      const ep = new THREE.Mesh(endplateGeo, mats.carbon);
+      ep.position.set(sx * (wingSpan * 0.5), wingY + 0.01, wingZ + 0.02);
+      ep.rotation.z = sx * -0.18;
+      stockWingGroup.add(ep);
+
+      addOrientedStrut(
+        stockWingGroup,
+        unitBoxGeo,
+        [sx * 0.48, 0.8, wingZ - 0.22],
+        [sx * 0.54, wingY + 0.02, wingZ - 0.02],
+        0.046,
+        0.16,
+        mats.carbon,
+        [sx, 0, 0],
+        0.02,
+      );
+    }
+  } else if (modelId === 'nemesis') {
+    // Valkyrie Nemesis R: Top-Hung Swan-Neck Le Mans Endurance Wing + Ruby Endplates
+    const wingSpan = bodyWidth * 1.02;
+    const mainFoil = new THREE.Mesh(
+      trackGeo(
+        createExtrudedShapeGeo(
+          [
+            [-0.2, 0],
+            [0.22, 0.055],
+            [0.2, 0.094],
+            [-0.18, 0.036],
+          ],
+          wingSpan,
+          0.014,
+        ),
+      ),
+      mats.carbon,
+    );
+    mainFoil.position.set(0, wingY, wingZ);
+    mainFoil.castShadow = true;
+    stockWingGroup.add(mainFoil);
+
+    const rubyStrip = new THREE.Mesh(
+      trackGeo(new THREE.BoxGeometry(wingSpan * 0.98, 0.024, 0.03)),
+      mats.engineAccent,
+    );
+    rubyStrip.position.set(0, wingY + 0.08, wingZ + 0.21);
+    stockWingGroup.add(rubyStrip);
+
+    const endplateGeo = trackGeo(new THREE.BoxGeometry(0.03, 0.22, 0.42));
+    const endplateTrimGeo = trackGeo(new THREE.BoxGeometry(0.034, 0.22, 0.028));
+    for (const sx of [-1, 1]) {
+      const ep = new THREE.Mesh(endplateGeo, mats.carbon);
+      ep.position.set(sx * (wingSpan * 0.5), wingY - 0.01, wingZ + 0.03);
+      stockWingGroup.add(ep);
+
+      const epTrim = new THREE.Mesh(endplateTrimGeo, mats.engineAccent);
+      epTrim.position.set(sx * (wingSpan * 0.5), wingY - 0.01, wingZ + 0.23);
+      stockWingGroup.add(epTrim);
+
+      addOrientedStrut(
+        stockWingGroup,
+        unitBoxGeo,
+        [sx * 0.34, 0.81, wingZ - 0.26],
+        [sx * 0.34, wingY + 0.07, wingZ - 0.04],
+        0.044,
+        0.17,
+        mats.carbon,
+        [sx, 0, 0],
         0.02,
       );
     }

@@ -74,6 +74,8 @@ const VALID_CAR_MODELS: CarModelId[] = [
   'pagani',
   'bolide',
   'solaris',
+  'phantom',
+  'nemesis',
 ];
 
 interface LocalLeaderboardStore {

@@ -88,7 +88,9 @@ export type CarModelId =
   | 'f1'
   | 'pagani'
   | 'bolide'
-  | 'solaris';
+  | 'solaris'
+  | 'phantom'
+  | 'nemesis';
 
 export type CameraMode = 'chase' | 'cine' | 'cockpit' | 'hood';
 
@@ -208,8 +210,25 @@ export interface CarModelSpec {
   maxIntegrity: number;
   speedRating: number; // 1-10
   handlingRating: number; // 1-10
-  priceGold: number; // 0 = unlocked by default
+  priceGold: number; // 0 = unlocked by default (unless priceDiamonds is set)
+  priceDiamonds?: number; // Exclusive Diamond-only price when > 0
   rarity: ItemRarity;
+}
+
+/**
+ * Escalating Fibonacci Diamond revive cost within a single run:
+ * 0 -> 2, 1 -> 3, 2 -> 5, 3 -> 8, 4 -> 13, 5 -> 21, 6 -> 34...
+ */
+export function getDiamondReviveCost(revivesUsedInRun: number): number {
+  const steps = Math.max(0, Math.floor(revivesUsedInRun));
+  let a = 2;
+  let b = 3;
+  for (let i = 0; i < steps; i++) {
+    const next = a + b;
+    a = b;
+    b = next;
+  }
+  return a;
 }
 
 export interface CarColorOption {
@@ -1313,6 +1332,10 @@ export function getDefaultWheelForCar(modelId: CarModelId): CarWheelConfig {
       return { style: 'turbine', color: 'cobalt' };
     case 'solaris':
       return { style: 'forgedY', color: 'gold' };
+    case 'phantom':
+      return { style: 'turbine', color: 'cobalt' };
+    case 'nemesis':
+      return { style: 'forgedY', color: 'black' };
     case 'lambo':
     case 'bugatti':
       return { style: 'twin5', color: 'gunmetal' };
@@ -6198,6 +6221,34 @@ export const CAR_MODELS: CarModelSpec[] = [
     speedRating: 10,
     handlingRating: 10,
     priceGold: 65000,
+  },
+  {
+    id: 'phantom',
+    rarity: 'legendary',
+    name: 'Nyx Phantom Stealth',
+    tagline: 'Sadece Elmas Özel · Çift hayalet sırt yüzgeci, buz-lazer farlar ve V10 art yakıcı',
+    topSpeedBonusMs: 14.4,
+    steeringResponsiveness: 16.8,
+    cornerGrip: 1.36,
+    maxIntegrity: 136,
+    speedRating: 10,
+    handlingRating: 10,
+    priceGold: 0,
+    priceDiamonds: 35,
+  },
+  {
+    id: 'nemesis',
+    rarity: 'legendary',
+    name: 'Valkyrie Nemesis R',
+    tagline: 'Sadece Elmas Özel · Köpekbalığı omurgası, yakut plazma reaktör ve V12 çift turbo zirvesi',
+    topSpeedBonusMs: 15.0,
+    steeringResponsiveness: 17.2,
+    cornerGrip: 1.39,
+    maxIntegrity: 145,
+    speedRating: 10,
+    handlingRating: 10,
+    priceGold: 0,
+    priceDiamonds: 65,
   },
 ];
 

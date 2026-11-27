@@ -1363,19 +1363,31 @@ export const GarageView: React.FC<GarageViewProps> = ({
     isEquipped: boolean;
     isUnlocked: boolean;
     priceGold: number;
+    priceDiamonds?: number;
     levelRoadLevel?: number;
     badgeTag?: string;
     thumbnail: React.ReactNode;
     onClick: () => void;
   }) => {
     const r = RARITY_STYLE[opts.rarity];
-    const statusText = opts.isEquipped
+    const isDiamondExclusive =
+      !opts.isEquipped &&
+      !opts.isUnlocked &&
+      Boolean(opts.priceDiamonds && opts.priceDiamonds > 0);
+    const statusNode: React.ReactNode = opts.isEquipped
       ? 'Seçili ✓'
       : opts.isUnlocked
         ? 'Garajda'
         : opts.levelRoadLevel
           ? `Sv.${opts.levelRoadLevel} Özel`
-          : `${opts.priceGold.toLocaleString('tr-TR')} Altın`;
+          : isDiamondExclusive ? (
+              <span className="inline-flex items-center gap-1 text-cyan-300">
+                <Gem className="h-3 w-3 text-cyan-400 shrink-0" />
+                <span>{opts.priceDiamonds} Elmas</span>
+              </span>
+            ) : (
+              `${opts.priceGold.toLocaleString('tr-TR')} Altın`
+            );
 
     return (
       <button
@@ -1385,7 +1397,9 @@ export const GarageView: React.FC<GarageViewProps> = ({
         className={`ug-cut-sm group relative flex flex-col overflow-hidden border p-2 text-left transition-all cursor-pointer ${
           opts.isSelected
             ? 'border-orange-500 bg-[#1c1622] ring-1 ring-orange-500/45 shadow-[0_0_16px_rgba(234,88,12,0.22)]'
-            : 'border-white/[0.08] bg-[#131722] hover:border-orange-500/35 hover:bg-[#191f2e]'
+            : isDiamondExclusive
+              ? 'border-cyan-400/35 bg-[#0e1624] hover:border-cyan-300/65 hover:bg-[#132033]'
+              : 'border-white/[0.08] bg-[#131722] hover:border-orange-500/35 hover:bg-[#191f2e]'
         }`}
       >
         {opts.isSelected && (
@@ -1422,7 +1436,7 @@ export const GarageView: React.FC<GarageViewProps> = ({
                   : 'text-zinc-200'
           }`}
         >
-          {statusText}
+          {statusNode}
         </div>
       </button>
     );
@@ -1475,6 +1489,34 @@ export const GarageView: React.FC<GarageViewProps> = ({
     }
 
     if (!isActiveUnlocked) {
+      if (activeModel.priceDiamonds && activeModel.priceDiamonds > 0) {
+        const canAffordDiamonds = diamonds >= activeModel.priceDiamonds;
+        if (canAffordDiamonds) {
+          return (
+            <button
+              type="button"
+              onClick={() => onUnlockCar(activeModel.id)}
+              className="ug-cut flex min-h-[48px] w-full items-center justify-center gap-2 border border-cyan-300/80 bg-gradient-to-r from-cyan-500 via-sky-400 to-cyan-400 px-4 font-display italic text-[15px] font-extrabold uppercase tracking-wider text-zinc-950 shadow-[0_0_22px_rgba(34,211,238,0.4)] hover:brightness-110 active:scale-[0.99] cursor-pointer"
+            >
+              <Gem className="h-4.5 w-4.5 shrink-0" />
+              <span>Elmasla Aç · {activeModel.priceDiamonds} Elmas</span>
+            </button>
+          );
+        }
+        return (
+          <button
+            type="button"
+            disabled
+            className="ug-cut flex min-h-[48px] w-full items-center justify-center gap-2 border border-cyan-400/35 bg-[#0a1420] px-4 font-display italic text-sm font-extrabold uppercase tracking-wider text-cyan-200/80 opacity-85 cursor-not-allowed"
+          >
+            <Gem className="h-4 w-4 text-cyan-400 shrink-0" />
+            <span>
+              Sadece Elmasla · {diamonds}/{activeModel.priceDiamonds} Elmas
+            </span>
+          </button>
+        );
+      }
+
       const missing = Math.max(1, activeModel.priceGold - goldCoins);
       const topUp = missing <= 80 ? missing : 75;
       return (
@@ -1668,12 +1710,18 @@ export const GarageView: React.FC<GarageViewProps> = ({
               >
                 {activeTuningClass.label}
               </span>
-              {!isActiveUnlocked && (
-                <span className="ug-skew inline-flex items-center gap-1 bg-orange-500/25 px-2 py-0.5 font-mono-num text-[10px] font-extrabold text-orange-200">
-                  <Lock className="h-2.5 w-2.5" />
-                  <span>{activeModel.priceGold.toLocaleString('tr-TR')}</span>
-                </span>
-              )}
+              {!isActiveUnlocked &&
+                (activeModel.priceDiamonds && activeModel.priceDiamonds > 0 ? (
+                  <span className="ug-skew inline-flex items-center gap-1 border border-cyan-400/45 bg-cyan-500/20 px-2 py-0.5 font-mono-num text-[10px] font-extrabold text-cyan-200">
+                    <Gem className="h-2.5 w-2.5 text-cyan-400" />
+                    <span>{activeModel.priceDiamonds} ELMAS</span>
+                  </span>
+                ) : (
+                  <span className="ug-skew inline-flex items-center gap-1 bg-orange-500/25 px-2 py-0.5 font-mono-num text-[10px] font-extrabold text-orange-200">
+                    <Lock className="h-2.5 w-2.5" />
+                    <span>{activeModel.priceGold.toLocaleString('tr-TR')}</span>
+                  </span>
+                ))}
             </div>
           </div>
 
@@ -2257,6 +2305,9 @@ export const GarageView: React.FC<GarageViewProps> = ({
                   {CAR_MODELS.map((m) => {
                     const isSelected = m.id === carModel;
                     const isUnlocked = unlockedCars.includes(m.id);
+                    const isDiamondCar = Boolean(
+                      m.priceDiamonds && m.priceDiamonds > 0,
+                    );
                     const r = RARITY_STYLE[m.rarity];
                     return renderGridCard({
                       keyId: m.id,
@@ -2266,11 +2317,14 @@ export const GarageView: React.FC<GarageViewProps> = ({
                       isEquipped: isSelected && isUnlocked,
                       isUnlocked,
                       priceGold: m.priceGold,
+                      priceDiamonds: m.priceDiamonds,
                       thumbnail: (
                         <div
                           className="relative flex h-full w-full items-center justify-center overflow-hidden"
                           style={{
-                            background: `radial-gradient(ellipse at 50% 62%, ${r.pillBg}, #0b0e16 82%)`,
+                            background: isDiamondCar
+                              ? 'radial-gradient(ellipse at 50% 62%, rgba(34,211,238,0.28), #08111c 82%)'
+                              : `radial-gradient(ellipse at 50% 62%, ${r.pillBg}, #0b0e16 82%)`,
                           }}
                         >
                           <img
@@ -2285,8 +2339,20 @@ export const GarageView: React.FC<GarageViewProps> = ({
                                 : 'group-hover:scale-105'
                             } ${!isUnlocked ? 'opacity-90' : ''}`}
                           />
+                          {isDiamondCar && (
+                            <span className="ug-skew pointer-events-none absolute left-1 top-1 inline-flex items-center gap-0.5 border border-cyan-400/45 bg-zinc-950/90 px-1 py-0.5 font-display text-[7.5px] font-extrabold uppercase tracking-wider text-cyan-300">
+                              <Gem className="h-2 w-2 text-cyan-400" />
+                              <span>ÖZEL</span>
+                            </span>
+                          )}
                           {!isUnlocked && (
-                            <span className="pointer-events-none absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-md bg-zinc-950/80 text-amber-300 border border-white/10">
+                            <span
+                              className={`pointer-events-none absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-md bg-zinc-950/80 border ${
+                                isDiamondCar
+                                  ? 'text-cyan-300 border-cyan-400/35'
+                                  : 'text-amber-300 border-white/10'
+                              }`}
+                            >
                               <Lock className="h-2.5 w-2.5" />
                             </span>
                           )}

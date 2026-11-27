@@ -84,6 +84,11 @@ interface StoreModalProps {
     diamondCost: number,
     goldAmount: number,
   ) => { ok: boolean; diamonds: number; goldCoins: number };
+  onOpenCrateWithDiamonds: (tierId: CrateTierId) => {
+    success: boolean;
+    error?: string;
+    outcome?: StoreFulfillmentOutcome;
+  };
   onRedeemPromoCode: (rawCode: string) => Promise<{
     success: boolean;
     error?: string;
@@ -209,6 +214,7 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
     currentUser,
     onFulfillPurchase,
     onExchangeDiamondsForGold,
+    onOpenCrateWithDiamonds,
     onRedeemPromoCode,
     onRestorePurchases,
     showcaseCar,
@@ -268,6 +274,14 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
         setExchangeNotice(
           `${pack.diamondCost} Elmas karşılığında +${pack.goldAmount.toLocaleString('tr-TR')} Altın hesabına eklendi!`,
         );
+      }
+    };
+
+    const handleOpenCrateWithDiamondsClick = (crate: CrateProductSpec) => {
+      if (diamonds < crate.diamondSinglePrice) return;
+      const res = onOpenCrateWithDiamonds(crate.tierId);
+      if (res.success && res.outcome) {
+        setRevealOutcome(res.outcome);
       }
     };
 
@@ -762,6 +776,30 @@ export const StoreModal: React.FC<StoreModalProps> = React.memo(
                           </div>
 
                           <div className="flex flex-col gap-2.5 pt-1">
+                            <button
+                              type="button"
+                              disabled={diamonds < crate.diamondSinglePrice}
+                              onClick={() =>
+                                handleOpenCrateWithDiamondsClick(crate)
+                              }
+                              className={`ug-cut-sm flex min-h-[48px] w-full items-center justify-between border px-4 font-display italic text-sm font-extrabold uppercase tracking-wide transition-all ${
+                                diamonds >= crate.diamondSinglePrice
+                                  ? 'border-cyan-400/60 bg-gradient-to-r from-cyan-500/22 via-sky-500/18 to-cyan-500/22 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.16)] hover:border-cyan-300 hover:from-cyan-500/32 hover:to-cyan-500/32 active:scale-[0.99] cursor-pointer'
+                                  : 'border-cyan-400/20 bg-[#0a131f] text-zinc-500 opacity-65 cursor-not-allowed'
+                              }`}
+                            >
+                              <span className="inline-flex items-center gap-1.5">
+                                <Gem className="h-4 w-4 text-cyan-400 shrink-0" />
+                                <span>Elmasla Aç</span>
+                              </span>
+                              <span className="inline-flex items-center gap-1 font-mono-num text-cyan-300">
+                                <span>{crate.diamondSinglePrice}</span>
+                                <span className="font-display text-xs">
+                                  Elmas
+                                </span>
+                              </span>
+                            </button>
+
                             <button
                               type="button"
                               onClick={() => startCrateCheckout(crate, 1)}
